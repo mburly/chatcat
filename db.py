@@ -6,7 +6,6 @@ import mysql.connector
 
 import constants
 
-blacklisted_names = constants.blacklisted_names
 
 def createConfig():
     config = configparser.ConfigParser()
@@ -73,7 +72,7 @@ def getUserID(cursor, username):
     return id
 
 def log(channel_name, username, message):
-    if username in blacklisted_names:
+    if username in constants.blacklisted_names:
         return
     db = connect(channel_name)
     cursor = db.cursor()
