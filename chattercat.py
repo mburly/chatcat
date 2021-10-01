@@ -6,6 +6,7 @@ import time
 
 import constants
 import db
+import twitch
 
 def stop():
     minutes = str((time.time() - init_start) / 60)
@@ -24,13 +25,26 @@ def start_socket(channel):
     sock.send(f'JOIN {channel}\n'.encode('utf-8'))
     return sock
 
-def run(channel_name):
-    if not os.path.exists('conf.ini'):
-        db.createConfig()
+# (flag) 1 = start, 2 = end
+def handle_session(flag, channel_name):
+    database = db.connect(channel_name)
+    cursor = database.cursor()
+    
+    datetime = db.getDateTime()
 
+    stream_title = twitch.get_channel_title(channel_name)
+
+    if(flag == 1):
+        stmt = f'INSERT INTO sessions (stream_title, start_datetime) VALUES ("{stream_title}", "{datetime}")'
+        cursor.execute(stmt)
+        database.commit()
+        return cursor.lastrowid
+    else:
+        stmt = f'UPDATE sessions SET end_datetime = "{datetime}" WHERE id = {id}'
+
+def run(channel_name, session_id):
     channel = '#' + channel_name
     sock = start_socket(channel)
-    message_count = -1
 
     if(os.path.exists('logs/') is False):
         os.mkdir('logs/')
@@ -49,7 +63,6 @@ def run(channel_name):
                 sock.close()
                 sock = start_socket(channel)
                 start = time.time()
-                message_count = -1
             try:
                 resp = sock.recv(2048).decode('utf-8', errors='ignore')
             except:
@@ -65,25 +78,22 @@ def run(channel_name):
             if(prev_username == username and len(message) == 1):
                 file.write(f'{db.getDate()} Returned 1 - SOCKET ERROR.')
                 return 1
-            if(message_count > 0):
-                if(len(message) == 0):
-                    continue
-                message_count = message_count + 1
-                if '\\' in message:
-                    message = message.replace('\\', '')
-                db.log(channel_name, username, message)
-                prev_username = username
-            else:
-                message_count = message_count + 1
+            if '\\' in message:
+                message = message.replace('\\', '')
+            db.log(channel_name, username, message, session_id)
+            prev_username = username
     except KeyboardInterrupt:
         stop()
     
 def main():
+    if not os.path.exists('conf.ini'):
+        db.createConfig()
     if(len(sys.argv) < 2):
         channel_name = input(f'Enter channel name: ')
     else:
         channel_name = sys.argv[1]
-    success = run(channel_name)
+    session_id = handle_session(1, channel_name)
+    success = run(channel_name, session_id)
     while(success == 1 or success == 2):
         success = run(channel_name)
     

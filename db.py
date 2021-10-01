@@ -6,7 +6,6 @@ import mysql.connector
 
 import constants
 
-
 def createConfig():
     config = configparser.ConfigParser()
     host = input("Enter hostname [default: localhost]: ")
@@ -41,7 +40,17 @@ def getDateTime():
     return f'{str(cur.tm_mon)}-{str(cur.tm_mday)}-{str(cur.tm_year)} {str(cur.tm_hour)}:{str(cur.tm_min)}:{str(cur.tm_sec)}'
 
 
-def createDB(cursor, channel_name):
+def createDB(channel_name):
+    config = constants.config
+    host = config['db']['host']
+    user = config['db']['user']
+    password = config['db']['password']
+    db = mysql.connector.connect(
+        host=host,
+        user=user,
+        password=password
+    )
+    cursor = db.cursor()
     try:
         db_name = f'cc_{channel_name}'
         
@@ -55,9 +64,14 @@ def createDB(cursor, channel_name):
 
         cursor.execute(stmt)
 
-        stmt = f'CREATE TABLE messages (id INT AUTO_INCREMENT PRIMARY KEY, message VARCHAR(512), chatterID INT, datetime VARCHAR(255))'
+        stmt = f'CREATE TABLE messages (id INT AUTO_INCREMENT PRIMARY KEY, message VARCHAR(512) COLLATE utf8mb4_bin, sessionID INT, chatterID INT, datetime VARCHAR(255))'
 
         cursor.execute(stmt)
+
+        stmt = f'CREATE TABLE sessions (id INT AUTO_INCREMENT PRIMARY KEY, stream_title VARCHAR(512) COLLATE utf8mb4_bin, start_datetime VARCHAR(255), end_datetime VARCHAR(255))'
+
+        cursor.execute(stmt)
+
         return 0
     except:
         return -1
@@ -71,7 +85,7 @@ def getUserID(cursor, username):
         return id
     return id
 
-def log(channel_name, username, message):
+def log(channel_name, username, message, session_id):
     if username in constants.blacklisted_names:
         return
     db = connect(channel_name)
@@ -89,18 +103,17 @@ def log(channel_name, username, message):
         
     message = message.replace("\"", "\'")
 
-    stmt = f'INSERT INTO messages (message, chatterID, datetime) VALUES ("{message}", {id}, "{datetime}")'
+    stmt = f'INSERT INTO messages (message, sessionID, chatterID, datetime) VALUES ("{message}", {session_id}, {id}, "{datetime}")'
     cursor.execute(stmt)
     db.commit()
 
     stmt = f'UPDATE chatters SET last_date = "{date}" WHERE id = {id}'
     cursor.execute(stmt)
     db.commit()
-    print(f'Logged message from {username}: {message}')
+    print(f'[{channel_name}] [{datetime}] Logged message from {username}: {message}')
 
 def connect(channel_name):
-    config = configparser.ConfigParser()
-    config.read('conf.ini')
+    config = constants.config
     try:
         db_name = f'cc_{channel_name}'
         db = mysql.connector.connect(
@@ -111,7 +124,7 @@ def connect(channel_name):
         )
         return db
     except:
-        if(createDB(cursor, channel_name) == 0):
+        if(createDB(channel_name) == 0):
             db = mysql.connector.connect(
             host=config['db']['host'],
             user=config['db']['user'],
