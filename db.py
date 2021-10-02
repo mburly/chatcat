@@ -72,6 +72,10 @@ def createDB(channel_name):
 
         cursor.execute(stmt)
 
+        stmt = f'CREATE TABLE emotes (id INT AUTO_INCREMENT PRIMARY KEY, emote_name VARCHAR(255) COLLATE utf8mb4_bin, emote_code VARCHAR(255) COLLATE utf8mb4_bin, variant INT, count INT DEFAULT 0, path VARCHAR(512) COLLATE utf8mb4_bin, date_added VARCHAR(255) COLLATE utf8mb4_bin)'
+
+        cursor.execute(stmt)
+
         return 0
     except:
         return -1

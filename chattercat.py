@@ -8,11 +8,6 @@ import constants
 import db
 import twitch
 
-def stop():
-    minutes = str((time.time() - init_start) / 60)
-    file.write(minutes)
-    sock.close()
-
 def start_socket(channel):
     config = configparser.ConfigParser()
     config.read('conf.ini')
@@ -50,13 +45,16 @@ def run(channel_name, session_id):
         os.mkdir('logs/')
 
     filename = 'logs/' + channel_name + '.log'
-    file = open(filename, 'w')
+    if not os.path.exists(filename):
+        file = open(filename, 'w')
+    else:
+        file = open(filename, 'a')
 
     init_start = time.time()
     start = time.time()
     username = ''
     message = ''
-
+    counter = 0
     try:
         prev_username = ''
         while True:
@@ -79,15 +77,17 @@ def run(channel_name, session_id):
             if(prev_username == username and len(message) == 1):
                 file.write(f'{db.getDateTime()} Returned 1 - SOCKET ERROR.')
                 return 1
+            if(message == []):
+                continue
             if '\\' in message:
                 message = message.replace('\\', '')
             db.log(channel_name, username, message, session_id)
             prev_username = username
     except KeyboardInterrupt:
-        stop()
+        sock.close()
     
 def main():
-    if not os.path.exists('conf.ini'):
+    if not os.path.exists(constants.config_name):
         db.createConfig()
     if(len(sys.argv) < 2):
         channel_name = input(f'Enter channel name: ')
