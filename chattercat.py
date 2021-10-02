@@ -56,6 +56,7 @@ def run(channel_name, session_id):
     start = time.time()
     username = ''
     message = ''
+
     try:
         prev_username = ''
         while True:
@@ -66,7 +67,7 @@ def run(channel_name, session_id):
             try:
                 resp = sock.recv(2048).decode('utf-8', errors='ignore')
             except:
-                file.write(f'{db.getDate()} Returned 2 - TIMEOUT/OVERFLOW ERROR.')
+                file.write(f'{db.getDateTime()} Returned 2 - TIMEOUT/OVERFLOW ERROR.')
                 return 2
             if(len(resp) > 0):
                 username = resp.split('!')[0]
@@ -76,7 +77,7 @@ def run(channel_name, session_id):
             if(len(message) > 0):
                 message = message[0].split('\r\n')[0]
             if(prev_username == username and len(message) == 1):
-                file.write(f'{db.getDate()} Returned 1 - SOCKET ERROR.')
+                file.write(f'{db.getDateTime()} Returned 1 - SOCKET ERROR.')
                 return 1
             if '\\' in message:
                 message = message.replace('\\', '')
@@ -95,7 +96,7 @@ def main():
     session_id = handle_session(1, channel_name)
     success = run(channel_name, session_id)
     while(success == 1 or success == 2):
-        success = run(channel_name)
+        success = run(channel_name, session_id)
     
 
 main()
