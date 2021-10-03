@@ -65,7 +65,7 @@ def run(channel_name, session_id):
             try:
                 resp = sock.recv(2048).decode('utf-8', errors='ignore')
             except:
-                file.write(f'{db.getDateTime()} Returned 2 - TIMEOUT/OVERFLOW ERROR.')
+                file.write(f'{db.getDateTime()} Returned 2 - TIMEOUT/OVERFLOW ERROR.\n')
                 return 2
             if(len(resp) > 0):
                 username = resp.split('!')[0]
@@ -75,7 +75,7 @@ def run(channel_name, session_id):
             if(len(message) > 0):
                 message = message[0].split('\r\n')[0]
             if(prev_username == username and len(message) == 1):
-                file.write(f'{db.getDateTime()} Returned 1 - SOCKET ERROR.')
+                file.write(f'{db.getDateTime()} Returned 1 - SOCKET ERROR.\n')
                 return 1
             if(message == []):
                 continue
@@ -90,7 +90,7 @@ def main():
     if not os.path.exists(constants.config_name):
         db.createConfig()
     if(len(sys.argv) < 2):
-        channel_name = input(f'Enter channel name: ')
+        channel_name = input('Enter channel name: ')
     else:
         channel_name = sys.argv[1]
     session_id = handle_session(1, channel_name)
