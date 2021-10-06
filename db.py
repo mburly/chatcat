@@ -5,6 +5,7 @@ import time
 import mysql.connector
 
 import constants
+import twitch
 
 def createConfig():
     config = configparser.ConfigParser()
@@ -39,7 +40,6 @@ def getDateTime():
     cur = time.localtime()
     return f'{str(cur.tm_mon)}-{str(cur.tm_mday)}-{str(cur.tm_year)} {str(cur.tm_hour)}:{str(cur.tm_min)}:{str(cur.tm_sec)}'
 
-
 def createDB(channel_name):
     config = constants.config
     host = config['db']['host']
@@ -72,9 +72,11 @@ def createDB(channel_name):
 
         cursor.execute(stmt)
 
-        stmt = f'CREATE TABLE emotes (id INT AUTO_INCREMENT PRIMARY KEY, emote_name VARCHAR(255) COLLATE utf8mb4_bin, emote_code VARCHAR(255) COLLATE utf8mb4_bin, variant INT, count INT DEFAULT 0, path VARCHAR(512) COLLATE utf8mb4_bin, date_added VARCHAR(255) COLLATE utf8mb4_bin, active BOOLEAN)'
+        stmt = f'CREATE TABLE emotes (id INT AUTO_INCREMENT PRIMARY KEY, emote_name VARCHAR(255) COLLATE utf8mb4_bin, emote_code VARCHAR(255) COLLATE utf8mb4_bin, variant INT, count INT DEFAULT 0, path VARCHAR(512) COLLATE utf8mb4_bin, date_added VARCHAR(255) COLLATE utf8mb4_bin, source VARCHAR(255) COLLATE utf8mb4_bin, active BOOLEAN)'
 
         cursor.execute(stmt)
+
+        populateEmotes(channel_name)
 
         return 0
     except:
@@ -88,6 +90,29 @@ def getUserID(cursor, username):
         id = row[0]
         return id
     return id
+
+# for first time inserting into emotes table only
+def populateEmotes(channel_name):
+    print("Populating emotes table...")
+    emotes = twitch.get_all_channel_emote_info(channel_name)
+    emote_types = list(emotes.keys())
+    db = connect(channel_name)
+    cursor = db.cursor()
+    source = 1
+    for emote_type in emote_types:
+        for emote in emotes[emote_type]:
+            emote_name = emote['code']
+            if(len(emote['path']) > 2):
+                url = emote['path'][2]
+            else:
+                url = emote['path'][0]
+            if '\\' in emote_name:
+                emote_name = emote_name.replace('\\', '\\\\')
+            stmt = f'INSERT INTO emotes (emote_name, emote_code, variant, path, date_added, source, active) VALUES ("{emote_name}","{emote_name}",0,"{url}","{getDate()}","{source}",1)'
+            cursor.execute(stmt)
+            db.commit()
+        source += 1
+    return 0
 
 def log(channel_name, username, message, session_id):
     if username in constants.blacklisted_names:

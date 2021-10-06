@@ -40,7 +40,6 @@ def handle_session(flag, channel_name):
 def run(channel_name, session_id):
     channel = '#' + channel_name
     sock = start_socket(channel)
-
     if(os.path.exists('logs/') is False):
         os.mkdir('logs/')
 
@@ -85,6 +84,9 @@ def run(channel_name, session_id):
             prev_username = username
     except KeyboardInterrupt:
         sock.close()
+
+    # def parseMessage():
+    #     words = message.split(' ')
     
 def main():
     if not os.path.exists(constants.config_name):
