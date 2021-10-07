@@ -37,6 +37,14 @@ def handle_session(flag, channel_name):
     else:
         stmt = f'UPDATE sessions SET end_datetime = "{datetime}" WHERE id = {id}'
 
+def parseMessage(emotes, message):
+        words = message.split(' ')
+        parsed_emotes = []
+        for word in words:
+            if word in emotes and word not in parsed_emotes:
+                parsed_emotes.append(word)
+        return parsed_emotes
+
 def run(channel_name, session_id):
     channel = '#' + channel_name
     sock = start_socket(channel)
@@ -54,6 +62,8 @@ def run(channel_name, session_id):
     username = ''
     message = ''
     counter = 0
+    emotes = db.getEmotes(channel_name)
+
     try:
         prev_username = ''
         while True:
@@ -80,13 +90,11 @@ def run(channel_name, session_id):
                 continue
             if '\\' in message:
                 message = message.replace('\\', '')
-            db.log(channel_name, username, message, session_id)
+            message_emotes = parseMessage(emotes, message)
+            db.log(channel_name, username, message, message_emotes, session_id)
             prev_username = username
     except KeyboardInterrupt:
         sock.close()
-
-    # def parseMessage():
-    #     words = message.split(' ')
     
 def main():
     if not os.path.exists(constants.config_name):

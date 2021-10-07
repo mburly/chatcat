@@ -72,7 +72,7 @@ def createDB(channel_name):
 
         cursor.execute(stmt)
 
-        stmt = f'CREATE TABLE emotes (id INT AUTO_INCREMENT PRIMARY KEY, emote_name VARCHAR(255) COLLATE utf8mb4_bin, emote_code VARCHAR(255) COLLATE utf8mb4_bin, variant INT, count INT DEFAULT 0, path VARCHAR(512) COLLATE utf8mb4_bin, date_added VARCHAR(255) COLLATE utf8mb4_bin, source VARCHAR(255) COLLATE utf8mb4_bin, active BOOLEAN)'
+        stmt = f'CREATE TABLE emotes (id INT AUTO_INCREMENT PRIMARY KEY, emote_name VARCHAR(255) COLLATE utf8mb4_bin, emote_code VARCHAR(255) COLLATE utf8mb4_bin, emote_id VARCHAR(255) COLLATE utf8mb4_bin, variant INT, count INT DEFAULT 0, path VARCHAR(512) COLLATE utf8mb4_bin, date_added VARCHAR(255) COLLATE utf8mb4_bin, source VARCHAR(255) COLLATE utf8mb4_bin, active BOOLEAN)'
 
         cursor.execute(stmt)
 
@@ -91,6 +91,17 @@ def getUserID(cursor, username):
         return id
     return id
 
+def getEmotes(channel_name):
+    emotes = []
+    db = connect(channel_name)
+    cursor = db.cursor()
+    stmt = 'SELECT emote_code FROM emotes;'
+    cursor.execute(stmt)
+    rows = cursor.fetchall()
+    for emote in rows:
+        emotes.append(str(emote[0]))
+    return emotes
+
 # for first time inserting into emotes table only
 def populateEmotes(channel_name):
     print("Populating emotes table...")
@@ -108,13 +119,14 @@ def populateEmotes(channel_name):
                 url = emote['path'][0]
             if '\\' in emote_name:
                 emote_name = emote_name.replace('\\', '\\\\')
-            stmt = f'INSERT INTO emotes (emote_name, emote_code, variant, path, date_added, source, active) VALUES ("{emote_name}","{emote_name}",0,"{url}","{getDate()}","{source}",1)'
+            emote_id = emote['id']
+            stmt = f'INSERT INTO emotes (emote_name, emote_code, emote_id, variant, path, date_added, source, active) VALUES ("{emote_name}","{emote_name}","{emote_id}",0,"{url}","{getDate()}","{source}",1)'
             cursor.execute(stmt)
             db.commit()
         source += 1
     return 0
 
-def log(channel_name, username, message, session_id):
+def log(channel_name, username, message, emotes, session_id):
     if username in constants.blacklisted_names:
         return
     db = connect(channel_name)
@@ -139,6 +151,12 @@ def log(channel_name, username, message, session_id):
     stmt = f'UPDATE chatters SET last_date = "{date}" WHERE id = {id}'
     cursor.execute(stmt)
     db.commit()
+
+    for emote in emotes:
+        stmt = f'UPDATE emotes SET count = count + 1 WHERE emote_code = "{emote}" AND active = 1;'
+        cursor.execute(stmt)
+        db.commit()
+
     print(f'[{channel_name}] [{datetime}] Logged message from {username}: {message}')
 
 def connect(channel_name):

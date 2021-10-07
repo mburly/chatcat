@@ -50,7 +50,6 @@ def get_all_channel_emote_info(channel_name):
     emotes['bttv_channel'] = get_emote_set_info(get_channel_bttv_emotes(id),4,id)
     return emotes
 
-
 def get_channel_ffz_emotes(channel_id):
     url = f'https://api.frankerfacez.com/v1/room/id/{channel_id}'
     page = urlopen(url)
@@ -105,6 +104,7 @@ def get_ffz_emote_info(emote_id):
     html = page.read().decode('utf-8')
     a = json.loads(html)
     info = {}
+    info['id'] = emote_id
     info['code'] = a['emote']['name']
     urls = []
     emote_sizes = ['1','2','4']
@@ -115,6 +115,7 @@ def get_ffz_emote_info(emote_id):
 
 def get_bttv_emote_info(emote_id):
     info = {}
+    info['id'] = emote_id
     emote_sizes = ['1x','2x','3x']
     urls = []
     session = HTMLSession()
@@ -149,7 +150,15 @@ def get_global_emote_info(emote_id):
     emote_sizes = ['1.0','2.0','3.0']
     urls = []
     info = {}
+    info['id'] = emote_id
+    undecoded = ['&lt;3','&gt;(']
     info['code'] = html.split('<meta property="og:title" content="')[1].split('"')[0]
+    for word in undecoded:
+        if word in info['code']:
+            if undecoded[0] in word:
+                info['code'] = '<3'
+            else:
+                info['code'] = '>('
     for i in range(0, len(emote_sizes)):
         urls.append(f'https://static-cdn.jtvnw.net/emoticons/v2/{emote_id}/static/light/{emote_sizes[i]}')
     info['path'] = urls
@@ -174,6 +183,7 @@ def get_subscriber_emote_info(channel_id, emote_id):
     emote_sizes = ['1.0','2.0','3.0']
     urls = []
     info = {}
+    info['id'] = emote_id
     info['code'] = html.split('<meta property="og:title" content="')[1].split('"')[0]
     for i in range(0, len(emote_sizes)):
         urls.append(f'https://static-cdn.jtvnw.net/emoticons/v2/{emote_id}/static/light/{emote_sizes[i]}')
