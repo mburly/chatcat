@@ -144,7 +144,7 @@ def log(channel_name, username, message, emotes, session_id):
         
     message = message.replace("\"", "\'")
 
-    stmt = f'INSERT INTO messages (message, sessionID, chatterID, datetime) VALUES ("{message}", {session_id}, {id}, "{datetime}")'
+    stmt = f'INSERT INTO messages (message, session_id, chatter_id, datetime) VALUES ("{message}", {session_id}, {id}, "{datetime}")'
     cursor.execute(stmt)
     db.commit()
 
