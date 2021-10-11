@@ -120,7 +120,7 @@ def populateEmotes(channel_name):
             if '\\' in emote_name:
                 emote_name = emote_name.replace('\\', '\\\\')
             emote_id = emote['id']
-            stmt = f'INSERT INTO emotes (emote_name, emote_code, emote_id, variant, path, date_added, source, active) VALUES ("{emote_name}","{emote_name}","{emote_id}",0,"{url}","{getDate()}","{source}",1)'
+            stmt = f'INSERT INTO emotes (name, code, emote_id, variant, path, date_added, source, active) VALUES ("{emote_name}","{emote_name}","{emote_id}",0,"{url}","{getDate()}","{source}",1)'
             cursor.execute(stmt)
             db.commit()
         source += 1
