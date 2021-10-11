@@ -64,7 +64,7 @@ def createDB(channel_name):
 
         cursor.execute(stmt)
 
-        stmt = f'CREATE TABLE messages (id INT AUTO_INCREMENT PRIMARY KEY, message VARCHAR(512) COLLATE utf8mb4_bin, sessionID INT, chatterID INT, datetime VARCHAR(255))'
+        stmt = f'CREATE TABLE messages (id INT AUTO_INCREMENT PRIMARY KEY, message VARCHAR(512) COLLATE utf8mb4_bin, session_id INT, chatter_id INT, datetime VARCHAR(255))'
 
         cursor.execute(stmt)
 
@@ -72,7 +72,7 @@ def createDB(channel_name):
 
         cursor.execute(stmt)
 
-        stmt = f'CREATE TABLE emotes (id INT AUTO_INCREMENT PRIMARY KEY, emote_name VARCHAR(255) COLLATE utf8mb4_bin, emote_code VARCHAR(255) COLLATE utf8mb4_bin, emote_id VARCHAR(255) COLLATE utf8mb4_bin, variant INT, count INT DEFAULT 0, path VARCHAR(512) COLLATE utf8mb4_bin, date_added VARCHAR(255) COLLATE utf8mb4_bin, source VARCHAR(255) COLLATE utf8mb4_bin, active BOOLEAN)'
+        stmt = f'CREATE TABLE emotes (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) COLLATE utf8mb4_bin, code VARCHAR(255) COLLATE utf8mb4_bin, emote_id VARCHAR(255) COLLATE utf8mb4_bin, variant INT, count INT DEFAULT 0, path VARCHAR(512) COLLATE utf8mb4_bin, date_added VARCHAR(255) COLLATE utf8mb4_bin, source VARCHAR(255) COLLATE utf8mb4_bin, active BOOLEAN)'
 
         cursor.execute(stmt)
 
@@ -171,14 +171,11 @@ def connect(channel_name):
         )
         return db
     except:
-        if(createDB(channel_name) == 0):
-            db = mysql.connector.connect(
-            host=config['db']['host'],
-            user=config['db']['user'],
-            password=config['db']['password'],
-            database=db_name
-            )
-            return db
-        else:
-            print("Something went wrong.")
-            return -1
+        createDB(channel_name)
+        db = mysql.connector.connect(
+        host=config['db']['host'],
+        user=config['db']['user'],
+        password=config['db']['password'],
+        database=db_name
+        )
+        return db

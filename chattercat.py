@@ -29,6 +29,8 @@ def handle_session(flag, channel_name):
 
     stream_title = twitch.get_channel_title(channel_name)
 
+    print(stream_title)
+
     if(flag == 1):
         stmt = f'INSERT INTO sessions (stream_title, start_datetime) VALUES ("{stream_title}", "{datetime}")'
         cursor.execute(stmt)
@@ -62,8 +64,8 @@ def run(channel_name, session_id):
     username = ''
     message = ''
     counter = 0
-    emotes = db.getEmotes(channel_name)
 
+    emotes = db.getEmotes(channel_name)
     try:
         prev_username = ''
         while True:
