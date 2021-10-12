@@ -60,7 +60,7 @@ def createDB(channel_name):
         db = connect(channel_name)
         cursor = db.cursor()
     
-        stmt = f'CREATE TABLE chatters (id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(255), first_date VARCHAR(255), last_date VARCHAR(255))'
+        stmt = f'CREATE TABLE chatters (id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(512), first_date VARCHAR(255), last_date VARCHAR(255))'
 
         cursor.execute(stmt)
 
