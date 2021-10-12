@@ -146,6 +146,16 @@ def get_bttv_channel_emote_info(channel_id):
             urls.append(f'https://cdn.betterttv.net/emote/{emotes[i]["id"]}/{emote_sizes[j]}')
         emote['path'] = urls
         info.append(emote)
+    emotes = a['sharedEmotes']
+    for i in range(0, len(emotes)):
+        emote = {}
+        urls = []
+        emote['id'] = emotes[i]['id']
+        emote['code'] = emotes[i]['code']
+        for j in range(0, len(emote_sizes)):
+            urls.append(f'https://cdn.betterttv.net/emote/{emotes[i]["id"]}/{emote_sizes[j]}')
+        emote['path'] = urls
+        info.append(emote)
     return info
 
 def get_global_emotes():

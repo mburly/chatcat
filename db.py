@@ -95,7 +95,7 @@ def getEmotes(channel_name):
     emotes = []
     db = connect(channel_name)
     cursor = db.cursor()
-    stmt = 'SELECT emote_code FROM emotes;'
+    stmt = 'SELECT code FROM emotes;'
     cursor.execute(stmt)
     rows = cursor.fetchall()
     for emote in rows:
@@ -153,7 +153,7 @@ def log(channel_name, username, message, emotes, session_id):
     db.commit()
 
     for emote in emotes:
-        stmt = f'UPDATE emotes SET count = count + 1 WHERE emote_code = "{emote}" AND active = 1;'
+        stmt = f'UPDATE emotes SET count = count + 1 WHERE code = "{emote}" AND active = 1;'
         cursor.execute(stmt)
         db.commit()
 
