@@ -1,4 +1,6 @@
+import certifi
 import json
+import ssl
 
 from bs4 import BeautifulSoup
 from requests_html import HTMLSession
@@ -8,7 +10,7 @@ import constants
 
 def get_channel_id(channel_name):
     url = f'https://api.frankerfacez.com/v1/user/{channel_name}'
-    page = urlopen(url)
+    page = urlopen(url, context=ssl.create_default_context(cafile=certifi.where()))
     html = page.read().decode('utf-8')
     a = json.loads(html)
     return a['user']['twitch_id']
@@ -50,7 +52,7 @@ def get_all_channel_emote_info(channel_name):
 
 def get_channel_ffz_emotes(channel_id):
     url = f'https://api.frankerfacez.com/v1/room/id/{channel_id}'
-    page = urlopen(url)
+    page = urlopen(url, context=ssl.create_default_context(cafile=certifi.where()))
     html = page.read().decode('utf-8')
     a = json.loads(html)
     emote_set_id = str(a['room']['set'])
@@ -62,7 +64,7 @@ def get_channel_ffz_emotes(channel_id):
 
 def get_global_ffz_emotes():
     url = 'https://api.frankerfacez.com/v1/set/global'
-    page = urlopen(url)
+    page = urlopen(url, context=ssl.create_default_context(cafile=certifi.where()))
     html = page.read().decode('utf-8')
     a = json.loads(html)
     emote_set = str(a['default_sets'][0])
@@ -74,7 +76,7 @@ def get_global_ffz_emotes():
 
 def get_channel_bttv_emotes(channel_id):
     url = f'https://api.betterttv.net/3/cached/users/twitch/{channel_id}'
-    page = urlopen(url)
+    page = urlopen(url, context=ssl.create_default_context(cafile=certifi.where()))
     html = page.read().decode('utf-8')
     a = json.loads(html)
     channel_emotes = []
@@ -88,7 +90,7 @@ def get_channel_bttv_emotes(channel_id):
 
 def get_global_bttv_emotes():
     url = 'https://api.betterttv.net/3/cached/emotes/global'
-    page = urlopen(url)
+    page = urlopen(url, context=ssl.create_default_context(cafile=certifi.where()))
     html = page.read().decode('utf-8')
     a = json.loads(html)
     global_emotes = []
@@ -98,7 +100,7 @@ def get_global_bttv_emotes():
 
 def get_ffz_emote_info(emote_id):
     url = f'https://api.frankerfacez.com/v1/emote/{emote_id}'
-    page = urlopen(url)
+    page = urlopen(url, context=ssl.create_default_context(cafile=certifi.where()))
     html = page.read().decode('utf-8')
     a = json.loads(html)
     info = {}
@@ -113,7 +115,7 @@ def get_ffz_emote_info(emote_id):
 
 def get_bttv_global_emote_info():
     url = 'https://api.betterttv.net/3/cached/emotes/global'
-    page = urlopen(url)
+    page = urlopen(url, context=ssl.create_default_context(cafile=certifi.where()))
     html = page.read().decode('utf-8')
     a = json.loads(html)
     emote_sizes = ['1x','2x','3x']
@@ -131,7 +133,7 @@ def get_bttv_global_emote_info():
 
 def get_bttv_channel_emote_info(channel_id):
     url = f'https://api.betterttv.net/3/cached/users/twitch/{channel_id}'
-    page = urlopen(url)
+    page = urlopen(url, context=ssl.create_default_context(cafile=certifi.where()))
     html = page.read().decode('utf-8')
     a = json.loads(html)
     emotes = a['channelEmotes']
@@ -160,7 +162,7 @@ def get_bttv_channel_emote_info(channel_id):
 
 def get_global_emotes():
     url = 'https://twitchemotes.com/'
-    page = urlopen(url)
+    page = urlopen(url, context=ssl.create_default_context(cafile=certifi.where()))
     html = page.read().decode('utf-8')
     soup = BeautifulSoup(html, 'html.parser')
     emotes = soup.find_all(class_="emote-name")
@@ -172,7 +174,7 @@ def get_global_emotes():
 
 def get_global_emote_info(emote_id):
     url = f'https://twitchemotes.com/global/emotes/{emote_id}'
-    page = urlopen(url)
+    page = urlopen(url, context=ssl.create_default_context(cafile=certifi.where()))
     html = page.read().decode('utf-8')
     emote_sizes = ['1.0','2.0','3.0']
     urls = []
@@ -193,7 +195,7 @@ def get_global_emote_info(emote_id):
 
 def get_subscriber_emotes(channel_id):
     url = f'https://twitchemotes.com/channels/{channel_id}'
-    page = urlopen(url)
+    page = urlopen(url, context=ssl.create_default_context(cafile=certifi.where()))
     html = page.read().decode('utf-8')
     soup = BeautifulSoup(html, 'html.parser')
     emotes = soup.find_all(class_="emote")
@@ -205,7 +207,7 @@ def get_subscriber_emotes(channel_id):
 
 def get_subscriber_emote_info(channel_id, emote_id):
     url = f'https://twitchemotes.com/channels/{channel_id}/emotes/{emote_id}'
-    page = urlopen(url)
+    page = urlopen(url, context=ssl.create_default_context(cafile=certifi.where()))
     html = page.read().decode('utf-8')
     emote_sizes = ['1.0','2.0','3.0']
     urls = []
@@ -219,7 +221,7 @@ def get_subscriber_emote_info(channel_id, emote_id):
 
 def get_channel_title(channel_name):
     url = f'https://twitch.tv/{channel_name}'
-    page = urlopen(url)
+    page = urlopen(url, context=ssl.create_default_context(cafile=certifi.where()))
     html = page.read().decode('utf-8')
     tag = "<meta name=\"twitter:description\" content=\""
     title = html.find(tag)
