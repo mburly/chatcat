@@ -157,7 +157,7 @@ def log(channel_name, username, message, emotes, session_id):
         cursor.execute(stmt)
         db.commit()
 
-    print(f'[{channel_name}] [{datetime}] Logged message from {username}: {message}')
+    print(f'[\033[1;32m{channel_name}\033[0m] [\033[1;34m{datetime}\033[0m] Logged message from {username}: {message}')
 
 def connect(channel_name):
     config = constants.config
