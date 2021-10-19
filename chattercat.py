@@ -1,3 +1,9 @@
+# TODO
+# Update emotes function
+# On keyboardinterrupt, fill in rest of session info and cleanly exit (make sure everything is closed socket, etc)
+# Rename 'path' field in database to 'url', keep 'path' field and make it the downloaded file path
+# Correct the 'tmi' logs, detecting bugs (0 length message etc)
+
 import configparser
 import os
 import socket
@@ -59,7 +65,6 @@ def run(channel_name, session_id):
     else:
         file = open(filename, 'a')
 
-    init_start = time.time()
     start = time.time()
     username = ''
     message = ''

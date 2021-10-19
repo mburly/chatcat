@@ -110,7 +110,7 @@ def get_ffz_emote_info(emote_id):
     emote_sizes = ['1','2','4']
     for i in range(0, len(a['emote']['urls'])):
         urls.append(f'https:{a["emote"]["urls"][emote_sizes[i]]}')
-    info['path'] = urls
+    info['url'] = urls
     return info
 
 def get_bttv_global_emote_info():
@@ -127,7 +127,7 @@ def get_bttv_global_emote_info():
         emote['code'] = a[i]['code']
         for j in range(0, len(emote_sizes)):
             urls.append(f'https://cdn.betterttv.net/emote/{a[i]["id"]}/{emote_sizes[j]}')
-        emote['path'] = urls
+        emote['url'] = urls
         info.append(emote)
     return info
 
@@ -146,7 +146,7 @@ def get_bttv_channel_emote_info(channel_id):
         emote['code'] = emotes[i]['code']
         for j in range(0, len(emote_sizes)):
             urls.append(f'https://cdn.betterttv.net/emote/{emotes[i]["id"]}/{emote_sizes[j]}')
-        emote['path'] = urls
+        emote['url'] = urls
         info.append(emote)
     emotes = a['sharedEmotes']
     for i in range(0, len(emotes)):
@@ -156,7 +156,7 @@ def get_bttv_channel_emote_info(channel_id):
         emote['code'] = emotes[i]['code']
         for j in range(0, len(emote_sizes)):
             urls.append(f'https://cdn.betterttv.net/emote/{emotes[i]["id"]}/{emote_sizes[j]}')
-        emote['path'] = urls
+        emote['url'] = urls
         info.append(emote)
     return info
 
@@ -190,7 +190,7 @@ def get_global_emote_info(emote_id):
                 info['code'] = '>('
     for i in range(0, len(emote_sizes)):
         urls.append(f'https://static-cdn.jtvnw.net/emoticons/v2/{emote_id}/static/light/{emote_sizes[i]}')
-    info['path'] = urls
+    info['url'] = urls
     return info
 
 def get_subscriber_emotes(channel_id):
@@ -216,7 +216,7 @@ def get_subscriber_emote_info(channel_id, emote_id):
     info['code'] = html.split('<meta property="og:title" content="')[1].split('"')[0]
     for i in range(0, len(emote_sizes)):
         urls.append(f'https://static-cdn.jtvnw.net/emoticons/v2/{emote_id}/static/light/{emote_sizes[i]}')
-    info['path'] = urls
+    info['url'] = urls
     return info
 
 def get_channel_title(channel_name):

@@ -3,9 +3,42 @@ import os
 import time
 
 import mysql.connector
+import requests
 
 import constants
 import twitch
+
+def downloadFile(url, fileName):
+    r = requests.get(url)
+    with open(fileName, 'wb') as f:
+        for chunk in r.iter_content(chunk_size=1024): 
+            if chunk:
+                f.write(chunk)
+    return None
+
+def downloadAllEmotes(cursor, channel_name):
+    bad_file_chars = ['\\','/',':','*','?','"','<','>','|']
+    if not os.path.exists('emotes'):
+        os.mkdir('emotes')
+    os.chdir('emotes')
+    if not os.path.exists(channel_name):
+        os.mkdir(channel_name)
+    os.chdir(channel_name)
+    stmt = 'SELECT url, emote_id, code FROM emotes WHERE source NOT LIKE "1";'
+    cursor.execute(stmt)
+    counter = 0
+    for row in cursor:
+        emote_name = row[2]
+        for character in bad_file_chars:
+            if character in emote_name:
+                emote_name = emote_name.replace(character, str(counter))
+                counter += 1
+        file_name = f'{emote_name}-{row[1]}.gif'
+        stmt = f'UPDATE emotes SET path = {file_name} WHERE emote_id = {row[1]}'
+        cursor.execute(stmt)
+        db.commit()
+        downloadFile(row[0], file_name)
+    os.chdir('../../')
 
 def createConfig():
     config = configparser.ConfigParser()
@@ -60,7 +93,7 @@ def createDB(channel_name):
         db = connect(channel_name)
         cursor = db.cursor()
     
-        stmt = f'CREATE TABLE chatters (id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(255), first_date VARCHAR(255), last_date VARCHAR(255))'
+        stmt = f'CREATE TABLE chatters (id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(512), first_date VARCHAR(255), last_date VARCHAR(255))'
 
         cursor.execute(stmt)
 
@@ -72,11 +105,12 @@ def createDB(channel_name):
 
         cursor.execute(stmt)
 
-        stmt = f'CREATE TABLE emotes (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) COLLATE utf8mb4_bin, code VARCHAR(255) COLLATE utf8mb4_bin, emote_id VARCHAR(255) COLLATE utf8mb4_bin, variant INT, count INT DEFAULT 0, path VARCHAR(512) COLLATE utf8mb4_bin, date_added VARCHAR(255) COLLATE utf8mb4_bin, source VARCHAR(255) COLLATE utf8mb4_bin, active BOOLEAN)'
+        stmt = f'CREATE TABLE emotes (id INT AUTO_INCREMENT PRIMARY KEY, code VARCHAR(255) COLLATE utf8mb4_bin, emote_id VARCHAR(255) COLLATE utf8mb4_bin, variant INT, count INT DEFAULT 0, url VARCHAR(512) COLLATE utf8mb4_bin, path VARCHAR(512) COLLATE utf8mb4_bin, date_added VARCHAR(255) COLLATE utf8mb4_bin, source VARCHAR(255) COLLATE utf8mb4_bin, active BOOLEAN)'
 
         cursor.execute(stmt)
 
         populateEmotes(channel_name)
+        downloadAllEmotes(cursor, channel_name)
 
         return 0
     except:
@@ -113,18 +147,34 @@ def populateEmotes(channel_name):
     for emote_type in emote_types:
         for emote in emotes[emote_type]:
             emote_name = emote['code']
-            if(len(emote['path']) > 2):
-                url = emote['path'][2]
+            if(len(emote['url']) > 2):
+                url = emote['url'][2]
             else:
-                url = emote['path'][0]
+                url = emote['url'][0]
             if '\\' in emote_name:
                 emote_name = emote_name.replace('\\', '\\\\')
             emote_id = emote['id']
-            stmt = f'INSERT INTO emotes (name, code, emote_id, variant, path, date_added, source, active) VALUES ("{emote_name}","{emote_name}","{emote_id}",0,"{url}","{getDate()}","{source}",1)'
+            stmt = f'INSERT INTO emotes (code, emote_id, variant, url, date_added, source, active) VALUES ("{emote_name}","{emote_id}",0,"{url}","{getDate()}","{source}",1)'
             cursor.execute(stmt)
             db.commit()
         source += 1
     return 0
+
+def updateEmotes(channel_name):
+    db = connect(channel_name)
+    cursor = db.cursor()
+    stmt = f'SELECT code, emote_id FROM emotes'
+    cursor.execute(stmt)
+    for row in cursor:
+        print(row)
+    comparing = twitch.get_all_channel_emote_info(channel_name)
+    i = 0
+    for emote_type in comparing:
+        if emote_type == 'twitch':
+            continue
+        for i in range(0, len(comparing[emote_type])):
+            print(comparing[emote_type][i]['id'])
+            print(comparing[emote_type][i]['code'])
 
 def log(channel_name, username, message, emotes, session_id):
     if username in constants.blacklisted_names:
