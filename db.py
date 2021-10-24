@@ -27,16 +27,15 @@ def downloadAllEmotes(cursor, channel_name):
     stmt = 'SELECT url, emote_id, code FROM emotes WHERE source NOT LIKE "1";'
     cursor.execute(stmt)
     counter = 0
+    print("Before download for loop.")
     for row in cursor:
         emote_name = row[2]
+        print(f'Emote name = {emote_name}')
         for character in bad_file_chars:
             if character in emote_name:
                 emote_name = emote_name.replace(character, str(counter))
                 counter += 1
         file_name = f'{emote_name}-{row[1]}.gif'
-        stmt = f'UPDATE emotes SET path = {file_name} WHERE emote_id = {row[1]}'
-        cursor.execute(stmt)
-        db.commit()
         downloadFile(row[0], file_name)
     os.chdir('../../')
 
