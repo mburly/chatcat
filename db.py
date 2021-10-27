@@ -16,7 +16,9 @@ def downloadFile(url, fileName):
                 f.write(chunk)
     return None
 
-def downloadAllEmotes(cursor, channel_name):
+def downloadAllEmotes(channel_name):
+    db = connect(channel_name)
+    cursor = db.cursor(buffered=True)
     bad_file_chars = ['\\','/',':','*','?','"','<','>','|']
     if not os.path.exists('emotes'):
         os.mkdir('emotes')
@@ -26,16 +28,21 @@ def downloadAllEmotes(cursor, channel_name):
     os.chdir(channel_name)
     stmt = 'SELECT url, emote_id, code FROM emotes WHERE source NOT LIKE "1";'
     cursor.execute(stmt)
+    rows = cursor.fetchall()
     counter = 0
-    print("Before download for loop.")
-    for row in cursor:
+    for row in rows:
         emote_name = row[2]
-        print(f'Emote name = {emote_name}')
         for character in bad_file_chars:
             if character in emote_name:
                 emote_name = emote_name.replace(character, str(counter))
                 counter += 1
         file_name = f'{emote_name}-{row[1]}.gif'
+        stmt = f'UPDATE emotes SET path = "{file_name}" WHERE emote_id LIKE "{row[1]}"'
+        try:
+            cursor.execute(stmt)
+            db.commit()
+        except mysql.connector.Error as err:
+            print(err)
         downloadFile(row[0], file_name)
     os.chdir('../../')
 
@@ -109,7 +116,7 @@ def createDB(channel_name):
         cursor.execute(stmt)
 
         populateEmotes(channel_name)
-        downloadAllEmotes(cursor, channel_name)
+        downloadAllEmotes(channel_name)
 
         return 0
     except:
