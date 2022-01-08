@@ -1,10 +1,11 @@
 # TODO
 # Update emotes function
 # On keyboardinterrupt, fill in rest of session info and cleanly exit (make sure everything is closed socket, etc)
-# Rename 'path' field in database to 'url', keep 'path' field and make it the downloaded file path
+# Download animated emotes properly (Twitch animated emotes, currently using only 'static' in the url)
 # Correct the 'tmi' logs, detecting bugs (0 length message etc)
 
 import configparser
+import keyboard
 import os
 import socket
 import sys
@@ -33,17 +34,33 @@ def handle_session(flag, channel_name):
     
     datetime = db.getDateTime()
 
-    stream_title = twitch.get_channel_title(channel_name)
-
-    print(stream_title)
-
     if(flag == 1):
+        counter = 0
+        stream_title = twitch.get_channel_title(channel_name)
+        if(len(stream_title) > 140):
+            print("Error fetching stream title. Still trying...")
+            while(len(stream_title) > 140):
+                if(counter >= 20):
+                    stream_title = 'Unable to get stream title.'
+                    break
+                stream_title = twitch.get_channel_title(channel_name)
+                counter += 1
+        print(stream_title)
         stmt = f'INSERT INTO sessions (stream_title, start_datetime) VALUES ("{stream_title}", "{datetime}")'
         cursor.execute(stmt)
         database.commit()
+        for i in range(1, len(constants.emote_types)+1):
+            db.update_emotes(channel_name, i)
         return cursor.lastrowid
     else:
+        stmt = f'SELECT MAX(id) FROM sessions'
+        cursor.execute(stmt)
+        rows = cursor.fetchall()
+        id = rows[0][0]
         stmt = f'UPDATE sessions SET end_datetime = "{datetime}" WHERE id = {id}'
+        cursor.execute(stmt)
+        database.commit()
+        return id
 
 def parseMessage(emotes, message):
         words = message.split(' ')
@@ -68,12 +85,15 @@ def run(channel_name, session_id):
     start = time.time()
     username = ''
     message = ''
-    counter = 0
 
     emotes = db.getEmotes(channel_name)
+
     try:
         prev_username = ''
         while True:
+            if(keyboard.is_pressed("ctrl+space")):
+                print("Ending session...")
+                return -1
             if(((time.time() - start) / 60) >= 5):
                 sock.close()
                 sock = start_socket(channel)
@@ -114,6 +134,6 @@ def main():
     success = run(channel_name, session_id)
     while(success == 1 or success == 2):
         success = run(channel_name, session_id)
-    
+    handle_session(2, channel_name)
 
 main()

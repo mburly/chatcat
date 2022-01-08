@@ -59,7 +59,7 @@ def get_channel_ffz_emotes(channel_id):
     emote_set = a['sets'][emote_set_id]['emoticons']
     channel_emotes = []
     for i in range(0, len(emote_set)):
-        channel_emotes.append(emote_set[i]['id'])
+        channel_emotes.append(str(emote_set[i]['id']))
     return channel_emotes
 
 def get_global_ffz_emotes():
@@ -71,7 +71,7 @@ def get_global_ffz_emotes():
     emotes = a['sets'][emote_set]['emoticons']
     global_emotes = []
     for i in range(0, len(emotes)):
-        global_emotes.append(emotes[i]['id'])
+        global_emotes.append(str(emotes[i]['id']))
     return global_emotes
 
 def get_channel_bttv_emotes(channel_id):
@@ -133,7 +133,10 @@ def get_bttv_global_emote_info():
 
 def get_bttv_channel_emote_info(channel_id):
     url = f'https://api.betterttv.net/3/cached/users/twitch/{channel_id}'
-    page = urlopen(url, context=ssl.create_default_context(cafile=certifi.where()))
+    try:
+        page = urlopen(url, context=ssl.create_default_context(cafile=certifi.where()))
+    except:
+        return
     html = page.read().decode('utf-8')
     a = json.loads(html)
     emotes = a['channelEmotes']
@@ -158,6 +161,19 @@ def get_bttv_channel_emote_info(channel_id):
             urls.append(f'https://cdn.betterttv.net/emote/{emotes[i]["id"]}/{emote_sizes[j]}')
         emote['url'] = urls
         info.append(emote)
+    return info
+
+def get_bttv_emote_info(emote_id):
+    info = {}
+    info['url'] = f'https://cdn.betterttv.net/emote/{emote_id}/3x'
+    url = f'https://betterttv.com/emotes/{emote_id}'
+    session = HTMLSession()
+    page = session.get(url)
+    page.html.render(sleep=1, keep_page=False)
+    soup = BeautifulSoup(page.html.raw_html, features='lxml')
+    title_tag = str(soup.findAll('h4'))
+    info['id'] = emote_id
+    info['code'] = title_tag.split('">')[1].split(' ')[0]
     return info
 
 def get_global_emotes():
@@ -214,8 +230,12 @@ def get_subscriber_emote_info(channel_id, emote_id):
     info = {}
     info['id'] = emote_id
     info['code'] = html.split('<meta property="og:title" content="')[1].split('"')[0]
+    if(len(html.split('animated')) == 1):
+        emote_type = 'static'
+    else:
+        emote_type = 'animated'
     for i in range(0, len(emote_sizes)):
-        urls.append(f'https://static-cdn.jtvnw.net/emoticons/v2/{emote_id}/static/light/{emote_sizes[i]}')
+        urls.append(f'https://static-cdn.jtvnw.net/emoticons/v2/{emote_id}/{emote_type}/light/{emote_sizes[i]}')
     info['url'] = urls
     return info
 
