@@ -1,9 +1,3 @@
-# TODO
-# Update emotes function
-# On keyboardinterrupt, fill in rest of session info and cleanly exit (make sure everything is closed socket, etc)
-# Download animated emotes properly (Twitch animated emotes, currently using only 'static' in the url)
-# Correct the 'tmi' logs, detecting bugs (0 length message etc)
-
 import configparser
 import keyboard
 import os
@@ -14,6 +8,9 @@ import time
 import constants
 import db
 import twitch
+import utils
+
+debug = constants.debug
 
 def start_socket(channel):
     config = configparser.ConfigParser()
@@ -21,7 +18,11 @@ def start_socket(channel):
     nickname = config['twitch']['nickname']
     token = config['twitch']['token']
     sock = socket.socket()
-    sock.connect(constants.address)
+    try:
+        sock.connect(constants.address)
+    except:
+        print("Unable to connect to host. Likely lost internet connection.")
+        return -1
     sock.send(f'PASS {token}\n'.encode('utf-8'))
     sock.send(f'NICK {nickname}\n'.encode('utf-8'))
     sock.send(f'JOIN {channel}\n'.encode('utf-8'))
@@ -32,14 +33,14 @@ def handle_session(flag, channel_name):
     database = db.connect(channel_name)
     cursor = database.cursor()
     
-    datetime = db.getDateTime()
+    datetime = utils.getDateTime()
 
     if(flag == 1):
         counter = 0
         stream_title = twitch.get_channel_title(channel_name)
-        if(len(stream_title) > 140):
+        if(len(stream_title) > 140 or '<meta' in stream_title):
             print("Error fetching stream title. Still trying...")
-            while(len(stream_title) > 140):
+            while(len(stream_title) > 140 or '<meta' in stream_title):
                 if(counter >= 20):
                     stream_title = 'Unable to get stream title.'
                     break
@@ -82,7 +83,8 @@ def run(channel_name, session_id):
     else:
         file = open(filename, 'a')
 
-    start = time.time()
+    live_start = time.time()
+    socket_start = time.time()
     username = ''
     message = ''
 
@@ -90,18 +92,37 @@ def run(channel_name, session_id):
 
     try:
         prev_username = ''
+        counter = 0
         while True:
-            if(keyboard.is_pressed("ctrl+space")):
-                print("Ending session...")
-                return -1
-            if(((time.time() - start) / 60) >= 5):
+            # if(keyboard.is_pressed("ctrl+space")):
+            #     print("Ending session...")
+            #     sock.close()
+            #     return -1
+            if(((time.time() - live_start) / 60) >= 1):
+                if(debug):
+                    utils.print_debug(f'Checking if offline with counter = {counter}')
+                if(twitch.is_channel_live(channel_name)):
+                    counter = 0
+                    if(debug):
+                        utils.print_debug(f'Detected online. Counter now = {counter}')
+                    live_start = time.time()
+                else:
+                    counter += 1
+                    if(debug):
+                        utils.print_debug(f'Detected offline. Counter now = {counter}')
+                    if(counter == 5):
+                        print("Stream ended. Now ending session...")
+                        sock.close()
+                        return -1
+                    live_start = time.time()
+            if(((time.time() - socket_start) / 60) >= 5):
                 sock.close()
                 sock = start_socket(channel)
-                start = time.time()
+                socket_start = time.time()
             try:
-                resp = sock.recv(2048).decode('utf-8', errors='ignore')
+                resp = sock.recv(4096).decode('utf-8', errors='ignore')
             except:
-                file.write(f'{db.getDateTime()} Returned 2 - TIMEOUT/OVERFLOW ERROR.\n')
+                file.write(f'{utils.getDateTime()} Returned 2 - TIMEOUT/OVERFLOW ERROR.\n')
                 return 2
             if(len(resp) > 0):
                 username = resp.split('!')[0]
@@ -111,7 +132,7 @@ def run(channel_name, session_id):
             if(len(message) > 0):
                 message = message[0].split('\r\n')[0]
             if(prev_username == username and len(message) == 1):
-                file.write(f'{db.getDateTime()} Returned 1 - SOCKET ERROR.\n')
+                file.write(f'{utils.getDateTime()} Returned 1 - SOCKET ERROR.\n')
                 return 1
             if(message == []):
                 continue
@@ -120,12 +141,12 @@ def run(channel_name, session_id):
             message_emotes = parseMessage(emotes, message)
             db.log(channel_name, username, message, message_emotes, session_id)
             prev_username = username
-    except KeyboardInterrupt:
+    except:
         sock.close()
     
 def main():
     if not os.path.exists(constants.config_name):
-        db.createConfig()
+        utils.createConfig()
     if(len(sys.argv) < 2):
         channel_name = input('Enter channel name: ')
     else:
@@ -136,4 +157,5 @@ def main():
         success = run(channel_name, session_id)
     handle_session(2, channel_name)
 
-main()
+if __name__ == "__main__":
+    main()

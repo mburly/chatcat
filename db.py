@@ -1,20 +1,10 @@
-import configparser
 import os
-import time
 
 import mysql.connector
-import requests
 
 import constants
 import twitch
-
-def downloadFile(url, fileName):
-    r = requests.get(url)
-    with open(fileName, 'wb') as f:
-        for chunk in r.iter_content(chunk_size=1024): 
-            if chunk:
-                f.write(chunk)
-    return None
+import utils
 
 def downloadAllEmotes(channel_name):
     db = connect(channel_name)
@@ -43,41 +33,8 @@ def downloadAllEmotes(channel_name):
             db.commit()
         except mysql.connector.Error as err:
             print(err)
-        downloadFile(row[0], file_name)
+        utils.downloadFile(row[0], file_name)
     os.chdir('../../')
-
-def createConfig():
-    config = configparser.ConfigParser()
-    host = input("Enter hostname [default: localhost]: ")
-    user = input("Enter DB username: ")
-    password = input("Enter DB password: ")
-    nickname = input("Enter your twitch username: ")
-    token = input("Please visit the URL https://twitchapps.com/tmi/ and enter the token after pressing Connect: ")
-
-    if host == '':
-        host = 'localhost'
-    
-    config['db'] = {
-        'host':host,
-        'user':user,
-        'password':password
-    }
-
-    config['twitch'] = {
-        'nickname':nickname,
-        'token':token
-    }
-
-    with open(constants.config_name, 'w') as configfile:
-        config.write(configfile)
-
-def getDate():
-    cur = time.localtime()
-    return f'{str(cur.tm_mon)}-{str(cur.tm_mday)}-{str(cur.tm_year)}'
-
-def getDateTime():
-    cur = time.localtime()
-    return f'{str(cur.tm_mon)}-{str(cur.tm_mday)}-{str(cur.tm_year)} {str(cur.tm_hour)}:{str(cur.tm_min)}:{str(cur.tm_sec)}'
 
 def createDB(channel_name):
     config = constants.config
@@ -93,7 +50,7 @@ def createDB(channel_name):
     try:
         db_name = f'cc_{channel_name}'
         
-        stmt = f'CREATE DATABASE IF NOT EXISTS {db_name};'
+        stmt = f'CREATE DATABASE IF NOT EXISTS {db_name} COLLATE utf8mb4_general_ci;'
     
         cursor.execute(stmt)
         db = connect(channel_name)
@@ -133,7 +90,7 @@ def getEmotes(channel_name):
         update_emotes(channel_name, i)
 
     cursor = db.cursor()
-    stmt = 'SELECT code FROM emotes;'
+    stmt = 'SELECT code FROM emotes WHERE ACTIVE = 1;'
     cursor.execute(stmt)
     rows = cursor.fetchall()
     for emote in rows:
@@ -157,13 +114,15 @@ def populateEmotes(channel_name):
             if '\\' in emote_name:
                 emote_name = emote_name.replace('\\', '\\\\')
             emote_id = emote['id']
-            stmt = f'INSERT INTO emotes (code, emote_id, variant, url, date_added, source, active) VALUES ("{emote_name}","{emote_id}",0,"{url}","{getDate()}","{source}",1);'
+            stmt = f'INSERT INTO emotes (code, emote_id, variant, url, date_added, source, active) VALUES ("{emote_name}","{emote_id}",0,"{url}","{utils.getDate()}","{source}",1);'
             cursor.execute(stmt)
             db.commit()
         source += 1
     return 0
 
 def update_emotes(channel_name, source):
+    if(constants.debug):
+        utils.print_debug('Entering (update_emotes) function')
     channel_id = twitch.get_channel_id(channel_name)
 
     if(source == 1):
@@ -225,7 +184,7 @@ def update_emotes(channel_name, source):
                 url = info["url"][2]
             else:
                 url = info["url"][0]
-            stmt = f'INSERT INTO emotes (code, emote_id, variant, url, date_added, source, active) VALUES ("{info["code"]}","{emote}",0,"{url}","{getDate()}","{source}",1);'
+            stmt = f'INSERT INTO emotes (code, emote_id, variant, url, date_added, source, active) VALUES ("{info["code"]}","{emote}",0,"{url}","{utils.getDate()}","{source}",1);'
             cursor.execute(stmt)
             db.commit()
         for emote in reactivated_emotes:
@@ -258,7 +217,9 @@ def update_emotes(channel_name, source):
             db.commit()
         for emote in newly_added_emotes:
             info = twitch.get_bttv_emote_info(emote)
-            stmt = f'INSERT INTO emotes (code, emote_id, variant, url, date_added, source, active) VALUES ("{info["code"]}","{emote}",0,"{info["url"]}","{getDate()}","{source}",1);'
+            print(info)
+            print(len(info))
+            stmt = f'INSERT INTO emotes (code, emote_id, variant, url, date_added, source, active) VALUES ("{info["code"]}","{emote}",0,"{info["url"]}","{utils.getDate()}","{source}",1);'
             cursor.execute(stmt)
             db.commit()
         for emote in reactivated_emotes:
@@ -278,8 +239,8 @@ def log(channel_name, username, message, emotes, session_id):
     cursor = db.cursor()
     id = getUserID(cursor, username)
 
-    date = getDate()
-    datetime = getDateTime()
+    date = utils.getDate()
+    datetime = utils.getDateTime()
 
     if(id == -1):
         stmt = f'INSERT INTO chatters (username, first_date, last_date) VALUES ("{username}", "{date}", "{date}");'
@@ -302,7 +263,7 @@ def log(channel_name, username, message, emotes, session_id):
         cursor.execute(stmt)
         db.commit()
 
-    print(f'[\033[1;32m{channel_name}\033[0m] [\033[1;34m{datetime}\033[0m] Logged message from {username}: {message}')
+    utils.print_log(channel_name, username, message)
 
 def connect(channel_name):
     config = constants.config

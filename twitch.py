@@ -6,24 +6,25 @@ from bs4 import BeautifulSoup
 from requests_html import HTMLSession
 from urllib.request import urlopen
 
-import constants
-
 def get_channel_id(channel_name):
     url = f'https://api.frankerfacez.com/v1/user/{channel_name}'
-    page = urlopen(url, context=ssl.create_default_context(cafile=certifi.where()))
+    try:
+        page = urlopen(url, context=ssl.create_default_context(cafile=certifi.where()))
+    except:
+        print("Channel not found on FrankerFaceZ API.")
+        return None
     html = page.read().decode('utf-8')
     a = json.loads(html)
     return a['user']['twitch_id']
 
 def is_channel_live(channel_name):
-    session = HTMLSession()
-    url = f'https://twitch.tv/{channel_name}'
-    page = session.get(url)
-    page.html.render(sleep=1, keep_page=False)
-    soup = BeautifulSoup(page.html.raw_html, features='lxml')
-    if(len(soup.find_all(class_="live-time")) > 0):
+    url = f'https://www.twitch.tv/{channel_name}'
+    page = urlopen(url, context=ssl.create_default_context(cafile=certifi.where()))
+    contents = page.read().decode('utf-8')
+    if 'isLiveBroadcast' in contents: 
         return True
-    return False
+    else:
+        return False
 
 # 1 = twitch, 2 = subscriber, 3 = ffz
 def get_emote_set_info(emote_set, set_type, channel_id):

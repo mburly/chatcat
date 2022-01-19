@@ -1,14 +1,16 @@
 import configparser
 import os
 
-import db
+import utils
+
+debug = 1
 
 config_name = 'conf.ini'
 server = 'irc.chat.twitch.tv'
 port = 6667
 address = (server, port)
 if not os.path.exists(config_name):
-    db.createConfig()
+    utils.createConfig()
 config = configparser.ConfigParser()
 config.read(config_name)
 blacklisted_messages = ['tmi.twitch.tv']
