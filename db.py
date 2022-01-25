@@ -276,23 +276,42 @@ def log(channel_name, username, message, emotes, session_id):
 
 def connect(channel_name):
     config = constants.config
-    try:
-        db_name = f'cc_{channel_name}'
-        db = mysql.connector.connect(
-            host=config['db']['host'],
-            user=config['db']['user'],
-            password=config['db']['password'],
-            database=db_name,
-            charset='utf8mb4'
-        )
-        return db
-    except:
-        createDB(channel_name)
-        db = mysql.connector.connect(
-        host=config['db']['host'],
-        user=config['db']['user'],
-        password=config['db']['password'],
-        database=db_name,
-        charset='utf8mb4'
-        )
-        return db
+    db_name = f'cc_{channel_name}'
+    if(os.name == 'nt'):
+        try:
+            db = mysql.connector.connect(
+                host=config['db']['host'],
+                user=config['db']['user'],
+                password=config['db']['password'],
+                database=db_name
+            )
+            return db
+        except:
+            createDB(channel_name)
+            db = mysql.connector.connect(
+                host=config['db']['host'],
+                user=config['db']['user'],
+                password=config['db']['password'],
+                database=db_name
+            )
+            return db
+    else:
+        try:
+            db = mysql.connector.connect(
+                host=config['db']['host'],
+                user=config['db']['user'],
+                password=config['db']['password'],
+                database=db_name,
+                charset='utf8mb4'
+            )
+            return db
+        except:
+            createDB(channel_name)
+            db = mysql.connector.connect(
+                host=config['db']['host'],
+                user=config['db']['user'],
+                password=config['db']['password'],
+                database=db_name,
+                charset='utf8mb4'
+            )
+            return db
