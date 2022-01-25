@@ -82,12 +82,13 @@ def getUserID(cursor, username):
         return id
     return id
 
-def getEmotes(channel_name):
+def getEmotes(channel_name, flag):
     emotes = []
     db = connect(channel_name)
     
-    for i in range(1, len(constants.emote_types)+1):
-        update_emotes(channel_name, i)
+    if(flag == 1):
+        for i in range(1, len(constants.emote_types)+1):
+            update_emotes(channel_name, i)
 
     cursor = db.cursor()
     stmt = 'SELECT code FROM emotes WHERE ACTIVE = 1;'
@@ -122,7 +123,7 @@ def populateEmotes(channel_name):
 
 def update_emotes(channel_name, source):
     if(constants.debug):
-        utils.print_debug('Entering (update_emotes) function')
+        utils.print_debug('Entering update_emotes function')
     channel_id = twitch.get_channel_id(channel_name)
 
     if(source == 1):
@@ -217,8 +218,6 @@ def update_emotes(channel_name, source):
             db.commit()
         for emote in newly_added_emotes:
             info = twitch.get_bttv_emote_info(emote)
-            print(info)
-            print(len(info))
             stmt = f'INSERT INTO emotes (code, emote_id, variant, url, date_added, source, active) VALUES ("{info["code"]}","{emote}",0,"{info["url"]}","{utils.getDate()}","{source}",1);'
             cursor.execute(stmt)
             db.commit()
@@ -231,10 +230,12 @@ def update_emotes(channel_name, source):
     return 0  
 
 def log(channel_name, username, message, emotes, session_id):
-    if username in constants.blacklisted_names:
-        return
-    if constants.blacklisted_messages[0] in message:
-        return
+    if(username == constants.config['twitch']['nickname'] and message == ''):
+        return 1
+    for symbol in constants.blacklisted_symbols:
+        if symbol in username:
+            return 1
+    
     db = connect(channel_name)
     cursor = db.cursor()
     id = getUserID(cursor, username)
@@ -247,8 +248,12 @@ def log(channel_name, username, message, emotes, session_id):
         cursor.execute(stmt)
         db.commit()
         id = getUserID(cursor, username)
-        
-    message = message.replace("\"", "\'")
+
+    if "\"" in message:
+        message = message.replace("\"", "\'")
+
+    if '\\' in message:
+        message = message.replace('\\', '\\\\')
 
     stmt = f'INSERT INTO messages (message, session_id, chatter_id, datetime) VALUES ("{message}", {session_id}, {id}, "{datetime}");'
     cursor.execute(stmt)
@@ -259,9 +264,14 @@ def log(channel_name, username, message, emotes, session_id):
     db.commit()
 
     for emote in emotes:
+        if '\\' in emote:
+            emote = emote.replace('\\','\\\\')
         stmt = f'UPDATE emotes SET count = count + 1 WHERE code = "{emote}" AND active = 1;'
         cursor.execute(stmt)
         db.commit()
+
+    if '\\\\' in message:
+        message = message.replace('\\\\', '\\')
 
     utils.print_log(channel_name, username, message)
 
