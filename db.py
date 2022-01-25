@@ -28,11 +28,8 @@ def downloadAllEmotes(channel_name):
                 counter += 1
         file_name = f'{emote_name}-{row[1]}.gif'
         stmt = f'UPDATE emotes SET path = "{file_name}" WHERE emote_id LIKE "{row[1]}" AND source NOT LIKE "1";'
-        try:
-            cursor.execute(stmt)
-            db.commit()
-        except mysql.connector.Error as err:
-            print(err)
+        cursor.execute(stmt)
+        db.commit()
         utils.downloadFile(row[0], file_name)
     os.chdir('../../')
 
@@ -230,6 +227,8 @@ def update_emotes(channel_name, source):
     return 0  
 
 def log(channel_name, username, message, emotes, session_id):
+    if(message == ''):
+        return 1
     if(username == constants.config['twitch']['nickname'] and message == ''):
         return 1
     for symbol in constants.blacklisted_symbols:
@@ -283,7 +282,8 @@ def connect(channel_name):
             host=config['db']['host'],
             user=config['db']['user'],
             password=config['db']['password'],
-            database=db_name
+            database=db_name,
+            charset='utf8mb4'
         )
         return db
     except:
@@ -292,6 +292,7 @@ def connect(channel_name):
         host=config['db']['host'],
         user=config['db']['user'],
         password=config['db']['password'],
-        database=db_name
+        database=db_name,
+        charset='utf8mb4'
         )
         return db

@@ -119,7 +119,7 @@ def run(channel_name, session_id, flag):
             except:
                 file.write(f'{utils.getDateTime()} - TIMEOUT/OVERFLOW ERROR.\n')
                 sock.close()
-                return 2
+                return 1
             if(len(resp) > 0):
                 username = resp.split('!')[0]
                 username = username.split(':')
@@ -154,7 +154,7 @@ def run(channel_name, session_id, flag):
             db.log(channel_name, username, message, message_emotes, session_id)
     except:
         sock.close()
-        return -1
+        return 1
     
 def main():
     if not os.path.exists(constants.config_name):
