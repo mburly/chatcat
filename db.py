@@ -152,7 +152,6 @@ def update_emotes(channel_name, source):
     if(source != 5 and source != 6):
         for row in rows:
             previous_emotes.append(row[0])
-
         stmt = f'SELECT emote_id FROM emotes WHERE source = {source} AND active = 0;'
         cursor.execute(stmt)
         rows = cursor.fetchall()
@@ -182,6 +181,8 @@ def update_emotes(channel_name, source):
                 url = info["url"][2]
             else:
                 url = info["url"][0]
+            if('\\' in info["code"]):
+                info["code"] = info["code"].replace('\\', '\\\\')
             stmt = f'INSERT INTO emotes (code, emote_id, variant, url, date_added, source, active) VALUES ("{info["code"]}","{emote}",0,"{url}","{utils.getDate()}","{source}",1);'
             cursor.execute(stmt)
             db.commit()
