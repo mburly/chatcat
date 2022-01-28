@@ -106,11 +106,11 @@ def parseUsername(message):
             username = message.split('tmi.twitch.tv')[0].split('@')[1].split('.')[0]
     return username
 
-def print_debug(text):
+def printDebug(text):
     print(f'[\033[1;34m{getDateTime()}\033[0m] [\033[0;33mDEBUG\033[0m] {text}')
 
-def print_error(text):
+def printError(text):
     print(f'[\033[1;34m{getDateTime()}\033[0m] [\033[0;91mERROR\033[0m] {text}')
 
-def print_log(channel_name, username, message):
+def printLog(channel_name, username, message):
     print(f'[\033[1;32m{channel_name}\033[0m] [\033[1;34m{getDateTime()}\033[0m] [\033[0;94mLOG\033[0m] \033[1;35m{username}\033[0m: {message}')

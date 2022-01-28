@@ -4,7 +4,6 @@ import os
 import utils
 
 debug = 1
-
 config_name = 'conf.ini'
 server = 'irc.chat.twitch.tv'
 port = 6667

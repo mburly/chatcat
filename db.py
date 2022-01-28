@@ -31,6 +31,8 @@ def downloadAllEmotes(channel_name):
         cursor.execute(stmt)
         db.commit()
         utils.downloadFile(row[0], file_name)
+    cursor.close()
+    db.close()
     os.chdir('../../')
 
 def createDB(channel_name):
@@ -62,10 +64,12 @@ def createDB(channel_name):
         stmt = f'CREATE TABLE emotes (id INT AUTO_INCREMENT PRIMARY KEY, code VARCHAR(255) COLLATE utf8mb4_general_ci, emote_id VARCHAR(255) COLLATE utf8mb4_general_ci, variant INT, count INT DEFAULT 0, url VARCHAR(512) COLLATE utf8mb4_general_ci, path VARCHAR(512) COLLATE utf8mb4_general_ci, date_added VARCHAR(255) COLLATE utf8mb4_general_ci, source VARCHAR(255) COLLATE utf8mb4_general_ci, active BOOLEAN) COLLATE utf8mb4_general_ci;'
         cursor.execute(stmt)
 
+        cursor.close()
+        db.close()
+
         print("Populating emotes table...")
         populateEmotes(channel_name)
         downloadAllEmotes(channel_name)
-
         return 0
     except:
         return -1
@@ -85,7 +89,7 @@ def getEmotes(channel_name, flag):
     
     if(flag == 1):
         for i in range(1, len(constants.emote_types)+1):
-            update_emotes(channel_name, i)
+            updateEmotes(channel_name, i)
 
     cursor = db.cursor()
     stmt = 'SELECT code FROM emotes WHERE ACTIVE = 1;'
@@ -93,14 +97,20 @@ def getEmotes(channel_name, flag):
     rows = cursor.fetchall()
     for emote in rows:
         emotes.append(str(emote[0]))
+    cursor.close()
+    db.close()
     return emotes
 
 # for first time inserting into emotes table only
 def populateEmotes(channel_name):
-    emotes = twitch.get_all_channel_emote_info(channel_name)
+    print("1")
+    emotes = twitch.getAllChannelEmoteInfo(channel_name)
+    print("2")
     emote_types = list(emotes.keys())
+    print("3")
     db = connect(channel_name)
     cursor = db.cursor()
+    print("4")
     source = 1
     for emote_type in emote_types:
         for emote in emotes[emote_type]:
@@ -116,25 +126,27 @@ def populateEmotes(channel_name):
             cursor.execute(stmt)
             db.commit()
         source += 1
+    cursor.close()
+    db.close()
     return 0
 
-def update_emotes(channel_name, source):
+def updateEmotes(channel_name, source):
     if(constants.debug):
-        utils.print_debug('Entering update_emotes function')
-    channel_id = twitch.get_channel_id(channel_name)
+        utils.printDebug('Entering update_emotes function')
+    channel_id = twitch.getChannelId(channel_name)
 
     if(source == 1):
-        emotes = twitch.get_global_emotes()
+        emotes = twitch.getGlobalEmotes()
     elif(source == 2):
-        emotes = twitch.get_subscriber_emotes(channel_id)
+        emotes = twitch.getSubscriberEmotes(channel_id)
     elif(source == 3):
-        emotes = twitch.get_global_ffz_emotes()
+        emotes = twitch.getGlobalFFZEmotes()
     elif(source == 4):
-        emotes = twitch.get_channel_ffz_emotes(channel_id)
+        emotes = twitch.getChannelFFZEmotes(channel_id)
     elif(source == 5):
-        emotes = twitch.get_bttv_global_emote_info()
+        emotes = twitch.getBTTVGlobalEmoteInfo()
     elif(source == 6):
-        emotes = twitch.get_bttv_channel_emote_info(channel_id)
+        emotes = twitch.getBTTVChannelEmoteInfo(channel_id)
     else:
         return -1
 
@@ -172,11 +184,11 @@ def update_emotes(channel_name, source):
             db.commit()
         for emote in newly_added_emotes:
             if(source == 1):
-                info = twitch.get_global_emote_info(emote)
+                info = twitch.getGlobalEmoteInfo(emote)
             elif(source == 2):
-                info = twitch.get_subscriber_emote_info(channel_id, emote)
+                info = twitch.getSubscriberEmoteInfo(channel_id, emote)
             elif(source == 3 or source == 4):
-                info = twitch.get_ffz_emote_info(emote)
+                info = twitch.getFFZEmoteInfo(emote)
             if(len(info["url"]) == 3):
                 url = info["url"][2]
             else:
@@ -215,7 +227,7 @@ def update_emotes(channel_name, source):
             cursor.execute(stmt)
             db.commit()
         for emote in newly_added_emotes:
-            info = twitch.get_bttv_emote_info(emote)
+            info = twitch.getBTTVEmoteInfo(emote)
             stmt = f'INSERT INTO emotes (code, emote_id, variant, url, date_added, source, active) VALUES ("{info["code"]}","{emote}",0,"{info["url"]}","{utils.getDate()}","{source}",1);'
             cursor.execute(stmt)
             db.commit()
@@ -224,6 +236,8 @@ def update_emotes(channel_name, source):
             cursor.execute(stmt)
             db.commit()
 
+    cursor.close()
+    db.close()
     downloadAllEmotes(channel_name)
     return 0  
 
@@ -270,10 +284,13 @@ def log(channel_name, username, message, emotes, session_id):
         cursor.execute(stmt)
         db.commit()
 
+    cursor.close()
+    db.close()
+
     if '\\\\' in message:
         message = message.replace('\\\\', '\\')
 
-    utils.print_log(channel_name, username, message)
+    utils.printLog(channel_name, username, message)
 
 def connect(channel_name):
     config = constants.config
