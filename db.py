@@ -6,34 +6,47 @@ import constants
 import twitch
 import utils
 
-def downloadAllEmotes(channel_name):
-    db = connect(channel_name)
-    cursor = db.cursor(buffered=True)
-    bad_file_chars = ['\\','/',':','*','?','"','<','>','|']
-    if not os.path.exists('emotes'):
-        os.mkdir('emotes')
-    os.chdir('emotes')
-    if not os.path.exists(channel_name):
-        os.mkdir(channel_name)
-    os.chdir(channel_name)
-    stmt = 'SELECT url, emote_id, code FROM emotes WHERE source NOT LIKE "1" AND path IS NULL;'
-    cursor.execute(stmt)
-    rows = cursor.fetchall()
-    counter = 0
-    for row in rows:
-        emote_name = row[2]
-        for character in bad_file_chars:
-            if character in emote_name:
-                emote_name = emote_name.replace(character, str(counter))
-                counter += 1
-        file_name = f'{emote_name}-{row[1]}.gif'
-        stmt = f'UPDATE emotes SET path = "{file_name}" WHERE emote_id LIKE "{row[1]}" AND source NOT LIKE "1";'
-        cursor.execute(stmt)
-        db.commit()
-        utils.downloadFile(row[0], file_name)
-    cursor.close()
-    db.close()
-    os.chdir('../../')
+def connect(channel_name):
+    config = constants.config
+    db_name = f'cc_{channel_name}'
+    if(os.name == 'nt'):
+        try:
+            db = mysql.connector.connect(
+                host=config['db']['host'],
+                user=config['db']['user'],
+                password=config['db']['password'],
+                database=db_name
+            )
+            return db
+        except:
+            createDB(channel_name)
+            db = mysql.connector.connect(
+                host=config['db']['host'],
+                user=config['db']['user'],
+                password=config['db']['password'],
+                database=db_name
+            )
+            return db
+    else:
+        try:
+            db = mysql.connector.connect(
+                host=config['db']['host'],
+                user=config['db']['user'],
+                password=config['db']['password'],
+                database=db_name,
+                charset='utf8mb4'
+            )
+            return db
+        except:
+            createDB(channel_name)
+            db = mysql.connector.connect(
+                host=config['db']['host'],
+                user=config['db']['user'],
+                password=config['db']['password'],
+                database=db_name,
+                charset='utf8mb4'
+            )
+            return db
 
 def createDB(channel_name):
     config = constants.config
@@ -74,14 +87,34 @@ def createDB(channel_name):
     except:
         return -1
 
-def getUserID(cursor, username):
-    id = -1
-    stmt = f'SELECT id FROM chatters WHERE username = "{username}";'
+def downloadAllEmotes(channel_name):
+    db = connect(channel_name)
+    cursor = db.cursor(buffered=True)
+    bad_file_chars = ['\\','/',':','*','?','"','<','>','|']
+    if not os.path.exists('emotes'):
+        os.mkdir('emotes')
+    os.chdir('emotes')
+    if not os.path.exists(channel_name):
+        os.mkdir(channel_name)
+    os.chdir(channel_name)
+    stmt = 'SELECT url, emote_id, code FROM emotes WHERE source NOT LIKE "1" AND path IS NULL;'
     cursor.execute(stmt)
-    for row in cursor:
-        id = row[0]
-        return id
-    return id
+    rows = cursor.fetchall()
+    counter = 0
+    for row in rows:
+        emote_name = row[2]
+        for character in bad_file_chars:
+            if character in emote_name:
+                emote_name = emote_name.replace(character, str(counter))
+                counter += 1
+        file_name = f'{emote_name}-{row[1]}.gif'
+        stmt = f'UPDATE emotes SET path = "{file_name}" WHERE emote_id LIKE "{row[1]}" AND source NOT LIKE "1";'
+        cursor.execute(stmt)
+        db.commit()
+        utils.downloadFile(row[0], file_name)
+    cursor.close()
+    db.close()
+    os.chdir('../../')
 
 def getEmotes(channel_name, flag):
     emotes = []
@@ -100,6 +133,66 @@ def getEmotes(channel_name, flag):
     cursor.close()
     db.close()
     return emotes
+
+def getUserID(cursor, username):
+    id = -1
+    stmt = f'SELECT id FROM chatters WHERE username = "{username}";'
+    cursor.execute(stmt)
+    for row in cursor:
+        id = row[0]
+        return id
+    return id
+
+def log(channel_name, username, message, emotes, session_id):
+    if(message == ''):
+        return 1
+    if(username == constants.config['twitch']['nickname'] and message == ''):
+        return 1
+    for symbol in constants.blacklisted_symbols:
+        if symbol in username:
+            return 1
+    
+    db = connect(channel_name)
+    cursor = db.cursor()
+    id = getUserID(cursor, username)
+
+    date = utils.getDate()
+    datetime = utils.getDateTime()
+
+    if(id == -1):
+        stmt = f'INSERT INTO chatters (username, first_date, last_date) VALUES ("{username}", "{date}", "{date}");'
+        cursor.execute(stmt)
+        db.commit()
+        id = getUserID(cursor, username)
+
+    if "\"" in message:
+        message = message.replace("\"", "\'")
+
+    if '\\' in message:
+        message = message.replace('\\', '\\\\')
+
+    stmt = f'INSERT INTO messages (message, session_id, chatter_id, datetime) VALUES ("{message}", {session_id}, {id}, "{datetime}");'
+    cursor.execute(stmt)
+    db.commit()
+
+    stmt = f'UPDATE chatters SET last_date = "{date}" WHERE id = {id};'
+    cursor.execute(stmt)
+    db.commit()
+
+    for emote in emotes:
+        if '\\' in emote:
+            emote = emote.replace('\\','\\\\')
+        stmt = f'UPDATE emotes SET count = count + 1 WHERE code = "{emote}" AND active = 1;'
+        cursor.execute(stmt)
+        db.commit()
+
+    cursor.close()
+    db.close()
+
+    if '\\\\' in message:
+        message = message.replace('\\\\', '\\')
+
+    utils.printLog(channel_name, username, message)
 
 # for first time inserting into emotes table only
 def populateEmotes(channel_name):
@@ -239,97 +332,4 @@ def updateEmotes(channel_name, source):
     cursor.close()
     db.close()
     downloadAllEmotes(channel_name)
-    return 0  
-
-def log(channel_name, username, message, emotes, session_id):
-    if(message == ''):
-        return 1
-    if(username == constants.config['twitch']['nickname'] and message == ''):
-        return 1
-    for symbol in constants.blacklisted_symbols:
-        if symbol in username:
-            return 1
-    
-    db = connect(channel_name)
-    cursor = db.cursor()
-    id = getUserID(cursor, username)
-
-    date = utils.getDate()
-    datetime = utils.getDateTime()
-
-    if(id == -1):
-        stmt = f'INSERT INTO chatters (username, first_date, last_date) VALUES ("{username}", "{date}", "{date}");'
-        cursor.execute(stmt)
-        db.commit()
-        id = getUserID(cursor, username)
-
-    if "\"" in message:
-        message = message.replace("\"", "\'")
-
-    if '\\' in message:
-        message = message.replace('\\', '\\\\')
-
-    stmt = f'INSERT INTO messages (message, session_id, chatter_id, datetime) VALUES ("{message}", {session_id}, {id}, "{datetime}");'
-    cursor.execute(stmt)
-    db.commit()
-
-    stmt = f'UPDATE chatters SET last_date = "{date}" WHERE id = {id};'
-    cursor.execute(stmt)
-    db.commit()
-
-    for emote in emotes:
-        if '\\' in emote:
-            emote = emote.replace('\\','\\\\')
-        stmt = f'UPDATE emotes SET count = count + 1 WHERE code = "{emote}" AND active = 1;'
-        cursor.execute(stmt)
-        db.commit()
-
-    cursor.close()
-    db.close()
-
-    if '\\\\' in message:
-        message = message.replace('\\\\', '\\')
-
-    utils.printLog(channel_name, username, message)
-
-def connect(channel_name):
-    config = constants.config
-    db_name = f'cc_{channel_name}'
-    if(os.name == 'nt'):
-        try:
-            db = mysql.connector.connect(
-                host=config['db']['host'],
-                user=config['db']['user'],
-                password=config['db']['password'],
-                database=db_name
-            )
-            return db
-        except:
-            createDB(channel_name)
-            db = mysql.connector.connect(
-                host=config['db']['host'],
-                user=config['db']['user'],
-                password=config['db']['password'],
-                database=db_name
-            )
-            return db
-    else:
-        try:
-            db = mysql.connector.connect(
-                host=config['db']['host'],
-                user=config['db']['user'],
-                password=config['db']['password'],
-                database=db_name,
-                charset='utf8mb4'
-            )
-            return db
-        except:
-            createDB(channel_name)
-            db = mysql.connector.connect(
-                host=config['db']['host'],
-                user=config['db']['user'],
-                password=config['db']['password'],
-                database=db_name,
-                charset='utf8mb4'
-            )
-            return db
+    return 0

@@ -10,21 +10,6 @@ import utils
 
 debug = constants.debug
 
-def startSocket(channel):
-    config = constants.config
-    nickname = config['twitch']['nickname']
-    token = config['twitch']['token']
-    sock = socket.socket()
-    try:
-        sock.connect(constants.address)
-    except:
-        utils.printError("Unable to connect to host. Likely lost internet connection.")
-        return -1
-    sock.send(f'PASS {token}\n'.encode('utf-8'))
-    sock.send(f'NICK {nickname}\n'.encode('utf-8'))
-    sock.send(f'JOIN {channel}\n'.encode('utf-8'))
-    return sock
-
 # (flag) 1 = start, 2 = end
 def handleSession(flag, channel_name):
     database = db.connect(channel_name)
@@ -160,7 +145,22 @@ def run(channel_name, session_id, flag):
     except:
         sock.close()
         return 1
-    
+
+def startSocket(channel):
+    config = constants.config
+    nickname = config['twitch']['nickname']
+    token = config['twitch']['token']
+    sock = socket.socket()
+    try:
+        sock.connect(constants.address)
+    except:
+        utils.printError("Unable to connect to host. Likely lost internet connection.")
+        return -1
+    sock.send(f'PASS {token}\n'.encode('utf-8'))
+    sock.send(f'NICK {nickname}\n'.encode('utf-8'))
+    sock.send(f'JOIN {channel}\n'.encode('utf-8'))
+    return sock
+
 def main():
     if not os.path.exists(constants.config_name):
         utils.createConfig()
@@ -173,6 +173,7 @@ def main():
     while(success == 1):
         success = run(channel_name, session_id, 2)
     handleSession(2, channel_name)
+
 
 if __name__ == "__main__":
     main()
