@@ -103,7 +103,8 @@ def downloadAllEmotes(channel_name):
     cursor.execute(stmt)
     rows = cursor.fetchall()
     counter = 0
-    for row in rows:
+    print("Downloading emotes...")
+    for row in utils.progressbar(rows):
         emote_name = row[2]
         for character in bad_file_chars:
             if character in emote_name:
@@ -117,7 +118,7 @@ def downloadAllEmotes(channel_name):
     cursor.close()
     db.close()
     os.chdir('../../')
-
+    
 def getEmotes(channel_name, flag):
     emotes = []
     db = connect(channel_name)
@@ -248,6 +249,7 @@ def updateEmotes(channel_name, source):
     stmt = f'SELECT emote_id FROM emotes WHERE source = {source} AND active = 1;'
     cursor.execute(stmt)
     rows = cursor.fetchall()
+    new_emotes = 0
     nonactive_emotes = []
     previous_emotes = []
 
@@ -290,6 +292,7 @@ def updateEmotes(channel_name, source):
             stmt = f'INSERT INTO emotes (code, emote_id, variant, url, date_added, source, active) VALUES ("{info["code"]}","{emote}",0,"{url}","{utils.getDate()}","{source}",1);'
             cursor.execute(stmt)
             db.commit()
+            new_emotes += 1
         for emote in reactivated_emotes:
             stmt = f'UPDATE emotes SET active = 1 WHERE emote_id = "{emote}";'
             cursor.execute(stmt)
@@ -327,6 +330,7 @@ def updateEmotes(channel_name, source):
             stmt = f'INSERT INTO emotes (code, emote_id, variant, url, date_added, source, active) VALUES ("{info["code"]}","{emote}",0,"{info["url"]}","{utils.getDate()}","{source}",1);'
             cursor.execute(stmt)
             db.commit()
+            new_emotes += 1
         for emote in reactivated_emotes:
             stmt = f'UPDATE emotes SET active = 1 WHERE emote_id = "{emote}";'
             cursor.execute(stmt)
@@ -334,7 +338,9 @@ def updateEmotes(channel_name, source):
             if(debug):
                 utils.printDebug(f'Setting emote: {emote} now reactivated.')
 
+    if(new_emotes > 0):
+        downloadAllEmotes(channel_name)
+
     cursor.close()
     db.close()
-    downloadAllEmotes(channel_name)
     return 0

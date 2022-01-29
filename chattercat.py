@@ -162,8 +162,10 @@ def startSocket(channel):
     return sock
 
 def main():
-    if not os.path.exists(constants.config_name):
-        utils.createConfig()
+    utils.cls()
+    print(constants.banner)
+    # if not os.path.exists(constants.config_name):
+    #     utils.createConfig()
     if(len(sys.argv) < 2):
         channel_name = input('Enter channel name: ')
     else:

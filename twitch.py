@@ -6,6 +6,8 @@ from bs4 import BeautifulSoup
 from requests_html import HTMLSession
 from urllib.request import urlopen
 
+import utils
+
 def getChannelId(channel_name):
     url = f'https://api.frankerfacez.com/v1/user/{channel_name}'
     try:
@@ -47,12 +49,18 @@ def isChannelLive(channel_name):
 def getAllChannelEmoteInfo(channel_name):
     id = getChannelId(channel_name)
     emotes = {}
+    print('Getting Twitch emotes...')
     emotes['twitch'] = getEmoteSetInfo(getGlobalEmotes(),1,id)
+    print('Getting Subscriber emotes...')
     emotes['subscriber'] = getEmoteSetInfo(getSubscriberEmotes(id),2,id)
+    print('Getting FFZ Global emotes...')
     emotes['ffz'] = getEmoteSetInfo(getGlobalFFZEmotes(),3,id)
+    print('Getting FFZ Channel emotes...')
     emotes['ffz_channel'] = getEmoteSetInfo(getChannelFFZEmotes(id),3,id)
-    emotes['bttv'] = getBTTVGlobalEmoteInfo()
-    emotes['bttv_channel'] = getBTTVChannelEmoteInfo(id)
+    print('Getting BTTV Global emotes...')
+    emotes['bttv'] = getBTTVGlobalEmoteInfoProg()
+    print('Getting BTTV Channel emotes...')
+    emotes['bttv_channel'] = getBTTVChannelEmoteInfoProg(id)
     return emotes
 
 def getBTTVChannelEmoteInfo(channel_id):
@@ -87,6 +95,38 @@ def getBTTVChannelEmoteInfo(channel_id):
         info.append(emote)
     return info
 
+def getBTTVChannelEmoteInfoProg(channel_id):
+    url = f'https://api.betterttv.net/3/cached/users/twitch/{channel_id}'
+    try:
+        page = urlopen(url, context=ssl.create_default_context(cafile=certifi.where()))
+    except:
+        return
+    html = page.read().decode('utf-8')
+    a = json.loads(html)
+    emotes = a['channelEmotes']
+    emote_sizes = ['1x','2x','3x']
+    info = []
+    for i in range(0, len(emotes)):
+        emote = {}
+        urls = []
+        emote['id'] = emotes[i]['id']
+        emote['code'] = emotes[i]['code']
+        for j in range(0, len(emote_sizes)):
+            urls.append(f'https://cdn.betterttv.net/emote/{emotes[i]["id"]}/{emote_sizes[j]}')
+        emote['url'] = urls
+        info.append(emote)
+    emotes = a['sharedEmotes']
+    for i in utils.progressbar(range(0, len(emotes))):
+        emote = {}
+        urls = []
+        emote['id'] = emotes[i]['id']
+        emote['code'] = emotes[i]['code']
+        for j in range(0, len(emote_sizes)):
+            urls.append(f'https://cdn.betterttv.net/emote/{emotes[i]["id"]}/{emote_sizes[j]}')
+        emote['url'] = urls
+        info.append(emote)
+    return info
+
 def getBTTVGlobalEmoteInfo():
     url = 'https://api.betterttv.net/3/cached/emotes/global'
     page = urlopen(url, context=ssl.create_default_context(cafile=certifi.where()))
@@ -95,6 +135,24 @@ def getBTTVGlobalEmoteInfo():
     emote_sizes = ['1x','2x','3x']
     info = []
     for i in range(0, len(a)):
+        emote = {}
+        urls = []
+        emote['id'] = a[i]['id']
+        emote['code'] = a[i]['code']
+        for j in range(0, len(emote_sizes)):
+            urls.append(f'https://cdn.betterttv.net/emote/{a[i]["id"]}/{emote_sizes[j]}')
+        emote['url'] = urls
+        info.append(emote)
+    return info
+
+def getBTTVGlobalEmoteInfoProg():
+    url = 'https://api.betterttv.net/3/cached/emotes/global'
+    page = urlopen(url, context=ssl.create_default_context(cafile=certifi.where()))
+    html = page.read().decode('utf-8')
+    a = json.loads(html)
+    emote_sizes = ['1x','2x','3x']
+    info = []
+    for i in utils.progressbar(range(0, len(a))):
         emote = {}
         urls = []
         emote['id'] = a[i]['id']
@@ -133,7 +191,7 @@ def getChannelFFZEmotes(channel_id):
 # 1 = twitch, 2 = subscriber, 3 = ffz
 def getEmoteSetInfo(emote_set, set_type, channel_id):
     info = []
-    for emote in emote_set:
+    for emote in utils.progressbar(emote_set):
         if(set_type == 1):
             info.append(getGlobalEmoteInfo(emote))
         elif(set_type == 2):
