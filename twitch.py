@@ -6,14 +6,19 @@ from bs4 import BeautifulSoup
 from requests_html import HTMLSession
 from urllib.request import urlopen
 
+import constants
 import utils
+
+emote_types = constants.emote_types
+error_messages = constants.error_messages
+status_messages = constants.status_messages
 
 def getChannelId(channel_name):
     url = f'https://api.frankerfacez.com/v1/user/{channel_name}'
     try:
         page = urlopen(url, context=ssl.create_default_context(cafile=certifi.where()))
     except:
-        print("Channel not found on FrankerFaceZ API.")
+        print(error_messages[2])
         return None
     html = page.read().decode('utf-8')
     a = json.loads(html)
@@ -49,18 +54,36 @@ def isChannelLive(channel_name):
 def getAllChannelEmoteInfo(channel_name):
     id = getChannelId(channel_name)
     emotes = {}
-    print('Getting Twitch emotes...')
-    emotes['twitch'] = getEmoteSetInfo(getGlobalEmotes(),1,id)
-    print('Getting Subscriber emotes...')
-    emotes['subscriber'] = getEmoteSetInfo(getSubscriberEmotes(id),2,id)
-    print('Getting FFZ Global emotes...')
-    emotes['ffz'] = getEmoteSetInfo(getGlobalFFZEmotes(),3,id)
-    print('Getting FFZ Channel emotes...')
-    emotes['ffz_channel'] = getEmoteSetInfo(getChannelFFZEmotes(id),3,id)
-    print('Getting BTTV Global emotes...')
-    emotes['bttv'] = getBTTVGlobalEmoteInfoProg()
-    print('Getting BTTV Channel emotes...')
-    emotes['bttv_channel'] = getBTTVChannelEmoteInfoProg(id)
+    print(status_messages[0])
+    try:
+        emotes[emote_types[0]] = getEmoteSetInfo(getGlobalEmotes(),1,id)
+    except:
+        emotes[emote_types[0]] = []
+    print(status_messages[1])
+    try:
+        emotes[emote_types[1]] = getEmoteSetInfo(getSubscriberEmotes(id),2,id)
+    except:
+        emotes[emote_types[1]] = []
+    print(status_messages[2])
+    try:
+        emotes[emote_types[2]] = getEmoteSetInfo(getGlobalFFZEmotes(),3,id)
+    except:
+        emotes[emote_types[2]] = []
+    print(status_messages[3])
+    try:
+        emotes[emote_types[3]] = getEmoteSetInfo(getChannelFFZEmotes(id),3,id)
+    except:
+        emotes[emote_types[3]] = []
+    print(status_messages[4])
+    try:
+        emotes[emote_types[4]] = getBTTVGlobalEmoteInfoProg()
+    except:
+        emotes[emote_types[4]] = []
+    print(status_messages[5])
+    try:
+        emotes[emote_types[5]] = getBTTVChannelEmoteInfoProg(id)
+    except:
+        emotes[emote_types[5]] = []
     return emotes
 
 def getBTTVChannelEmoteInfo(channel_id):
@@ -188,7 +211,7 @@ def getChannelFFZEmotes(channel_id):
         channel_emotes.append(str(emote_set[i]['id']))
     return channel_emotes
 
-# 1 = twitch, 2 = subscriber, 3 = ffz
+# (set_type) 1 = twitch, 2 = subscriber, 3 = ffz
 def getEmoteSetInfo(emote_set, set_type, channel_id):
     info = []
     for emote in utils.progressbar(emote_set):

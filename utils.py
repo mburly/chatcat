@@ -7,6 +7,7 @@ import requests
 
 import constants
 
+input_messages = constants.input_messages
 os.system("")
 
 def cls(debug_flag=0):
@@ -18,14 +19,14 @@ def cls(debug_flag=0):
 def createConfig():
     config = configparser.ConfigParser()
     printBanner(1)
-    host = input("Enter hostname: ")
-    user = input("Enter DB username: ")
-    password = input("Enter DB password: ")
+    host = input(f'input_messages[0] ')
+    user = input(f'input_messages[1] ')
+    password = input(f'input_messages[2] ')
     cls()
     print(constants.banner)
     printBanner(2)
-    nickname = input("Enter your twitch username: ")
-    token = input("Please visit the URL \033[4;37mhttps://twitchapps.com/tmi/\033[0m and enter the token after pressing Connect: ")
+    nickname = input(f'input_messages[3] ')
+    token = input(f'input_messages[4] ')
     cls()
     print(constants.banner)
 
@@ -135,7 +136,6 @@ def printBanner(flag):
         printSpaces('[0;102m',len(text)-9)
     else:
         return None
-
 
 def printDebug(text):
     print(f'[\033[1;34m{getDateTime()}\033[0m] [\033[0;33mDEBUG\033[0m] {text}')

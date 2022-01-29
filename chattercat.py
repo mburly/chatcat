@@ -1,3 +1,4 @@
+import configparser
 import os
 import socket
 import sys
@@ -9,6 +10,9 @@ import twitch
 import utils
 
 debug = constants.debug
+debug_messages = constants.debug_messages
+error_messages = constants.error_messages
+input_messages = constants.input_messages
 
 # (flag) 1 = start, 2 = end
 def handleSession(flag, channel_name):
@@ -19,7 +23,7 @@ def handleSession(flag, channel_name):
         counter = 0
         stream_title = twitch.getChannelTitle(channel_name)
         if(len(stream_title) > 140 or '<meta' in stream_title):
-            utils.printError("Error fetching stream title. Still trying...")
+            utils.printError(error_messages[0])
             while(len(stream_title) > 140 or '<meta' in stream_title):
                 if(counter >= 20):
                     stream_title = 'Unable to get stream title.'
@@ -48,7 +52,6 @@ def handleSession(flag, channel_name):
 
 def parseEmotes(emotes, message):
     if(type(message) == list):
-        utils.printError("[parseEmotes()] Something is wrong.")
         return []
     words = message.split(' ')
     parsed_emotes = []
@@ -61,10 +64,10 @@ def parseEmotes(emotes, message):
 def run(channel_name, session_id, flag):
     channel = '#' + channel_name
     sock = startSocket(channel)
-    if(os.path.exists('logs/') is False):
-        os.mkdir('logs/')
+    if(os.path.exists(constants.dirs[1]) is False):
+        os.mkdir(constants.dirs[1])
 
-    filename = 'logs/' + channel_name + '.log'
+    filename = f'{constants.dirs[1]}/{channel_name}.log'
     if not os.path.exists(filename):
         file = open(filename, 'w')
     else:
@@ -81,18 +84,18 @@ def run(channel_name, session_id, flag):
         while True:
             if(((time.time() - live_start) / 60) >= (1-(counter*.15))):
                 if(debug):
-                    utils.printDebug(f'Checking if offline with counter = {counter}')
+                    utils.printDebug(f'{debug_messages[0]} {counter}')
                 if(twitch.isChannelLive(channel_name)):
                     counter = 0
                     if(debug):
-                        utils.printDebug(f'Detected online. Counter now = {counter}')
+                        utils.printDebug(f'{debug_messages[1]} {counter}')
                     live_start = time.time()
                 else:
                     counter += 1
                     if(debug):
-                        utils.printDebug(f'Detected offline. Counter now = {counter}')
+                        utils.printDebug(f'{debug_messages[2]} {counter}')
                     if(counter == 5):
-                        utils.printDebug("Stream ended. Now ending session...")
+                        utils.printDebug(debug_messages[3])
                         sock.close()
                         return -1
                     live_start = time.time()
@@ -147,14 +150,15 @@ def run(channel_name, session_id, flag):
         return 1
 
 def startSocket(channel):
-    config = constants.config
+    config = configparser.ConfigParser()
+    config.read(constants.config_name)
     nickname = config['twitch']['nickname']
     token = config['twitch']['token']
     sock = socket.socket()
     try:
         sock.connect(constants.address)
     except:
-        utils.printError("Unable to connect to host. Likely lost internet connection.")
+        utils.printError(error_messages[1])
         return -1
     sock.send(f'PASS {token}\n'.encode('utf-8'))
     sock.send(f'NICK {nickname}\n'.encode('utf-8'))
@@ -162,12 +166,16 @@ def startSocket(channel):
     return sock
 
 def main():
-    utils.cls()
-    print(constants.banner)
-    # if not os.path.exists(constants.config_name):
-    #     utils.createConfig()
+    config = configparser.ConfigParser()
+    if not os.path.exists(constants.config_name):
+        utils.cls()
+        print(constants.banner)
+        utils.createConfig()
+    else:
+        utils.cls()
+        print(constants.banner)
     if(len(sys.argv) < 2):
-        channel_name = input('Enter channel name: ')
+        channel_name = input(f'{input_messages[5]} ')
     else:
         channel_name = sys.argv[1]
     session_id = handleSession(1, channel_name)
