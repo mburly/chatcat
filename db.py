@@ -6,6 +6,8 @@ import constants
 import twitch
 import utils
 
+debug = constants.debug
+
 def connect(channel_name):
     config = constants.config
     db_name = f'cc_{channel_name}'
@@ -196,14 +198,10 @@ def log(channel_name, username, message, emotes, session_id):
 
 # for first time inserting into emotes table only
 def populateEmotes(channel_name):
-    print("1")
     emotes = twitch.getAllChannelEmoteInfo(channel_name)
-    print("2")
     emote_types = list(emotes.keys())
-    print("3")
     db = connect(channel_name)
     cursor = db.cursor()
-    print("4")
     source = 1
     for emote_type in emote_types:
         for emote in emotes[emote_type]:
@@ -225,9 +223,8 @@ def populateEmotes(channel_name):
 
 def updateEmotes(channel_name, source):
     if(constants.debug):
-        utils.printDebug('Entering update_emotes function')
+        utils.printDebug(f'Entering update_emotes function for source = {source}')
     channel_id = twitch.getChannelId(channel_name)
-
     if(source == 1):
         emotes = twitch.getGlobalEmotes()
     elif(source == 2):
@@ -275,6 +272,8 @@ def updateEmotes(channel_name, source):
             stmt = f'UPDATE emotes SET active = 0 WHERE emote_id = "{emote}";'
             cursor.execute(stmt)
             db.commit()
+            if(debug):
+                utils.printDebug(f'Setting emote: {emote} now inactive.')
         for emote in newly_added_emotes:
             if(source == 1):
                 info = twitch.getGlobalEmoteInfo(emote)
@@ -295,6 +294,8 @@ def updateEmotes(channel_name, source):
             stmt = f'UPDATE emotes SET active = 1 WHERE emote_id = "{emote}";'
             cursor.execute(stmt)
             db.commit()
+            if(debug):
+                utils.printDebug(f'Setting emote: {emote} now reactivated.')
     else:
         current_emotes = []
         for emote in emotes:
@@ -319,6 +320,8 @@ def updateEmotes(channel_name, source):
             stmt = f'UPDATE emotes SET active = 0 WHERE emote_id = "{emote}";'
             cursor.execute(stmt)
             db.commit()
+            if(debug):
+                utils.printDebug(f'Setting emote: {emote} now inactive.')
         for emote in newly_added_emotes:
             info = twitch.getBTTVEmoteInfo(emote)
             stmt = f'INSERT INTO emotes (code, emote_id, variant, url, date_added, source, active) VALUES ("{info["code"]}","{emote}",0,"{info["url"]}","{utils.getDate()}","{source}",1);'
@@ -328,6 +331,8 @@ def updateEmotes(channel_name, source):
             stmt = f'UPDATE emotes SET active = 1 WHERE emote_id = "{emote}";'
             cursor.execute(stmt)
             db.commit()
+            if(debug):
+                utils.printDebug(f'Setting emote: {emote} now reactivated.')
 
     cursor.close()
     db.close()
