@@ -125,7 +125,8 @@ def getEmotes(channel_name, flag):
     
     if(flag == 1):
         for i in range(1, len(constants.emote_types)+1):
-            updateEmotes(channel_name, i)
+            if(updateEmotes(channel_name, i) == -2):
+                return -1
 
     cursor = db.cursor()
     stmt = 'SELECT code FROM emotes WHERE ACTIVE = 1;'
@@ -227,6 +228,8 @@ def updateEmotes(channel_name, source):
     if(constants.debug):
         utils.printDebug(f'{debug_messages[4]} {constants.emote_types[source-1]}')
     channel_id = twitch.getChannelId(channel_name)
+    if(channel_id == None):
+        return -2
     if(source == 1):
         emotes = twitch.getGlobalEmotes()
     elif(source == 2):

@@ -78,6 +78,8 @@ def run(channel_name, session_id, flag):
     username = ''
     message = ''
     emotes = db.getEmotes(channel_name, flag)
+    if(emotes == -1):
+        return 0
 
     try:
         counter = 0
@@ -110,8 +112,7 @@ def run(channel_name, session_id, flag):
                     sock.close()
                     return 1
             except Exception as msg:
-                file.write(msg)
-                file.write(f'{utils.getDateTime()} - 2 - TIMEOUT/OVERFLOW ERROR.\n')
+                file.write(str(msg))
                 sock.close()
                 return 1
             if(len(resp) > 0):

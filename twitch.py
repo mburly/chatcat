@@ -53,6 +53,8 @@ def isChannelLive(channel_name):
 
 def getAllChannelEmoteInfo(channel_name):
     id = getChannelId(channel_name)
+    if(id == None):
+        return -1
     emotes = {}
     print(status_messages[0])
     try:
