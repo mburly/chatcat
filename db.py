@@ -79,7 +79,7 @@ def createDB(channel_name):
         cursor.execute(stmt)
         stmt = f'CREATE TABLE sessions (id INT AUTO_INCREMENT PRIMARY KEY, stream_title VARCHAR(512) COLLATE utf8mb4_general_ci, start_datetime VARCHAR(255), end_datetime VARCHAR(255)) COLLATE utf8mb4_general_ci;'
         cursor.execute(stmt)
-        stmt = f'CREATE TABLE emotes (id INT AUTO_INCREMENT PRIMARY KEY, code VARCHAR(255) COLLATE utf8mb4_general_ci, emote_id VARCHAR(255) COLLATE utf8mb4_general_ci, variant INT, count INT DEFAULT 0, url VARCHAR(512) COLLATE utf8mb4_general_ci, path VARCHAR(512) COLLATE utf8mb4_general_ci, date_added VARCHAR(255) COLLATE utf8mb4_general_ci, source VARCHAR(255) COLLATE utf8mb4_general_ci, active BOOLEAN) COLLATE utf8mb4_general_ci;'
+        stmt = f'CREATE TABLE emotes (id INT AUTO_INCREMENT PRIMARY KEY, code VARCHAR(255) COLLATE utf8mb4_general_ci, emote_id VARCHAR(255) COLLATE utf8mb4_general_ci, count INT DEFAULT 0, url VARCHAR(512) COLLATE utf8mb4_general_ci, path VARCHAR(512) COLLATE utf8mb4_general_ci, date_added VARCHAR(255) COLLATE utf8mb4_general_ci, source VARCHAR(255) COLLATE utf8mb4_general_ci, active BOOLEAN) COLLATE utf8mb4_general_ci;'
         cursor.execute(stmt)
         cursor.close()
         db.close()
@@ -215,7 +215,7 @@ def populateEmotes(channel_name):
             if '\\' in emote_name:
                 emote_name = emote_name.replace('\\', '\\\\')
             emote_id = emote['id']
-            stmt = f'INSERT INTO emotes (code, emote_id, variant, url, date_added, source, active) VALUES ("{emote_name}","{emote_id}",0,"{url}","{utils.getDate()}","{source}",1);'
+            stmt = f'INSERT INTO emotes (code, emote_id, url, date_added, source, active) VALUES ("{emote_name}","{emote_id}","{url}","{utils.getDate()}","{source}",1);'
             cursor.execute(stmt)
             db.commit()
         source += 1
@@ -290,7 +290,7 @@ def updateEmotes(channel_name, source):
                 url = info["url"][0]
             if('\\' in info["code"]):
                 info["code"] = info["code"].replace('\\', '\\\\')
-            stmt = f'INSERT INTO emotes (code, emote_id, variant, url, date_added, source, active) VALUES ("{info["code"]}","{emote}",0,"{url}","{utils.getDate()}","{source}",1);'
+            stmt = f'INSERT INTO emotes (code, emote_id, url, date_added, source, active) VALUES ("{info["code"]}","{emote}","{url}","{utils.getDate()}","{source}",1);'
             cursor.execute(stmt)
             db.commit()
             new_emotes += 1
@@ -329,7 +329,7 @@ def updateEmotes(channel_name, source):
                 utils.printDebug(f'{debug_messages[5]} {emote} {debug_messages[6]}')
         for emote in newly_added_emotes:
             info = twitch.getBTTVEmoteInfo(emote)
-            stmt = f'INSERT INTO emotes (code, emote_id, variant, url, date_added, source, active) VALUES ("{info["code"]}","{emote}",0,"{info["url"]}","{utils.getDate()}","{source}",1);'
+            stmt = f'INSERT INTO emotes (code, emote_id, url, date_added, source, active) VALUES ("{info["code"]}","{emote}","{info["url"]}","{utils.getDate()}","{source}",1);'
             cursor.execute(stmt)
             db.commit()
             new_emotes += 1
@@ -340,7 +340,9 @@ def updateEmotes(channel_name, source):
             if(debug):
                 utils.printDebug(f'{debug_messages[5]} {emote} {debug_messages[7]}')
 
-    if(new_emotes > 0):
+    config = configparser.ConfigParser()
+    config.read(constants.config_name)
+    if(new_emotes > 0 and config[config_sections[2]][constants.options_variables[0]] == 'True'):
         downloadAllEmotes(channel_name)
 
     cursor.close()
