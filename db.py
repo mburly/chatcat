@@ -82,7 +82,8 @@ def createDB(channel_name):
         cursor.close()
         db.close()
         populateEmotes(channel_name)
-        downloadAllEmotes(channel_name)
+        if(config['options']['download'] == 'True'):
+            downloadAllEmotes(channel_name)
         return 0
     except:
         return -1

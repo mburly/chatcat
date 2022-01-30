@@ -18,13 +18,13 @@ def cls(debug_flag=0):
 
 def createConfig():
     config = configparser.ConfigParser()
-    printBanner(1)
+    printLabel(1)
     host = input(f'{input_messages[0]} ')
     user = input(f'{input_messages[1]} ')
     password = input(f'{input_messages[2]} ')
     cls()
     print(f'\n{constants.banner}')
-    printBanner(2)
+    printLabel(2)
     nickname = input(f'{input_messages[3]} ')
     token = input(f'{input_messages[4]} ')
     cls()
@@ -44,8 +44,13 @@ def createConfig():
         'token':token
     }
 
+    config['options'] = {
+        'download':True
+    }
+
     with open(constants.config_name, 'w') as configfile:
         config.write(configfile)
+        configfile.close()
 
 def downloadFile(url, fileName):
     r = requests.get(url)
@@ -123,7 +128,17 @@ def parseUsername(message):
             username = message.split('tmi.twitch.tv')[0].split('@')[1].split('.')[0]
     return username
 
-def printBanner(flag):
+def printBanner():
+    config = configparser.ConfigParser()
+    config.read(constants.config_name)
+    cls()
+    print(f'\n{constants.banner}')
+    if(config['options']['download'] == 'True'):
+        print(f'\t\t\t\t\tDownload emotes: [\033[0;32mON\033[0m]\n')
+    else:
+        print(f'\t\t\t\t\tDownload emotes: [\033[0;31mOFF\033[0m]')
+
+def printLabel(flag):
     if(flag == 1):
         text = f'\033[45mDATABASE INFORMATION\033[0m'
         printSpaces('[0;105m', len(text)-9)
@@ -134,6 +149,11 @@ def printBanner(flag):
         printSpaces('[0;102m',len(text)-9)
         print(text)
         printSpaces('[0;102m',len(text)-9)
+    elif(flag == 3):
+        text = f'\033[44mOPTIONS\033[0m'
+        printSpaces('[0;104m',len(text)-9)
+        print(text)
+        printSpaces('[0;104m',len(text)-9)
     else:
         return None
 
@@ -147,7 +167,7 @@ def printLog(channel_name, username, message):
     print(f'[\033[1;32m{channel_name}\033[0m] [\033[1;34m{getDateTime()}\033[0m] [\033[0;94mLOG\033[0m] \033[1;35m{username}\033[0m: {message}')
 
 def printMenu():
-    print(constants.menu_message)
+    print(constants.main_menu)
     selection = input(f'{input_messages[6]} ')
     try:
         selection = int(selection)
@@ -155,16 +175,15 @@ def printMenu():
         return -1
     while(selection != 1):
         if(selection == 2):
-            printOptions()
+            code = printOptions()
+            printBanner()
+            print(constants.main_menu)
+        elif(selection == 3):
             cls()
-            print(f'\n{constants.banner}')
-            print(constants.menu_message)
-        if(selection == 3):
             return 0
         else:
-            cls()
-            print(f'\n{constants.banner}')
-            print(constants.menu_message)
+            printBanner()
+            print(constants.main_menu)
         selection = input(f'{input_messages[6]} ')
         try:
             selection = int(selection)
@@ -174,8 +193,48 @@ def printMenu():
     return channel_name
 
 def printOptions():
-    print('foo')
-    input("Blah")
+    cls()
+    print(f'\n{constants.banner}')
+    printLabel(3)
+    print(constants.options_menu)
+    selection = input(f'{input_messages[6]} ')
+    try:
+        selection = int(selection)
+    except:
+        return -1
+    if(selection == 1):
+        cls()
+        print(f'\n{constants.banner}')
+        printLabel(3)
+        print(constants.download_options_menu)
+        selection = input(f'{input_messages[6]} ')
+        try:
+            selection = int(selection)
+        except:
+            return -1
+        config = configparser.ConfigParser()
+        config.read(constants.config_name)
+        if(selection == 1):
+            if(config['options'] == True):
+                return 0
+            else:
+                config['options'] = {
+                    'download':True
+                }
+        elif(selection == 2):
+            if(config['options'] == False):
+                return 0
+            config['options'] = {
+                'download':False
+            }
+        with open(constants.config_name, 'w') as configfile:
+            config.write(configfile)
+        return 0
+    elif(selection == 2):
+        return 0
+    else:
+        return -1
+
 
 def printSpaces(color, num):
     for i in range(0, num):

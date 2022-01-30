@@ -172,8 +172,7 @@ def main():
         print(f'\n{constants.banner}')
         utils.createConfig()
     else:
-        utils.cls()
-        print(f'\n{constants.banner}')
+        utils.printBanner()
     if(len(sys.argv) < 2):
         channel_name = utils.printMenu()
         if(channel_name == 0):
@@ -183,7 +182,7 @@ def main():
     else:
         channel_name = sys.argv[1]
     utils.cls()
-    print(f'\n{constants.banner}')
+    utils.printBanner()
     session_id = handleSession(1, channel_name)
     success = run(channel_name, session_id, 1)
     while(success == 1):
