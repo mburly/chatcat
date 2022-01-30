@@ -7,6 +7,8 @@ import constants
 import twitch
 import utils
 
+config_sections = constants.config_sections
+db_variables = constants.db_variables
 debug = constants.debug
 debug_messages = constants.debug_messages
 
@@ -17,27 +19,27 @@ def connect(channel_name):
     if(os.name == 'nt'):
         try:
             db = mysql.connector.connect(
-                host=config['db']['host'],
-                user=config['db']['user'],
-                password=config['db']['password'],
+                host=config[config_sections[0]][db_variables[0]],
+                user=config[config_sections[0]][db_variables[1]],
+                password=config[config_sections[0]][db_variables[2]],
                 database=db_name
             )
             return db
         except:
             createDB(channel_name)
             db = mysql.connector.connect(
-                host=config['db']['host'],
-                user=config['db']['user'],
-                password=config['db']['password'],
+                host=config[config_sections[0]][db_variables[0]],
+                user=config[config_sections[0]][db_variables[1]],
+                password=config[config_sections[0]][db_variables[2]],
                 database=db_name
             )
             return db
     else:
         try:
             db = mysql.connector.connect(
-                host=config['db']['host'],
-                user=config['db']['user'],
-                password=config['db']['password'],
+                host=config[config_sections[0]][db_variables[0]],
+                user=config[config_sections[0]][db_variables[1]],
+                password=config[config_sections[0]][db_variables[2]],
                 database=db_name,
                 charset='utf8mb4'
             )
@@ -45,9 +47,9 @@ def connect(channel_name):
         except:
             createDB(channel_name)
             db = mysql.connector.connect(
-                host=config['db']['host'],
-                user=config['db']['user'],
-                password=config['db']['password'],
+                host=config[config_sections[0]][db_variables[0]],
+                user=config[config_sections[0]][db_variables[1]],
+                password=config[config_sections[0]][db_variables[2]],
                 database=db_name,
                 charset='utf8mb4'
             )
@@ -56,9 +58,9 @@ def connect(channel_name):
 def createDB(channel_name):
     config = configparser.ConfigParser()
     config.read(constants.config_name)
-    host = config['db']['host']
-    user = config['db']['user']
-    password = config['db']['password']
+    host = config[config_sections[0]][db_variables[0]]
+    user = config[config_sections[0]][db_variables[1]]
+    password = config[config_sections[0]][db_variables[2]]
     db = mysql.connector.connect(
         host=host,
         user=user,
@@ -82,7 +84,7 @@ def createDB(channel_name):
         cursor.close()
         db.close()
         populateEmotes(channel_name)
-        if(config['options']['download'] == 'True'):
+        if(config[config_sections[2]][constants.options_variables[0]] == 'True'):
             downloadAllEmotes(channel_name)
         return 0
     except:
@@ -149,7 +151,7 @@ def log(channel_name, username, message, emotes, session_id):
     config.read(constants.config_name)
     if(message == ''):
         return 1
-    if(username == config['twitch']['nickname'] and message == ''):
+    if(username == config[config_sections[1]][constants.twitch_variables[0]] and message == ''):
         return 1
     for symbol in constants.blacklisted_symbols:
         if symbol in username:

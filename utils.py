@@ -7,6 +7,10 @@ import requests
 
 import constants
 
+config_sections = constants.config_sections
+db_variables = constants.db_variables
+twitch_variables = constants.twitch_variables
+options_variables = constants.options_variables
 input_messages = constants.input_messages
 os.system("")
 
@@ -33,19 +37,19 @@ def createConfig():
     if host == '':
         host = 'localhost'
     
-    config['db'] = {
-        'host':host,
-        'user':user,
-        'password':password
+    config[config_sections[0]] = {
+        db_variables[0]:host,
+        db_variables[1]:user,
+        db_variables[2]:password
     }
 
-    config['twitch'] = {
-        'nickname':nickname,
-        'token':token
+    config[config_sections[1]] = {
+        twitch_variables[0]:nickname,
+        twitch_variables[1]:token
     }
 
-    config['options'] = {
-        'download':True
+    config[config_sections[2]] = {
+        options_variables[0]:True
     }
 
     with open(constants.config_name, 'w') as configfile:
@@ -133,7 +137,7 @@ def printBanner():
     config.read(constants.config_name)
     cls()
     print(f'\n{constants.banner}')
-    if(config['options']['download'] == 'True'):
+    if(config[config_sections[2]][options_variables[0]] == 'True'):
         print(f'\t\t\t\t\tDownload emotes: [\033[0;32mON\033[0m]\n')
     else:
         print(f'\t\t\t\t\tDownload emotes: [\033[0;31mOFF\033[0m]')
@@ -215,17 +219,17 @@ def printOptions():
         config = configparser.ConfigParser()
         config.read(constants.config_name)
         if(selection == 1):
-            if(config['options'] == True):
+            if(config[config_sections[2]] == True):
                 return 0
             else:
-                config['options'] = {
-                    'download':True
+                config[config_sections[2]] = {
+                    options_variables[0]:True
                 }
         elif(selection == 2):
-            if(config['options'] == False):
+            if(config[config_sections[2]] == False):
                 return 0
-            config['options'] = {
-                'download':False
+            config[config_sections[2]] = {
+                options_variables[0]:False
             }
         with open(constants.config_name, 'w') as configfile:
             config.write(configfile)
@@ -234,7 +238,6 @@ def printOptions():
         return 0
     else:
         return -1
-
 
 def printSpaces(color, num):
     for i in range(0, num):

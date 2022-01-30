@@ -153,8 +153,8 @@ def run(channel_name, session_id, flag):
 def startSocket(channel):
     config = configparser.ConfigParser()
     config.read(constants.config_name)
-    nickname = config['twitch']['nickname']
-    token = config['twitch']['token']
+    nickname = config[constants.config_sections[1]][constants.twitch_variables[0]]
+    token = config[constants.config_sections[1]][constants.twitch_variables[1]]
     sock = socket.socket()
     try:
         sock.connect(constants.address)
@@ -171,6 +171,7 @@ def main():
         utils.cls()
         print(f'\n{constants.banner}')
         utils.createConfig()
+        utils.printBanner()
     else:
         utils.printBanner()
     if(len(sys.argv) < 2):
