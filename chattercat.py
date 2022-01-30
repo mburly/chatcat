@@ -106,11 +106,12 @@ def run(channel_name, session_id, flag):
             try:
                 resp = sock.recv(2048).decode('utf-8', errors='ignore')
                 if resp == '' :
-                    file.write(f'{utils.getDateTime()} - TIMEOUT/OVERFLOW ERROR.\n')
+                    file.write(f'{utils.getDateTime()} - 1 - TIMEOUT/OVERFLOW ERROR.\n')
                     sock.close()
                     return 1
-            except:
-                file.write(f'{utils.getDateTime()} - TIMEOUT/OVERFLOW ERROR.\n')
+            except Exception as msg:
+                file.write(msg)
+                file.write(f'{utils.getDateTime()} - 2 - TIMEOUT/OVERFLOW ERROR.\n')
                 sock.close()
                 return 1
             if(len(resp) > 0):
@@ -166,18 +167,23 @@ def startSocket(channel):
     return sock
 
 def main():
-    config = configparser.ConfigParser()
     if not os.path.exists(constants.config_name):
         utils.cls()
-        print(constants.banner)
+        print(f'\n{constants.banner}')
         utils.createConfig()
     else:
         utils.cls()
-        print(constants.banner)
+        print(f'\n{constants.banner}')
     if(len(sys.argv) < 2):
-        channel_name = input(f'{input_messages[5]} ')
+        channel_name = utils.printMenu()
+        if(channel_name == 0):
+            return 0
+        while(channel_name == -1):
+            channel_name = utils.printMenu()
     else:
         channel_name = sys.argv[1]
+    utils.cls()
+    print(f'\n{constants.banner}')
     session_id = handleSession(1, channel_name)
     success = run(channel_name, session_id, 1)
     while(success == 1):

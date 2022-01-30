@@ -23,12 +23,12 @@ def createConfig():
     user = input(f'{input_messages[1]} ')
     password = input(f'{input_messages[2]} ')
     cls()
-    print(constants.banner)
+    print(f'\n{constants.banner}')
     printBanner(2)
     nickname = input(f'{input_messages[3]} ')
     token = input(f'{input_messages[4]} ')
     cls()
-    print(constants.banner)
+    print(f'\n{constants.banner}')
 
     if host == '':
         host = 'localhost'
@@ -145,6 +145,37 @@ def printError(text):
 
 def printLog(channel_name, username, message):
     print(f'[\033[1;32m{channel_name}\033[0m] [\033[1;34m{getDateTime()}\033[0m] [\033[0;94mLOG\033[0m] \033[1;35m{username}\033[0m: {message}')
+
+def printMenu():
+    print(constants.menu_message)
+    selection = input(f'{input_messages[6]} ')
+    try:
+        selection = int(selection)
+    except:
+        return -1
+    while(selection != 1):
+        if(selection == 2):
+            printOptions()
+            cls()
+            print(f'\n{constants.banner}')
+            print(constants.menu_message)
+        if(selection == 3):
+            return 0
+        else:
+            cls()
+            print(f'\n{constants.banner}')
+            print(constants.menu_message)
+        selection = input(f'{input_messages[6]} ')
+        try:
+            selection = int(selection)
+        except:
+            return -1
+    channel_name = input(f'{input_messages[5]} ')
+    return channel_name
+
+def printOptions():
+    print('foo')
+    input("Blah")
 
 def printSpaces(color, num):
     for i in range(0, num):

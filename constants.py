@@ -3,7 +3,7 @@ import os
 import pyfiglet
 
 banner = pyfiglet.figlet_format('Chattercat', font='speed')
-debug = 1
+debug = 0
 config_name = 'conf.ini'
 server = 'irc.chat.twitch.tv'
 port = 6667
@@ -13,6 +13,8 @@ blacklisted_symbols = ['#', '!', ':', '.']
 dirs = ['emotes', 'logs']
 bttv_emote_class_name = 'Emote_headerText__3r74d'
 twitch_live_class_name = 'ScAnimatedNumber-sc-acnd2k-0 bHSmOZ'
+menu_message = '[1] Enter channel name\n[2] Options\n[3] Exit'
+version = 'DEV1'
 emote_types = ['twitch','subscriber','ffz','ffz_channel','bttv','bttv_channel']
 debug_messages = ['Checking if offline with counter =', 'Detected online. Counter now =', 'Detected offline. Counter now =',
 'Stream ended. Now ending session...', 'Entering update_emotes function for source =', 'Setting emote:', 'now inactive.',
@@ -21,6 +23,6 @@ error_messages = ['Error fetching stream title. Still trying...', 'Unable to con
 'Channel not found on FrankerFaceZ API.']
 input_messages = ['Enter hostname (default is typically localhost):', 'Enter DB account username:', 'Enter DB account password:',
 'Enter your twitch username:', 'Please visit the URL \033[4;37mhttps://twitchapps.com/tmi/\033[0m and enter the token after pressing Connect: ',
-'Enter channel name:']
+'Enter channel name:', 'Please make a selection:']
 status_messages = ['Getting Twitch emotes...', 'Getting Subscriber emotes...', 'Getting FFZ Global emotes...',
 'Getting FFZ Channel emotes...', 'Getting BTTV Global emotes...', 'Getting BTTV Channel emotes...', 'Downloading emotes...']
