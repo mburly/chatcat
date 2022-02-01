@@ -119,6 +119,16 @@ def downloadAllEmotes(channel_name):
     db.close()
     os.chdir('../../')
 
+def dropDatabase(channel_name):
+    db_name = f'cc_{channel_name}'
+    db = connect(channel_name)
+    cursor = db.cursor()
+    stmt = f'DROP DATABASE {db_name};'
+    cursor.execute(stmt)
+    db.commit()
+    cursor.close()
+    db.close()
+
 def getEmotes(channel_name, flag):
     emotes = []
     db = connect(channel_name)

@@ -154,6 +154,7 @@ def printLabel(flag):
         print(text)
         printSpaces('[0;102m',len(text)-9)
     elif(flag == 3):
+        print(f'Version [v{constants.version}]\n')
         text = f'\033[44mOPTIONS\033[0m'
         printSpaces('[0;104m',len(text)-9)
         print(text)
@@ -247,8 +248,14 @@ def printSpaces(color, num):
 def progressbar(it, prefix="", size=60, file=sys.stdout):
     count = len(it)
     def show(j):
+        if((j/count)*100 <= 10):
+            color = f'\033[1;31m'
+        elif((j/count)*100 < 100):
+            color = f'\033[1;33m'
+        else:
+            color = f'\033[1;32m'
         x = int(size*j/count)
-        file.write("%s[%s%s] %i/%i\r" % (prefix, "●"*x, " "*(size-x), j, count))
+        file.write("%s[%s%s%s%s] %s%i/%i%s\r" % (prefix, color, "●"*x, " "*(size-x), '\033[0m', color, j, count, '\033[0m'))
         file.flush()        
     show(0)
     for i, item in enumerate(it):

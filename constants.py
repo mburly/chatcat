@@ -20,7 +20,7 @@ twitch_live_class_name = 'ScAnimatedNumber-sc-acnd2k-0 bHSmOZ'
 main_menu = '[1] Enter channel name\n[2] Options\n[3] Exit'
 options_menu = '[1] Download settings\n[2] Back'
 download_options_menu = 'Download emotes to chatcat folder?\n[1] Yes *DEFAULT*\n[2] No'
-version = 'vDEV1'
+version = 'DEV1'
 emote_types = ['twitch','subscriber','ffz','ffz_channel','bttv','bttv_channel']
 debug_messages = ['Checking if offline with counter =', 'Detected online. Counter now =', 'Detected offline. Counter now =',
 'Stream ended. Now ending session...', 'Entering update_emotes function for source =', 'Setting emote:', 'now inactive.',

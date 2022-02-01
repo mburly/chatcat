@@ -16,6 +16,8 @@ input_messages = constants.input_messages
 
 # (flag) 1 = start, 2 = end
 def handleSession(flag, channel_name):
+    if(twitch.getChannelId(channel_name) == None):
+        return -2
     database = db.connect(channel_name)
     cursor = database.cursor()
     datetime = utils.getDateTime()
@@ -78,8 +80,6 @@ def run(channel_name, session_id, flag):
     username = ''
     message = ''
     emotes = db.getEmotes(channel_name, flag)
-    if(emotes == -1):
-        return 0
 
     try:
         counter = 0
@@ -186,6 +186,9 @@ def main():
     utils.cls()
     utils.printBanner()
     session_id = handleSession(1, channel_name)
+    # Channel doesn't exist or wasn't found
+    if(session_id == -2):
+        return 0
     success = run(channel_name, session_id, 1)
     while(success == 1):
         success = run(channel_name, session_id, 2)

@@ -18,7 +18,7 @@ def getChannelId(channel_name):
     try:
         page = urlopen(url, context=ssl.create_default_context(cafile=certifi.where()))
     except:
-        print(error_messages[2])
+        utils.printError(error_messages[2])
         return None
     html = page.read().decode('utf-8')
     a = json.loads(html)
