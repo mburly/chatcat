@@ -6,6 +6,7 @@ import time
 import requests
 
 import constants
+import db
 
 config_sections = constants.config_sections
 db_variables = constants.db_variables
@@ -130,6 +131,8 @@ def parseUsername(message):
             username = message.split('.tmi.twitch.tv')[0]
         else:
             username = message.split('tmi.twitch.tv')[0].split('@')[1].split('.')[0]
+    if ' ' in username:
+        return None
     return username
 
 def printBanner():
@@ -236,6 +239,35 @@ def printOptions():
             config.write(configfile)
         return 0
     elif(selection == 2):
+        cls()
+        print(f'\n{constants.banner}')
+        printLabel(3)
+        print(constants.database_options_menu)
+        databases = db.getDatabases()
+        for i in range(0, len(databases)):
+            print(f'[{i+1}] {databases[i]}')
+        if(len(databases) == 0):
+            print("No databases found! Press any key to go back.")
+            selection = input()
+            return 0
+        else:
+            print(f'[{len(databases)+1}] Delete ALL databases')
+            print(f'[{len(databases)+2}] Back')
+        selection = input(f'{input_messages[6]} ')
+        if(selection == str(len(databases)+1)):
+            db.dropDatabase(databases)
+            return 0
+        if(selection == str(len(databases)+2)):
+            return 0
+        try:
+            db.dropDatabase(databases[int(selection)-1])
+            time.sleep(5)
+            return 0
+        except:
+            return 0
+    elif(selection == 3):
+        return 0
+    elif(selection == 4):
         return 0
     else:
         return -1

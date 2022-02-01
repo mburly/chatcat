@@ -12,9 +12,16 @@ db_variables = constants.db_variables
 debug = constants.debug
 debug_messages = constants.debug_messages
 
-def connect(channel_name):
+def connect(channel_name=None):
     config = configparser.ConfigParser()
     config.read(constants.config_name)
+    if(channel_name is None):
+        db = mysql.connector.connect(
+            host=config[config_sections[0]][db_variables[0]],
+            user=config[config_sections[0]][db_variables[1]],
+            password=config[config_sections[0]][db_variables[2]]
+        )
+        return db
     db_name = f'cc_{channel_name}'
     if(os.name == 'nt'):
         try:
@@ -120,14 +127,34 @@ def downloadAllEmotes(channel_name):
     os.chdir('../../')
 
 def dropDatabase(channel_name):
-    db_name = f'cc_{channel_name}'
-    db = connect(channel_name)
+    db = connect()
     cursor = db.cursor()
-    stmt = f'DROP DATABASE {db_name};'
+    if(type(channel_name) == list):
+        for channel in channel_name:
+            stmt = f'DROP DATABASE cc_{channel};'
+            cursor.execute(stmt)
+            db.commit()
+        cursor.close()
+        db.close()
+    else:
+        stmt = f'DROP DATABASE cc_{channel_name};'
+        cursor.execute(stmt)
+        db.commit()
+        cursor.close()
+        db.close()
+
+def getDatabases():
+    db = connect()
+    cursor = db.cursor()
+    stmt = 'SHOW DATABASES;'
     cursor.execute(stmt)
-    db.commit()
+    databases = []
+    for row in cursor.fetchall():
+        if 'cc_' in row[0]:
+            databases.append(row[0].split('cc_')[1])
     cursor.close()
     db.close()
+    return databases
 
 def getEmotes(channel_name, flag):
     emotes = []

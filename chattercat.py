@@ -186,6 +186,8 @@ def main():
         if(channel_name == 0):
             return 0
         while(channel_name == -1):
+            utils.cls()
+            utils.printBanner()
             channel_name = utils.printMenu()
     else:
         channel_name = sys.argv[1]

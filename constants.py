@@ -18,8 +18,9 @@ dirs = ['emotes', 'logs']
 bttv_emote_class_name = 'Emote_headerText__3r74d'
 twitch_live_class_name = 'ScAnimatedNumber-sc-acnd2k-0 bHSmOZ'
 main_menu = '[1] Enter channel name\n[2] Options\n[3] Exit'
-options_menu = '[1] Download settings\n[2] Back'
+options_menu = '[1] Download settings\n[2] Delete databases\n[3] Set debug mode\n[4] Back'
 download_options_menu = 'Download emotes to chatcat folder?\n[1] Yes *DEFAULT*\n[2] No'
+database_options_menu = 'Please select which databases to delete. They are NOT recoverable.'
 version = 'DEV1'
 emote_types = ['twitch','subscriber','ffz','ffz_channel','bttv','bttv_channel']
 debug_messages = ['Checking if offline with counter =', 'Detected online. Counter now =', 'Detected offline. Counter now =',
