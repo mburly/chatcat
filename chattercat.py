@@ -112,9 +112,15 @@ def run(channel_name, session_id, flag):
                     sock.close()
                     return 1
             except Exception as msg:
-                file.write(str(msg))
+                file.write(f'{utils.getDateTime()} - {str(msg)}\n')
                 sock.close()
                 return 1
+            except KeyboardInterrupt:
+                try:
+                    sock.close()
+                    return -3
+                except:
+                    return -3
             if(len(resp) > 0):
                 username = resp.split('!')[0]
                 username = username.split(':')
@@ -188,6 +194,7 @@ def main():
     session_id = handleSession(1, channel_name)
     # Channel doesn't exist or wasn't found
     if(session_id == -2):
+        utils.printError(error_messages[2])
         return 0
     success = run(channel_name, session_id, 1)
     while(success == 1):
