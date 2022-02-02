@@ -23,44 +23,23 @@ def connect(channel_name=None):
         )
         return db
     db_name = f'cc_{channel_name}'
-    if(os.name == 'nt'):
-        try:
-            db = mysql.connector.connect(
-                host=config[config_sections[0]][db_variables[0]],
-                user=config[config_sections[0]][db_variables[1]],
-                password=config[config_sections[0]][db_variables[2]],
-                database=db_name
-            )
-            return db
-        except:
-            createDB(channel_name)
-            db = mysql.connector.connect(
-                host=config[config_sections[0]][db_variables[0]],
-                user=config[config_sections[0]][db_variables[1]],
-                password=config[config_sections[0]][db_variables[2]],
-                database=db_name
-            )
-            return db
-    else:
-        try:
-            db = mysql.connector.connect(
-                host=config[config_sections[0]][db_variables[0]],
-                user=config[config_sections[0]][db_variables[1]],
-                password=config[config_sections[0]][db_variables[2]],
-                database=db_name,
-                charset='utf8mb4'
-            )
-            return db
-        except:
-            createDB(channel_name)
-            db = mysql.connector.connect(
-                host=config[config_sections[0]][db_variables[0]],
-                user=config[config_sections[0]][db_variables[1]],
-                password=config[config_sections[0]][db_variables[2]],
-                database=db_name,
-                charset='utf8mb4'
-            )
-            return db
+    try:
+        db = mysql.connector.connect(
+            host=config[config_sections[0]][db_variables[0]],
+            user=config[config_sections[0]][db_variables[1]],
+            password=config[config_sections[0]][db_variables[2]],
+            database=db_name
+        )
+        return db
+    except:
+        createDB(channel_name)
+        db = mysql.connector.connect(
+            host=config[config_sections[0]][db_variables[0]],
+            user=config[config_sections[0]][db_variables[1]],
+            password=config[config_sections[0]][db_variables[2]],
+            database=db_name
+        )
+        return db
 
 def createDB(channel_name):
     config = configparser.ConfigParser()
