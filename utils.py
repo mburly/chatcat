@@ -50,7 +50,8 @@ def createConfig():
     }
 
     config[config_sections[2]] = {
-        options_variables[0]:True
+        options_variables[0]:True,
+        options_variables[1]:'0'
     }
 
     with open(constants.config_name, 'w') as configfile:
@@ -93,6 +94,11 @@ def getDateTime():
     if(cur.tm_sec < 10):
         sec = '0'
     return f'{mon}{str(cur.tm_mon)}-{day}{str(cur.tm_mday)}-{str(cur.tm_year)} {hour}{str(cur.tm_hour)}:{min}{str(cur.tm_min)}:{sec}{str(cur.tm_sec)}'
+
+def getDebugMode():
+    config = configparser.ConfigParser()
+    config.read(constants.config_name)
+    return int(config[constants.config_sections[2]][options_variables[1]])
 
 def getIndices(list, text):
     indices = []
@@ -227,13 +233,15 @@ def printOptions():
                 return 0
             else:
                 config[config_sections[2]] = {
-                    options_variables[0]:True
+                    options_variables[0]:True,
+                    options_variables[1]:config[config_sections[2]][options_variables[1]]
                 }
         elif(selection == 2):
             if(config[config_sections[2]] == False):
                 return 0
             config[config_sections[2]] = {
-                options_variables[0]:False
+                options_variables[0]:False,
+                options_variables[1]:config[config_sections[2]][options_variables[1]]
             }
         with open(constants.config_name, 'w') as configfile:
             config.write(configfile)
@@ -266,6 +274,37 @@ def printOptions():
         except:
             return 0
     elif(selection == 3):
+        cls()
+        print(f'\n{constants.banner}')
+        printLabel(3)
+        print(constants.debug_options_menu)
+        selection = input(f'{input_messages[6]} ')
+        try:
+            selection = int(selection)
+        except:
+            return -1
+        config = configparser.ConfigParser()
+        config.read(constants.config_name)
+        if(selection == 1):
+            if(config[config_sections[2]][options_variables[1]] == '0'):
+                config[config_sections[2]] = {
+                options_variables[0]:config[config_sections[2]][options_variables[0]],
+                options_variables[1]:'1'
+                }
+            else:
+                return 0
+        elif(selection == 2):
+            if(config[config_sections[2]][options_variables[1]] == '1'):
+                config[config_sections[2]] = {
+                options_variables[0]:config[config_sections[2]][options_variables[0]],
+                options_variables[1]:'0'
+                }
+            else:
+                return 0
+        else:
+            return -1
+        with open(constants.config_name, 'w') as configfile:
+            config.write(configfile)
         return 0
     elif(selection == 4):
         return 0

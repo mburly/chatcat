@@ -9,7 +9,6 @@ import db
 import twitch
 import utils
 
-debug = constants.debug
 debug_messages = constants.debug_messages
 error_messages = constants.error_messages
 input_messages = constants.input_messages
@@ -63,7 +62,7 @@ def parseEmotes(emotes, message):
     return parsed_emotes
 
 # flags 1 = first run, 2 = otherwise
-def run(channel_name, session_id, flag):
+def run(channel_name, session_id, debug, flag):
     channel = '#' + channel_name
     sock = startSocket(channel)
     if(os.path.exists(constants.dirs[1]) is False):
@@ -198,9 +197,10 @@ def main():
     if(session_id == -2):
         utils.printError(error_messages[2])
         return 0
-    success = run(channel_name, session_id, 1)
+    debug = utils.getDebugMode()
+    success = run(channel_name, session_id, debug, 1)
     while(success == 1):
-        success = run(channel_name, session_id, 2)
+        success = run(channel_name, session_id, debug, 2)
     handleSession(2, channel_name)
 
 

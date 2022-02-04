@@ -9,19 +9,21 @@ import utils
 
 config_sections = constants.config_sections
 db_variables = constants.db_variables
-debug = constants.debug
 debug_messages = constants.debug_messages
 
 def connect(channel_name=None):
     config = configparser.ConfigParser()
     config.read(constants.config_name)
     if(channel_name is None):
-        db = mysql.connector.connect(
-            host=config[config_sections[0]][db_variables[0]],
-            user=config[config_sections[0]][db_variables[1]],
-            password=config[config_sections[0]][db_variables[2]]
-        )
-        return db
+        try:
+            db = mysql.connector.connect(
+                host=config[config_sections[0]][db_variables[0]],
+                user=config[config_sections[0]][db_variables[1]],
+                password=config[config_sections[0]][db_variables[2]]
+            )
+            return db
+        except:
+            return -1
     db_name = f'cc_{channel_name}'
     try:
         db = mysql.connector.connect(
@@ -47,11 +49,14 @@ def createDB(channel_name):
     host = config[config_sections[0]][db_variables[0]]
     user = config[config_sections[0]][db_variables[1]]
     password = config[config_sections[0]][db_variables[2]]
-    db = mysql.connector.connect(
-        host=host,
-        user=user,
-        password=password
-    )
+    try:
+        db = mysql.connector.connect(
+            host=host,
+            user=user,
+            password=password
+        )
+    except:
+        return -1
     cursor = db.cursor()
     try:
         db_name = f'cc_{channel_name}'
@@ -124,6 +129,8 @@ def dropDatabase(channel_name):
 
 def getDatabases():
     db = connect()
+    if(db == -1):
+        return []
     cursor = db.cursor()
     stmt = 'SHOW DATABASES;'
     cursor.execute(stmt)
@@ -241,7 +248,8 @@ def populateEmotes(channel_name):
     return 0
 
 def updateEmotes(channel_name, source):
-    if(constants.debug):
+    debug = utils.getDebugMode()
+    if(debug):
         utils.printDebug(f'{debug_messages[4]} {constants.emote_types[source-1]}')
     channel_id = twitch.getChannelId(channel_name)
     if(channel_id == None):
