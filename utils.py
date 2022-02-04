@@ -12,6 +12,7 @@ config_sections = constants.config_sections
 db_variables = constants.db_variables
 twitch_variables = constants.twitch_variables
 options_variables = constants.options_variables
+error_messages = constants.error_messages
 input_messages = constants.input_messages
 os.system("")
 
@@ -51,7 +52,7 @@ def createConfig():
 
     config[config_sections[2]] = {
         options_variables[0]:True,
-        options_variables[1]:'0'
+        options_variables[1]:False
     }
 
     with open(constants.config_name, 'w') as configfile:
@@ -190,6 +191,9 @@ def printMenu():
     while(selection != 1):
         if(selection == 2):
             code = printOptions()
+            if(code == -1):
+                printError(error_messages[3])
+                a = input()
             printBanner()
             print(constants.main_menu)
         elif(selection == 3):
@@ -207,9 +211,7 @@ def printMenu():
     return channel_name
 
 def printOptions():
-    cls()
-    print(f'\n{constants.banner}')
-    printLabel(3)
+    printOptionsHeader()
     print(constants.options_menu)
     selection = input(f'{input_messages[6]} ')
     try:
@@ -217,9 +219,7 @@ def printOptions():
     except:
         return -1
     if(selection == 1):
-        cls()
-        print(f'\n{constants.banner}')
-        printLabel(3)
+        printOptionsHeader()
         print(constants.download_options_menu)
         selection = input(f'{input_messages[6]} ')
         try:
@@ -247,9 +247,7 @@ def printOptions():
             config.write(configfile)
         return 0
     elif(selection == 2):
-        cls()
-        print(f'\n{constants.banner}')
-        printLabel(3)
+        printOptionsHeader()
         print(constants.database_options_menu)
         databases = db.getDatabases()
         for i in range(0, len(databases)):
@@ -274,9 +272,7 @@ def printOptions():
         except:
             return 0
     elif(selection == 3):
-        cls()
-        print(f'\n{constants.banner}')
-        printLabel(3)
+        printOptionsHeader()
         print(constants.debug_options_menu)
         selection = input(f'{input_messages[6]} ')
         try:
@@ -286,18 +282,18 @@ def printOptions():
         config = configparser.ConfigParser()
         config.read(constants.config_name)
         if(selection == 1):
-            if(config[config_sections[2]][options_variables[1]] == '0'):
+            if(config[config_sections[2]][options_variables[1]] == False):
                 config[config_sections[2]] = {
                 options_variables[0]:config[config_sections[2]][options_variables[0]],
-                options_variables[1]:'1'
+                options_variables[1]:True
                 }
             else:
                 return 0
         elif(selection == 2):
-            if(config[config_sections[2]][options_variables[1]] == '1'):
+            if(config[config_sections[2]][options_variables[1]] == True):
                 config[config_sections[2]] = {
                 options_variables[0]:config[config_sections[2]][options_variables[0]],
-                options_variables[1]:'0'
+                options_variables[1]:False
                 }
             else:
                 return 0
@@ -310,6 +306,11 @@ def printOptions():
         return 0
     else:
         return -1
+
+def printOptionsHeader():
+    cls()
+    print(f'\n{constants.banner}')
+    printLabel(3)
 
 def printSpaces(color, num):
     for i in range(0, num):
