@@ -144,6 +144,8 @@ def handleDatabaseOption():
         db.dropDatabase(databases[int(selection)-1])
         return 0
     except:
+        printError(error_messages[3])
+        input()
         return 0
 
 def handleDebugOption(selection):
@@ -272,34 +274,16 @@ def printMenu():
     while(selection != 1):
         if(selection == 2):
             code = printOptions()
-            if(code == 0):
-                return -1
-            if(code == 1):
-                while(code == 1):
-                    code = printOptions()
-                    if(code == 0):
-                        return -1
-            if(code == -1):
-                printError(error_messages[3])
-                input()
-            while(code == -1):
-                code = printOptions()
-                print(f'CODE NOW = {code}')
+            while(code != 0):
                 if(code == -1):
                     printError(error_messages[3])
                     input()
-                elif(code == 0):
-                    return -2
+                code = printOptions()
+            return 1
         elif(selection == 3):
             cls()
             return 0
         else:
-            printBanner()
-            print(constants.main_menu)
-        selection = input(f'{input_messages[6]} ')
-        try:
-            selection = int(selection)
-        except:
             return -1
     channel_name = input(f'{input_messages[5]} ')
     return channel_name

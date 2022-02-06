@@ -16,7 +16,7 @@ input_messages = constants.input_messages
 # (flag) 1 = start, 2 = end
 def handleSession(flag, channel_name):
     if(twitch.getChannelId(channel_name) == None):
-        return -2
+        return -1
     database = db.connect(channel_name)
     cursor = database.cursor()
     datetime = utils.getDateTime()
@@ -184,41 +184,35 @@ def main():
         channel_name = utils.printMenu()
         if(channel_name == 0):
             return 0
-        while(channel_name == -1):
-            utils.printError(error_messages[3])
-            input()
-            utils.cls()
+        while(channel_name == 1 or channel_name == -1):
+            if(channel_name == -1):
+                utils.printError(error_messages[3])
+                input()
             utils.printBanner()
             channel_name = utils.printMenu()
-            if(channel_name == 0):
-                return 0
+        if(channel_name == 0):
+            return 0
     else:
         channel_name = sys.argv[1]
     utils.cls()
     utils.printBanner()
     session_id = handleSession(1, channel_name)
-    # Channel doesn't exist or wasn't found
-    if(session_id == -2):
+    while(session_id == -1):
         utils.printError(error_messages[2])
         input()
-        while(session_id == -2):
-            utils.cls()
-            utils.printBanner()
-            channel_name = utils.printMenu()
-            if(channel_name == 0):
-                return 0
-            while(channel_name == -1):
+        utils.printBanner()
+        channel_name = utils.printMenu()
+        if(channel_name == 0):
+            return 0
+        while(channel_name == 1 or channel_name == -1):
+            if(channel_name == -1):
                 utils.printError(error_messages[3])
-                input()
-                utils.cls()
-                utils.printBanner()
-                channel_name = utils.printMenu()
-            if(channel_name == 0):
-                return 0
-            utils.cls()
-            utils.printBanner()
-            session_id = handleSession(1, channel_name)
-        return 0
+            channel_name = utils.printMenu()
+        if(channel_name == 0):
+            return 0
+        utils.cls()
+        utils.printBanner()
+        session_id = handleSession(1, channel_name)
     debug = utils.getDebugMode()
     success = run(channel_name, session_id, debug, 1)
     while(success == 1):
