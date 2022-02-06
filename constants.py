@@ -27,7 +27,7 @@ debug_messages = ['Checking if offline with counter =', 'Detected online. Counte
 'Stream ended. Now ending session...', 'Entering update_emotes function for source =', 'Setting emote:', 'now inactive.',
 'now reactivated.']
 error_messages = ['Error fetching stream title. Still trying...', 'Unable to connect to host. Likely lost internet connection.',
-'Channel not found on FrankerFaceZ API.', 'Invalid selection. Press any key to return to the main menu.']
+'Channel not found on FrankerFaceZ API. Press any key to return to the previous menu.', 'Invalid selection. Press any key to return to the previous menu.']
 input_messages = ['Enter hostname (default is typically localhost):', 'Enter DB account username:', 'Enter DB account password:',
 'Enter your twitch username:', 'Please visit the URL \033[4;37mhttps://twitchapps.com/tmi/\033[0m and enter the token after pressing Connect:',
 'Enter channel name:', 'Please make a selection:']

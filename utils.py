@@ -119,6 +119,83 @@ def getOccurrences(list, text):
             occurrences += 1
     return occurrences
 
+def handleDatabaseOption():
+    databases = db.getDatabases()
+    num_databases = len(databases)
+    for i in range(0, num_databases):
+        print(f'[{i+1}] {databases[i]}')
+    if(num_databases == 0):
+        print("No databases found! Press any key to go back.")
+        selection = input()
+        return 0
+    else:
+        if(num_databases != 1):
+            print(f'[{num_databases+1}] Delete ALL databases')
+            print(f'[{num_databases+2}] Back')
+        else:
+            print(f'[{num_databases+1}] Back')
+    selection = input(f'{input_messages[6]} ')
+    if(selection == str(num_databases+1)):
+        db.dropDatabase(databases)
+        return 0
+    if(selection == str(num_databases+2)):
+        return 0
+    try:
+        db.dropDatabase(databases[int(selection)-1])
+        return 0
+    except:
+        return 0
+
+def handleDebugOption(selection):
+    config = configparser.ConfigParser()
+    config.read(constants.config_name)
+    debug = getDebugMode()
+    if(selection == 1):
+        if(debug == False):
+            config[config_sections[2]] = {
+            options_variables[0]:config[config_sections[2]][options_variables[0]],
+            options_variables[1]:True
+            }
+        else:
+            return 0
+    elif(selection == 2):
+        if(debug == True):
+            config[config_sections[2]] = {
+            options_variables[0]:config[config_sections[2]][options_variables[0]],
+            options_variables[1]:False
+            }
+        else:
+            return 0
+    else:
+        return -1
+    with open(constants.config_name, 'w') as configfile:
+        config.write(configfile)
+    return 0
+
+def handleDownloadOption(selection):
+    config = configparser.ConfigParser()
+    config.read(constants.config_name)
+    if(selection == 1):
+        if(config[config_sections[2]] == True):
+            return 0
+        else:
+            config[config_sections[2]] = {
+                options_variables[0]:True,
+                options_variables[1]:config[config_sections[2]][options_variables[1]]
+            }
+    elif(selection == 2):
+        if(config[config_sections[2]] == False):
+            return 0
+        config[config_sections[2]] = {
+            options_variables[0]:False,
+            options_variables[1]:config[config_sections[2]][options_variables[1]]
+        }
+    else:
+        return -1
+    with open(constants.config_name, 'w') as configfile:
+        config.write(configfile)
+    return 0
+
 def parseMessage(message):
     parsed_message = ''
     for i in range(0, len(message)):
@@ -195,11 +272,24 @@ def printMenu():
     while(selection != 1):
         if(selection == 2):
             code = printOptions()
+            if(code == 0):
+                return -1
+            if(code == 1):
+                while(code == 1):
+                    code = printOptions()
+                    if(code == 0):
+                        return -1
             if(code == -1):
                 printError(error_messages[3])
-                a = input()
-            printBanner()
-            print(constants.main_menu)
+                input()
+            while(code == -1):
+                code = printOptions()
+                print(f'CODE NOW = {code}')
+                if(code == -1):
+                    printError(error_messages[3])
+                    input()
+                elif(code == 0):
+                    return -2
         elif(selection == 3):
             cls()
             return 0
@@ -230,51 +320,14 @@ def printOptions():
             selection = int(selection)
         except:
             return -1
-        config = configparser.ConfigParser()
-        config.read(constants.config_name)
-        if(selection == 1):
-            if(config[config_sections[2]] == True):
-                return 0
-            else:
-                config[config_sections[2]] = {
-                    options_variables[0]:True,
-                    options_variables[1]:config[config_sections[2]][options_variables[1]]
-                }
-        elif(selection == 2):
-            if(config[config_sections[2]] == False):
-                return 0
-            config[config_sections[2]] = {
-                options_variables[0]:False,
-                options_variables[1]:config[config_sections[2]][options_variables[1]]
-            }
-        with open(constants.config_name, 'w') as configfile:
-            config.write(configfile)
-        return 0
+        if(handleDownloadOption(selection) == -1):
+            return -1
+        return 1
     elif(selection == 2):
         printOptionsHeader()
         print(constants.database_options_menu)
-        databases = db.getDatabases()
-        for i in range(0, len(databases)):
-            print(f'[{i+1}] {databases[i]}')
-        if(len(databases) == 0):
-            print("No databases found! Press any key to go back.")
-            selection = input()
-            return 0
-        else:
-            print(f'[{len(databases)+1}] Delete ALL databases')
-            print(f'[{len(databases)+2}] Back')
-        selection = input(f'{input_messages[6]} ')
-        if(selection == str(len(databases)+1)):
-            db.dropDatabase(databases)
-            return 0
-        if(selection == str(len(databases)+2)):
-            return 0
-        try:
-            db.dropDatabase(databases[int(selection)-1])
-            time.sleep(5)
-            return 0
-        except:
-            return 0
+        handleDatabaseOption()
+        return 1
     elif(selection == 3):
         printOptionsHeader()
         print(constants.debug_options_menu)
@@ -283,30 +336,9 @@ def printOptions():
             selection = int(selection)
         except:
             return -1
-        config = configparser.ConfigParser()
-        config.read(constants.config_name)
-        debug = getDebugMode()
-        if(selection == 1):
-            if(debug == False):
-                config[config_sections[2]] = {
-                options_variables[0]:config[config_sections[2]][options_variables[0]],
-                options_variables[1]:True
-                }
-            else:
-                return 0
-        elif(selection == 2):
-            if(debug == True):
-                config[config_sections[2]] = {
-                options_variables[0]:config[config_sections[2]][options_variables[0]],
-                options_variables[1]:False
-                }
-            else:
-                return 0
-        else:
+        if(handleDebugOption(selection) == -1):
             return -1
-        with open(constants.config_name, 'w') as configfile:
-            config.write(configfile)
-        return 0
+        return 1
     elif(selection == 4):
         return 0
     else:

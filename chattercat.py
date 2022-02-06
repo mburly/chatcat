@@ -185,9 +185,13 @@ def main():
         if(channel_name == 0):
             return 0
         while(channel_name == -1):
+            utils.printError(error_messages[3])
+            input()
             utils.cls()
             utils.printBanner()
             channel_name = utils.printMenu()
+            if(channel_name == 0):
+                return 0
     else:
         channel_name = sys.argv[1]
     utils.cls()
@@ -196,6 +200,24 @@ def main():
     # Channel doesn't exist or wasn't found
     if(session_id == -2):
         utils.printError(error_messages[2])
+        input()
+        while(session_id == -2):
+            utils.cls()
+            utils.printBanner()
+            channel_name = utils.printMenu()
+            if(channel_name == 0):
+                return 0
+            while(channel_name == -1):
+                utils.printError(error_messages[3])
+                input()
+                utils.cls()
+                utils.printBanner()
+                channel_name = utils.printMenu()
+            if(channel_name == 0):
+                return 0
+            utils.cls()
+            utils.printBanner()
+            session_id = handleSession(1, channel_name)
         return 0
     debug = utils.getDebugMode()
     success = run(channel_name, session_id, debug, 1)
