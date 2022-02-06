@@ -2,7 +2,6 @@ import configparser
 import os
 import sys
 import time
-from click import option
 
 import requests
 
@@ -15,6 +14,11 @@ twitch_variables = constants.twitch_variables
 options_variables = constants.options_variables
 error_messages = constants.error_messages
 input_messages = constants.input_messages
+status_messages = constants.status_messages
+bg_colors = constants.bg_colors
+bold_colors = constants.bold_colors
+colors = constants.colors
+high_int_colors = constants.high_int_colors
 os.system("")
 
 def cls(debug_flag=0):
@@ -105,6 +109,14 @@ def getDebugMode():
     else:
         return False
 
+def getDownloadOption():
+    config = configparser.ConfigParser()
+    config.read(constants.config_name)
+    if(config[config_sections[2]][constants.options_variables[0]] == 'True'):
+        return True
+    else:
+        return False
+
 def getIndices(list, text):
     indices = []
     for i in range(0, len(list)):
@@ -122,12 +134,13 @@ def getOccurrences(list, text):
 def handleDatabaseOption():
     databases = db.getDatabases()
     num_databases = len(databases)
+    if(num_databases == 0):
+        printOptionsHeader()
+        printInfo(status_messages[7])
+        input()
+        return 0
     for i in range(0, num_databases):
         print(f'[{i+1}] {databases[i]}')
-    if(num_databases == 0):
-        print("No databases found! Press any key to go back.")
-        selection = input()
-        return 0
     else:
         if(num_databases != 1):
             print(f'[{num_databases+1}] Delete ALL databases')
@@ -222,7 +235,7 @@ def parseMessage(message):
     for i in range(0, len(message)):
         if '\r\n' in message[i]:
             message[i] = message[i].split('\r\n')[0]
-        if 'tmi.twitch.tv' in message[i]:
+        if constants.server_url in message[i]:
             continue
         if i == 0:
             parsed_message = message[i]
@@ -231,15 +244,15 @@ def parseMessage(message):
     return parsed_message[1:]
 
 def parseUsername(message):
-    if message == ':tmi.twitch.tv\r\n':
+    if message == f':{constants.server_url}\r\n':
         return None
-    if ':tmi.twitch.tv\r\n' in message:
+    if f':{constants.server_url}\r\n' in message:
         message = message.split('\r\n')[1]
-    if 'tmi.twitch.tv' in message:
+    if constants.server_url in message:
         if '@' not in message:
-            username = message.split('.tmi.twitch.tv')[0]
+            username = message.split(f'.{constants.server_url}')[0]
         else:
-            username = message.split('tmi.twitch.tv')[0].split('@')[1].split('.')[0]
+            username = message.split(constants.server_url)[0].split('@')[1].split('.')[0]
     if ' ' in username:
         return None
     return username
@@ -249,25 +262,27 @@ def printBanner():
     config.read(constants.config_name)
     cls()
     print(f'\n{constants.banner}')
-    if(config[config_sections[2]][options_variables[0]] == 'True'):
-        print(f'\t\t\t\t\tDownload emotes: [\033[0;32mON\033[0m]\n')
+    if(getDownloadOption() == True):
+        print(f'\t\t\t\t\tDownload emotes: [{colors["green"]}ON{colors["clear"]}]\n')
     else:
-        print(f'\t\t\t\t\tDownload emotes: [\033[0;31mOFF\033[0m]')
+        print(f'\t\t\t\t\tDownload emotes: [{colors["red"]}OFF{colors["clear"]}]')
 
 def printLabel(flag):
     if(flag == 1):
-        text = f'\033[45mDATABASE INFORMATION\033[0m'
+        print(f'Version [v{constants.version}]\n')
+        text = f'{bg_colors["pink"]}{constants.label_titles[0]}{colors["clear"]}'
         printSpaces('[0;105m', len(text)-9)
         print(text)
         printSpaces('[0;105m', len(text)-9)
     elif(flag == 2):
-        text = f'\033[42mTWITCH INFORMATION\033[0m'
+        print(f'Version [v{constants.version}]\n')
+        text = f'{bg_colors["green"]}{constants.label_titles[1]}{colors["clear"]}'
         printSpaces('[0;102m',len(text)-9)
         print(text)
         printSpaces('[0;102m',len(text)-9)
     elif(flag == 3):
         print(f'Version [v{constants.version}]\n')
-        text = f'\033[44mOPTIONS\033[0m'
+        text = f'{bg_colors["blue"]}{constants.label_titles[2]}{colors["clear"]}'
         printSpaces('[0;104m',len(text)-9)
         print(text)
         printSpaces('[0;104m',len(text)-9)
@@ -275,16 +290,16 @@ def printLabel(flag):
         return None
 
 def printDebug(text):
-    print(f'[\033[1;34m{getDateTime()}\033[0m] [\033[0;33mDEBUG\033[0m] {text}')
+    print(f'[{bold_colors["blue"]}{getDateTime()}{colors["clear"]}] [{colors["yellow"]}DEBUG{colors["clear"]}] {text}')
 
 def printError(text):
-    print(f'[\033[1;34m{getDateTime()}\033[0m] [\033[0;91mERROR\033[0m] {text}')
+    print(f'[{bold_colors["blue"]}{getDateTime()}{colors["clear"]}] [{high_int_colors["red"]}ERROR{colors["clear"]}] {text}')
 
 def printInfo(text):
-    print(f'[\033[1;34m{getDateTime()}\033[0m] [\033[0;92mINFO\033[0m] {text}')
+    print(f'[{bold_colors["blue"]}{getDateTime()}{colors["clear"]}] [{high_int_colors["green"]}INFO{colors["clear"]}] {text}')
 
 def printLog(channel_name, username, message):
-    print(f'[\033[1;32m{channel_name}\033[0m] [\033[1;34m{getDateTime()}\033[0m] [\033[0;94mLOG\033[0m] \033[1;35m{username}\033[0m: {message}')
+    print(f'[{bold_colors["green"]}{channel_name}{colors["clear"]}] [{bold_colors["blue"]}{getDateTime()}{colors["clear"]}] [{high_int_colors["blue"]}LOG{colors["clear"]}] {bold_colors["purple"]}{username}{colors["clear"]}: {message}')
 
 def printMenu():
     print(constants.main_menu)
@@ -358,19 +373,19 @@ def printOptionsHeader():
 def printSpaces(color, num):
     for i in range(0, num):
         print(f'\033{color} ', end="")
-    print("\033[0m")
+    print(colors['clear'])
 
 def progressbar(it, prefix="", size=60, file=sys.stdout):
     count = len(it)
     def show(j):
         if((j/count)*100 <= 10):
-            color = f'\033[1;31m'
+            color = bold_colors['red']
         elif((j/count)*100 < 100):
-            color = f'\033[1;33m'
+            color = bold_colors['yellow']
         else:
-            color = f'\033[1;32m'
+            color = bold_colors['green']
         x = int(size*j/count)
-        file.write("%s[%s%s%s%s] %s%i/%i%s\r" % (prefix, color, "●"*x, " "*(size-x), '\033[0m', color, j, count, '\033[0m'))
+        file.write("%s[%s%s%s%s] %s%i/%i%s\r" % (prefix, color, "●"*x, " "*(size-x), colors['clear'], color, j, count, colors['clear']))
         file.flush()        
     show(0)
     for i, item in enumerate(it):

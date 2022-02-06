@@ -75,7 +75,7 @@ def createDB(channel_name):
         cursor.close()
         db.close()
         populateEmotes(channel_name)
-        if(config[config_sections[2]][constants.options_variables[0]] == 'True'):
+        if(utils.getDownloadOption()):
             downloadAllEmotes(channel_name)
         return 0
     except:
@@ -311,12 +311,12 @@ def updateEmotes(channel_name, source):
                 info = twitch.getSubscriberEmoteInfo(channel_id, emote)
             elif(source == 3 or source == 4):
                 info = twitch.getFFZEmoteInfo(emote)
-            if(len(info["url"]) == 3):
-                url = info["url"][2]
+            if(len(info['url']) == 3):
+                url = info['url'][2]
             else:
-                url = info["url"][0]
-            if('\\' in info["code"]):
-                info["code"] = info["code"].replace('\\', '\\\\')
+                url = info['url'][0]
+            if('\\' in info['code']):
+                info['code'] = info['code'].replace('\\', '\\\\')
             stmt = f'INSERT INTO emotes (code, emote_id, url, date_added, source, active) VALUES ("{info["code"]}","{emote}","{url}","{utils.getDate()}","{source}",1);'
             cursor.execute(stmt)
             db.commit()
@@ -369,7 +369,7 @@ def updateEmotes(channel_name, source):
 
     config = configparser.ConfigParser()
     config.read(constants.config_name)
-    if(new_emotes > 0 and config[config_sections[2]][constants.options_variables[0]] == 'True'):
+    if(new_emotes > 0 and utils.getDownloadOption()):
         downloadAllEmotes(channel_name)
 
     cursor.close()

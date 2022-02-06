@@ -27,7 +27,7 @@ def handleSession(flag, channel_name):
             utils.printError(error_messages[0])
             while(len(stream_title) > 140 or '<meta' in stream_title):
                 if(counter >= 20):
-                    stream_title = 'Unable to get stream title.'
+                    stream_title = constants.unknown_stream_title
                     break
                 stream_title = twitch.getChannelTitle(channel_name)
                 counter += 1
@@ -61,7 +61,7 @@ def parseEmotes(emotes, message):
             parsed_emotes.append(word)
     return parsed_emotes
 
-# flags 1 = first run, 2 = otherwise
+# (flag) 1 = first run, 2 = otherwise
 def run(channel_name, session_id, debug, flag):
     channel = '#' + channel_name
     sock = startSocket(channel)
@@ -107,7 +107,7 @@ def run(channel_name, session_id, debug, flag):
             try:
                 resp = sock.recv(2048).decode('utf-8', errors='ignore')
                 if resp == '' :
-                    file.write(f'{utils.getDateTime()} - 1 - TIMEOUT/OVERFLOW ERROR.\n')
+                    file.write(f'{utils.getDateTime()} - {constants.log_errors[0]}.\n')
                     sock.close()
                     return 1
             except Exception as msg:
@@ -125,11 +125,11 @@ def run(channel_name, session_id, debug, flag):
                 username = username.split(':')
                 username = username[len(username)-1]
                 message = resp.split(' ')
-                occurrences = utils.getOccurrences(message, "tmi.twitch.tv")
+                occurrences = utils.getOccurrences(message, constants.server_url)
                 if(occurrences == 1):
                     message = utils.parseMessage(message[3:])
                 else:
-                    username_indices = utils.getIndices(message, 'tmi.twitch.tv')
+                    username_indices = utils.getIndices(message, constants.server_url)
                     occurrences = len(username_indices)
                     for i in range(0, occurrences):
                         if(i == occurrences-1):
