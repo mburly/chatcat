@@ -2,6 +2,7 @@ import configparser
 import os
 import sys
 import time
+from click import option
 
 import requests
 
@@ -284,8 +285,9 @@ def printOptions():
             return -1
         config = configparser.ConfigParser()
         config.read(constants.config_name)
+        debug = getDebugMode()
         if(selection == 1):
-            if(config[config_sections[2]][options_variables[1]] == False):
+            if(debug == False):
                 config[config_sections[2]] = {
                 options_variables[0]:config[config_sections[2]][options_variables[0]],
                 options_variables[1]:True
@@ -293,7 +295,7 @@ def printOptions():
             else:
                 return 0
         elif(selection == 2):
-            if(config[config_sections[2]][options_variables[1]] == True):
+            if(debug == True):
                 config[config_sections[2]] = {
                 options_variables[0]:config[config_sections[2]][options_variables[0]],
                 options_variables[1]:False
