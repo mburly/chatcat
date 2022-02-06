@@ -99,7 +99,10 @@ def getDateTime():
 def getDebugMode():
     config = configparser.ConfigParser()
     config.read(constants.config_name)
-    return int(config[constants.config_sections[2]][options_variables[1]])
+    if(config[constants.config_sections[2]][options_variables[1]] == 'True'):
+        return True
+    else:
+        return False
 
 def getIndices(list, text):
     indices = []
