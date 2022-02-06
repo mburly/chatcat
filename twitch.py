@@ -55,32 +55,32 @@ def getAllChannelEmoteInfo(channel_name):
     if(id == None):
         return -1
     emotes = {}
-    print(status_messages[0])
+    utils.printInfo(status_messages[0])
     try:
         emotes[emote_types[0]] = getEmoteSetInfo(getGlobalEmotes(),1,id)
     except:
         emotes[emote_types[0]] = []
-    print(status_messages[1])
+    utils.printInfo(status_messages[1])
     try:
         emotes[emote_types[1]] = getEmoteSetInfo(getSubscriberEmotes(id),2,id)
     except:
         emotes[emote_types[1]] = []
-    print(status_messages[2])
+    utils.printInfo(status_messages[2])
     try:
         emotes[emote_types[2]] = getEmoteSetInfo(getGlobalFFZEmotes(),3,id)
     except:
         emotes[emote_types[2]] = []
-    print(status_messages[3])
+    utils.printInfo(status_messages[3])
     try:
         emotes[emote_types[3]] = getEmoteSetInfo(getChannelFFZEmotes(id),3,id)
     except:
         emotes[emote_types[3]] = []
-    print(status_messages[4])
+    utils.printInfo(status_messages[4])
     try:
         emotes[emote_types[4]] = getBTTVGlobalEmoteInfoProg()
     except:
         emotes[emote_types[4]] = []
-    print(status_messages[5])
+    utils.printInfo(status_messages[5])
     try:
         emotes[emote_types[5]] = getBTTVChannelEmoteInfoProg(id)
     except:

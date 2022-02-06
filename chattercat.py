@@ -31,7 +31,7 @@ def handleSession(flag, channel_name):
                     break
                 stream_title = twitch.getChannelTitle(channel_name)
                 counter += 1
-        utils.printLog(channel_name, "Stream Title", stream_title)
+        utils.printInfo(f'Stream Title: {stream_title}')
         stmt = f'INSERT INTO sessions (stream_title, start_datetime) VALUES ("{stream_title}", "{datetime}")'
         cursor.execute(stmt)
         database.commit()

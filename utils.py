@@ -133,17 +133,33 @@ def handleDatabaseOption():
             print(f'[{num_databases+1}] Delete ALL databases')
             print(f'[{num_databases+2}] Back')
             selection = input(f'{input_messages[6]} ')
-            if(selection == str(num_databases+1)):
+            try:
+                selection = int(selection)
+            except:
+                printError(error_messages[3])
+                input()
+                return 0
+            if(selection == num_databases+1):
                 db.dropDatabase(databases)
                 return 0
-            if(selection == str(num_databases+2)):
+            if(selection == num_databases+2):
                 return 0
         else:
             print(f'[{num_databases+1}] Back')
             selection = input(f'{input_messages[6]} ')
-            if(selection == str(num_databases+1)):
+            try:
+                selection = int(selection)
+            except:
+                printError(error_messages[3])
+                input()
+                return 0
+            if(selection == num_databases+1):
                 return 0
     try:
+        if(selection <= 0):
+            printError(error_messages[3])
+            input()
+            return 0
         db.dropDatabase(databases[int(selection)-1])
         return 0
     except:
@@ -263,6 +279,9 @@ def printDebug(text):
 
 def printError(text):
     print(f'[\033[1;34m{getDateTime()}\033[0m] [\033[0;91mERROR\033[0m] {text}')
+
+def printInfo(text):
+    print(f'[\033[1;34m{getDateTime()}\033[0m] [\033[0;92mINFO\033[0m] {text}')
 
 def printLog(channel_name, username, message):
     print(f'[\033[1;32m{channel_name}\033[0m] [\033[1;34m{getDateTime()}\033[0m] [\033[0;94mLOG\033[0m] \033[1;35m{username}\033[0m: {message}')

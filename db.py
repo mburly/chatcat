@@ -94,7 +94,7 @@ def downloadAllEmotes(channel_name):
     cursor.execute(stmt)
     rows = cursor.fetchall()
     counter = 0
-    print(constants.status_messages[6])
+    utils.printInfo(constants.status_messages[6])
     for row in utils.progressbar(rows):
         emote_name = row[2]
         for character in constants.bad_file_chars:
