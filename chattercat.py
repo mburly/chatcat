@@ -182,8 +182,6 @@ def main():
         utils.printBanner()
     if(len(sys.argv) < 2):
         channel_name = utils.printMenu()
-        if(channel_name == 0):
-            return 0
         while(channel_name == 1 or channel_name == -1):
             if(channel_name == -1):
                 utils.printError(error_messages[3])

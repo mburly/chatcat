@@ -132,14 +132,17 @@ def handleDatabaseOption():
         if(num_databases != 1):
             print(f'[{num_databases+1}] Delete ALL databases')
             print(f'[{num_databases+2}] Back')
+            selection = input(f'{input_messages[6]} ')
+            if(selection == str(num_databases+1)):
+                db.dropDatabase(databases)
+                return 0
+            if(selection == str(num_databases+2)):
+                return 0
         else:
             print(f'[{num_databases+1}] Back')
-    selection = input(f'{input_messages[6]} ')
-    if(selection == str(num_databases+1)):
-        db.dropDatabase(databases)
-        return 0
-    if(selection == str(num_databases+2)):
-        return 0
+            selection = input(f'{input_messages[6]} ')
+            if(selection == str(num_databases+1)):
+                return 0
     try:
         db.dropDatabase(databases[int(selection)-1])
         return 0
