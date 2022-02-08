@@ -377,6 +377,7 @@ def updateEmotes(channel_name, source):
     config.read(constants.config_name)
     if(new_emotes > 0 and utils.getDownloadOption()):
         downloadAllEmotes(channel_name)
+        utils.printInfo(f'Downloaded {new_emotes} newly active emotes.')
 
     cursor.close()
     db.close()
