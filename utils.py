@@ -21,11 +21,9 @@ colors = constants.colors
 high_int_colors = constants.high_int_colors
 os.system("")
 
-def cls(debug_flag=0):
-    if(debug_flag == 0):
-        os.system('cls' if os.name=='nt' else 'clear')
-    else:
-        return
+def cls():
+    os.system('cls' if os.name=='nt' else 'clear')
+    return
 
 def createConfig():
     config = configparser.ConfigParser()
@@ -43,6 +41,9 @@ def createConfig():
 
     if host == '':
         host = 'localhost'
+
+    if user == '':
+        user = 'root'
     
     config[config_sections[0]] = {
         db_variables[0]:host,
@@ -60,9 +61,12 @@ def createConfig():
         options_variables[1]:False
     }
 
-    with open(constants.config_name, 'w') as configfile:
-        config.write(configfile)
-        configfile.close()
+    try:
+        with open(constants.config_name, 'w') as configfile:
+            config.write(configfile)
+            configfile.close()
+    except:
+        return -1
 
 def downloadFile(url, fileName):
     r = requests.get(url)
@@ -143,8 +147,7 @@ def handleDatabaseOption():
         print(f'[{i+1}] {databases[i]}')
     else:
         if(num_databases != 1):
-            print(f'[{num_databases+1}] Delete ALL databases')
-            print(f'[{num_databases+2}] Back')
+            print(f'[{num_databases+1}] {constants.database_options_menu[0]}\n[{num_databases+2}] {constants.database_options_menu[1]}')
             selection = input(f'{input_messages[6]} ')
             try:
                 selection = int(selection)
@@ -298,8 +301,8 @@ def printError(text):
 def printInfo(text):
     print(f'[{bold_colors["blue"]}{getDateTime()}{colors["clear"]}] [{high_int_colors["green"]}INFO{colors["clear"]}] {text}')
 
-def printLog(channel_name, username, message):
-    print(f'[{bold_colors["green"]}{channel_name}{colors["clear"]}] [{bold_colors["blue"]}{getDateTime()}{colors["clear"]}] [{high_int_colors["blue"]}LOG{colors["clear"]}] {bold_colors["purple"]}{username}{colors["clear"]}: {message}')
+def printLog(channel_name, username, message, username_color):
+    print(f'[{bold_colors["green"]}{channel_name}{colors["clear"]}] [{bold_colors["blue"]}{getDateTime()}{colors["clear"]}] [{high_int_colors["blue"]}LOG{colors["clear"]}] {username_color}{username}{colors["clear"]}: {message}')
 
 def printMenu():
     print(constants.main_menu)
@@ -346,7 +349,7 @@ def printOptions():
         return 1
     elif(selection == 2):
         printOptionsHeader()
-        print(constants.database_options_menu)
+        print(constants.database_options_header)
         handleDatabaseOption()
         return 1
     elif(selection == 3):

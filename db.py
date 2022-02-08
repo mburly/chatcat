@@ -1,5 +1,6 @@
 import configparser
 import os
+import random
 
 import mysql.connector
 
@@ -34,14 +35,17 @@ def connect(channel_name=None):
         )
         return db
     except:
-        createDB(channel_name)
-        db = mysql.connector.connect(
-            host=config[config_sections[0]][db_variables[0]],
-            user=config[config_sections[0]][db_variables[1]],
-            password=config[config_sections[0]][db_variables[2]],
-            database=db_name
-        )
-        return db
+        try:
+            createDB(channel_name)
+            db = mysql.connector.connect(
+                host=config[config_sections[0]][db_variables[0]],
+                user=config[config_sections[0]][db_variables[1]],
+                password=config[config_sections[0]][db_variables[2]],
+                database=db_name
+            )
+            return db
+        except:
+            return -1
 
 def createDB(channel_name):
     config = configparser.ConfigParser()
@@ -221,7 +225,9 @@ def log(channel_name, username, message, emotes, session_id):
     if '\\\\' in message:
         message = message.replace('\\\\', '\\')
 
-    utils.printLog(channel_name, username, message)
+    rand = random.Random()
+    username_color = rand.randrange(0,5)
+    utils.printLog(channel_name, username, message, constants.username_colors[username_color])
 
 def populateEmotes(channel_name):
     emotes = twitch.getAllChannelEmoteInfo(channel_name)

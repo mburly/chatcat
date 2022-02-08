@@ -18,6 +18,8 @@ def handleSession(flag, channel_name):
     if(twitch.getChannelId(channel_name) == None):
         return -1
     database = db.connect(channel_name)
+    if(database == -1):
+        return -1
     cursor = database.cursor()
     datetime = utils.getDateTime()
     if(flag == 1):
@@ -176,7 +178,8 @@ def main():
     if not os.path.exists(constants.config_name):
         utils.cls()
         print(f'\n{constants.banner}')
-        utils.createConfig()
+        if(utils.createConfig() == -1):
+            return -1
         utils.printBanner()
     else:
         utils.printBanner()
