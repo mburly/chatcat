@@ -1,6 +1,5 @@
 import pyfiglet
 
-
 config_name = 'conf.ini'
 server = 'irc.chat.twitch.tv'
 port = 6667
