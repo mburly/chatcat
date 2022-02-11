@@ -3,6 +3,7 @@ import json
 import ssl
 
 from bs4 import BeautifulSoup
+import requests
 from requests_html import HTMLSession
 from urllib.request import urlopen
 
@@ -40,6 +41,13 @@ def getChannelTitle(channel_name):
         stream_title += buffer
         index += 1
     return stream_title
+
+def get_oauth(client_id, client_secret):
+    response = requests.post(
+        f'{constants.oauth_url}/token?client_id={client_id}&client_secret={client_secret}&grant_type=client_credentials'
+    )
+    response = response.json()
+    return response['access_token']
 
 def isChannelLive(channel_name):
     url = f'https://www.twitch.tv/{channel_name}'
