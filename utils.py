@@ -22,7 +22,8 @@ high_int_colors = constants.high_int_colors
 os.system("")
 
 def cls():
-    os.system('cls' if os.name=='nt' else 'clear')
+    if not getDebugMode():
+        os.system('cls' if os.name=='nt' else 'clear')
     return
 
 def createConfig():

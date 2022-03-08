@@ -1,6 +1,7 @@
 import configparser
 import os
 import random
+import shutil
 
 import mysql.connector
 
@@ -122,6 +123,10 @@ def dropDatabase(channel_name):
             stmt = f'DROP DATABASE cc_{channel};'
             cursor.execute(stmt)
             db.commit()
+            emotes_dir = f'{os.getcwd()}/emotes/{channel}'
+            shutil.rmtree(emotes_dir)
+            logs_dir = f'{os.getcwd()}/logs/{channel}.log'
+            os.remove(logs_dir)
         cursor.close()
         db.close()
     else:
@@ -130,6 +135,10 @@ def dropDatabase(channel_name):
         db.commit()
         cursor.close()
         db.close()
+        emotes_dir = f'{os.getcwd()}/emotes/{channel_name}'
+        shutil.rmtree(emotes_dir)
+        logs_dir = f'{os.getcwd()}/logs/{channel_name}.log'
+        os.remove(logs_dir)
 
 def getDatabases():
     db = connect()
@@ -375,7 +384,7 @@ def updateEmotes(channel_name, source):
 
     config = configparser.ConfigParser()
     config.read(constants.config_name)
-    if(new_emotes > 0 and utils.getDownloadOption()):
+    if(source != 1 and new_emotes > 0 and utils.getDownloadOption()):
         downloadAllEmotes(channel_name)
         utils.printInfo(f'Downloaded {new_emotes} newly active emotes.')
 
