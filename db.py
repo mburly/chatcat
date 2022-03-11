@@ -124,7 +124,8 @@ def dropDatabase(channel_name):
             cursor.execute(stmt)
             db.commit()
             emotes_dir = f'{os.getcwd()}/emotes/{channel}'
-            shutil.rmtree(emotes_dir)
+            if os.path.exists(emotes_dir):
+                shutil.rmtree(emotes_dir)
             logs_dir = f'{os.getcwd()}/logs/{channel}.log'
             os.remove(logs_dir)
         cursor.close()
@@ -136,7 +137,8 @@ def dropDatabase(channel_name):
         cursor.close()
         db.close()
         emotes_dir = f'{os.getcwd()}/emotes/{channel_name}'
-        shutil.rmtree(emotes_dir)
+        if os.path.exists(emotes_dir):
+            shutil.rmtree(emotes_dir)
         logs_dir = f'{os.getcwd()}/logs/{channel_name}.log'
         os.remove(logs_dir)
 

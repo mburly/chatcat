@@ -109,9 +109,12 @@ def getDateTime():
 def getDebugMode():
     config = configparser.ConfigParser()
     config.read(constants.config_name)
-    if(config[constants.config_sections[2]][options_variables[1]] == 'True'):
-        return True
-    else:
+    try:
+        if(config[constants.config_sections[2]][options_variables[1]] == 'True'):
+            return True
+        else:
+            return False
+    except:
         return False
 
 def getDownloadOption():

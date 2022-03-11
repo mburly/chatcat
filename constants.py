@@ -19,8 +19,8 @@ oauth_url = 'https://id.twitch.tv/oauth2'
 server_url = 'tmi.twitch.tv'
 label_titles = ['DATABASE INFORMATION', 'TWITCH INFORMATION', 'OPTIONS']
 bg_colors = {'pink':'\033[45m',
-          'green':'\033[42m',
-          'blue':'\033[44m'}
+             'green':'\033[42m',
+             'blue':'\033[44m'}
 bold_colors = {'red':'\033[1;31m',
                'green':'\033[1;32m',
                'yellow':'\033[1;33m',
@@ -45,13 +45,30 @@ banner = f'{bold_colors["purple"]}{pyfiglet.figlet_format("Chattercat", font="sp
 version = 'DEV1'
 emote_types = ['twitch','subscriber','ffz','ffz_channel','bttv','bttv_channel']
 log_errors = ['TIMEOUT/OVERFLOW ERROR']
-debug_messages = ['Checking if offline with counter =', 'Detected online. Counter now =', 'Detected offline. Counter now =',
-'Stream ended. Now ending session...', 'Entering update_emotes function for source =', 'Setting emote:', 'now inactive.',
+debug_messages = ['Checking if offline with counter =', 
+'Detected online. Counter now =', 
+'Detected offline. Counter now =',
+'Stream ended. Now ending session...', 
+'Entering update_emotes function for source =', 
+'Setting emote:', 
+'now inactive.',
 'now reactivated.']
-error_messages = ['Error fetching stream title. Still trying...', 'Unable to connect to host. Likely lost internet connection.',
-'Channel not found on FrankerFaceZ API. Press any key to return to the previous menu.', 'Invalid selection. Press any key to return to the previous menu.']
-input_messages = ['Enter hostname (default is typically localhost):', 'Enter DB account username (default is typically root):', 'Enter DB account password:',
-'Enter your twitch username:', 'Please visit the URL \033[4;37mhttps://twitchapps.com/tmi/\033[0m and enter the token after pressing Connect:',
-'Enter channel name:', 'Please make a selection:']
-status_messages = ['Getting Twitch emotes...', 'Getting Subscriber emotes...', 'Getting FFZ Global emotes...',
-'Getting FFZ Channel emotes...', 'Getting BTTV Global emotes...', 'Getting BTTV Channel emotes...', 'Downloading emotes...', 'No databases found! Press any key to go back.']
+error_messages = ['Error fetching stream title. Still trying...', 
+'Unable to connect to host. Likely lost internet connection.',
+'Channel not found on FrankerFaceZ API. Press any key to return to the previous menu.', 
+'Invalid selection. Press any key to return to the previous menu.']
+input_messages = ['Enter hostname (default is typically localhost):', 
+'Enter DB account username (default is typically root):', 
+'Enter DB account password:',
+'Enter your twitch username:', 
+'Please visit the URL \033[4;37mhttps://twitchapps.com/tmi/\033[0m and enter the token after pressing Connect:',
+'Enter channel name:',
+'Please make a selection:']
+status_messages = ['Getting Twitch emotes...', 
+'Getting Subscriber emotes...', 
+'Getting FFZ Global emotes...',
+'Getting FFZ Channel emotes...', 
+'Getting BTTV Global emotes...', 
+'Getting BTTV Channel emotes...', 
+'Downloading emotes...', 
+'No databases found! Press any key to go back.']
