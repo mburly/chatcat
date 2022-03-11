@@ -197,6 +197,7 @@ def main():
         channel_name = sys.argv[1]
     utils.cls()
     utils.printBanner()
+    channel_name = channel_name.lower()
     session_id = handleSession(1, channel_name)
     while(session_id == -1):
         utils.printError(error_messages[2])
@@ -213,6 +214,7 @@ def main():
             return 0
         utils.cls()
         utils.printBanner()
+        channel_name = channel_name.lower()
         session_id = handleSession(1, channel_name)
     debug = utils.getDebugMode()
     success = run(channel_name, session_id, debug, 1)
