@@ -23,17 +23,7 @@ def handleSession(flag, channel_name):
     cursor = database.cursor()
     datetime = utils.getDateTime()
     if(flag == 1):
-        counter = 0
-        stream_title = twitch.getChannelTitle(channel_name)
-        if(len(stream_title) > 140 or '<meta' in stream_title):
-            utils.printError(error_messages[0])
-            while(len(stream_title) > 140 or '<meta' in stream_title):
-                if(counter >= 20):
-                    stream_title = constants.unknown_stream_title
-                    break
-                stream_title = twitch.getChannelTitle(channel_name)
-                counter += 1
-        utils.printInfo(f'Stream Title: {stream_title}')
+        stream_title = twitch.getStreamTitle(channel_name)
         stmt = f'INSERT INTO sessions (stream_title, start_datetime) VALUES ("{stream_title}", "{datetime}")'
         cursor.execute(stmt)
         database.commit()
@@ -67,28 +57,19 @@ def parseEmotes(emotes, message):
 def run(channel_name, session_id, debug, flag):
     channel = '#' + channel_name
     sock = startSocket(channel)
-    if(os.path.exists(constants.dirs[1]) is False):
-        os.mkdir(constants.dirs[1])
-
-    filename = f'{constants.dirs[1]}/{channel_name}.log'
-    if not os.path.exists(filename):
-        file = open(filename, 'w')
-    else:
-        file = open(filename, 'a')
-
     live_start = time.time()
     socket_start = time.time()
     username = ''
     message = ''
     emotes = db.getEmotes(channel_name, flag)
-
+    utils.printBanner()
     try:
         counter = 0
         while True:
             if(((time.time() - live_start) / 60) >= (1-(counter*.15))):
                 if(debug):
                     utils.printDebug(f'{debug_messages[0]} {counter}')
-                if(twitch.isChannelLive(channel_name)):
+                if(twitch.isStreamLive(channel_name)):
                     counter = 0
                     if(debug):
                         utils.printDebug(f'{debug_messages[1]} {counter}')
@@ -109,11 +90,9 @@ def run(channel_name, session_id, debug, flag):
             try:
                 resp = sock.recv(2048).decode('utf-8', errors='ignore')
                 if resp == '' :
-                    file.write(f'{utils.getDateTime()} - {constants.log_errors[0]}.\n')
                     sock.close()
                     return 1
             except Exception as msg:
-                file.write(f'{utils.getDateTime()} - {str(msg)}\n')
                 sock.close()
                 return 1
             except KeyboardInterrupt:

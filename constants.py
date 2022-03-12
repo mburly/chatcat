@@ -4,13 +4,14 @@ config_name = 'conf.ini'
 server = 'irc.chat.twitch.tv'
 port = 6667
 address = (server, port)
+client_id = 'hodl2vsgr34qf7b5kppu7y3669rot7'
 bad_file_chars = ['\\','/',':','*','?','"','<','>','|']
 blacklisted_symbols = ['#', '!', ':', '.']
 config_sections = ['db', 'twitch', 'options']
 db_variables = ['host', 'user', 'password']
-twitch_variables = ['nickname', 'token']
+twitch_variables = ['nickname', 'token', 'secret_key']
 options_variables = ['download', 'debug']
-dirs = ['emotes', 'logs']
+dirs = ['emotes', 'global']
 bttv_emote_class_name = 'Emote_headerText__3r74d'
 twitch_live_class_name = 'ScAnimatedNumber-sc-acnd2k-0 bHSmOZ'
 unknown_stream_title = 'Unable to get stream title.'
@@ -63,12 +64,15 @@ input_messages = ['Enter hostname (default is typically localhost):',
 'Enter your twitch username:', 
 'Please visit the URL \033[4;37mhttps://twitchapps.com/tmi/\033[0m and enter the token after pressing Connect:',
 'Enter channel name:',
-'Please make a selection:']
+'Please make a selection:',
+'Enter the secret key:']
 status_messages = ['Getting Twitch emotes...', 
 'Getting Subscriber emotes...', 
 'Getting FFZ Global emotes...',
 'Getting FFZ Channel emotes...', 
 'Getting BTTV Global emotes...', 
 'Getting BTTV Channel emotes...', 
-'Downloading emotes...', 
-'No databases found! Press any key to go back.']
+'Downloading channel emotes...', 
+'No databases found! Press any key to go back.',
+'Downloading global emotes...',
+'Checking for emote updates...']

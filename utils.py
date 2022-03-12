@@ -37,6 +37,7 @@ def createConfig():
     printLabel(2)
     nickname = input(f'{input_messages[3]} ')
     token = input(f'{input_messages[4]} ')
+    key = input(f'{input_messages[7]} ')
     cls()
     print(f'\n{constants.banner}')
 
@@ -54,7 +55,8 @@ def createConfig():
 
     config[config_sections[1]] = {
         twitch_variables[0]:nickname,
-        twitch_variables[1]:token
+        twitch_variables[1]:token,
+        twitch_variables[2]:key
     }
 
     config[config_sections[2]] = {
@@ -138,6 +140,9 @@ def getOccurrences(list, text):
         if text in list[i]:
             occurrences += 1
     return occurrences
+
+def globalEmotesDirectoryExists():
+    return os.path.exists(f'{os.getcwd()}/global')
 
 def handleDatabaseOption():
     databases = db.getDatabases()
