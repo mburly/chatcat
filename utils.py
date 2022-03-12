@@ -80,7 +80,7 @@ def downloadFile(url, fileName):
     return None
 
 def getDate():
-    cur = time.localtime()
+    cur = time.gmtime()
     mon = ''
     day = ''
     if(cur.tm_mon < 10):
@@ -90,7 +90,7 @@ def getDate():
     return f'{mon}{str(cur.tm_mon)}-{day}{str(cur.tm_mday)}-{str(cur.tm_year)}'
 
 def getDateTime():
-    cur = time.localtime()
+    cur = time.gmtime()
     mon = ''
     day = ''
     hour = ''

@@ -62,27 +62,16 @@ def run(channel_name, session_id, debug, flag):
     username = ''
     message = ''
     emotes = db.getEmotes(channel_name, flag)
-    utils.printBanner()
+    if(flag == 1):
+        utils.printBanner()
     try:
-        counter = 0
         while True:
-            if(((time.time() - live_start) / 60) >= (1-(counter*.15))):
-                if(debug):
-                    utils.printDebug(f'{debug_messages[0]} {counter}')
+            if(((time.time() - live_start) / 60) >= 1):
                 if(twitch.isStreamLive(channel_name)):
-                    counter = 0
-                    if(debug):
-                        utils.printDebug(f'{debug_messages[1]} {counter}')
                     live_start = time.time()
                 else:
-                    counter += 1
-                    if(debug):
-                        utils.printDebug(f'{debug_messages[2]} {counter}')
-                    if(counter == 5):
-                        utils.printDebug(debug_messages[3])
-                        sock.close()
-                        return -1
-                    live_start = time.time()
+                    sock.close()
+                    return -1
             if(((time.time() - socket_start) / 60) >= 5):
                 sock.close()
                 sock = startSocket(channel)
@@ -92,15 +81,15 @@ def run(channel_name, session_id, debug, flag):
                 if resp == '' :
                     sock.close()
                     return 1
-            except Exception as msg:
-                sock.close()
-                return 1
             except KeyboardInterrupt:
                 try:
                     sock.close()
                     return -3
                 except:
                     return -3
+            except:
+                sock.close()
+                return 1
             if(len(resp) > 0):
                 username = resp.split('!')[0]
                 username = username.split(':')
@@ -174,7 +163,6 @@ def main():
             return 0
     else:
         channel_name = sys.argv[1]
-    utils.cls()
     utils.printBanner()
     channel_name = channel_name.lower()
     session_id = handleSession(1, channel_name)
@@ -191,7 +179,6 @@ def main():
             channel_name = utils.printMenu()
         if(channel_name == 0):
             return 0
-        utils.cls()
         utils.printBanner()
         channel_name = channel_name.lower()
         session_id = handleSession(1, channel_name)

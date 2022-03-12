@@ -199,4 +199,4 @@ def isStreamLive(channel_name):
     try:
         return requests.get(url,params=None,headers=getHeaders()).json()['data'] != []
     except:
-        return None
+        return False
