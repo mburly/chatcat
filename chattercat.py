@@ -54,7 +54,7 @@ def parseEmotes(emotes, message):
     return parsed_emotes
 
 # (flag) 1 = first run, 2 = otherwise
-def run(channel_name, session_id, debug, flag):
+def run(channel_name, session_id, flag):
     channel = '#' + channel_name
     sock = startSocket(channel)
     live_start = time.time()
@@ -66,13 +66,13 @@ def run(channel_name, session_id, debug, flag):
         utils.printBanner()
     try:
         while True:
-            if(((time.time() - live_start) / 60) >= 1):
+            if(utils.elapsedTime(live_start) >= 1):
                 if(twitch.isStreamLive(channel_name)):
                     live_start = time.time()
                 else:
                     sock.close()
                     return -1
-            if(((time.time() - socket_start) / 60) >= 5):
+            if(utils.elapsedTime(socket_start) >= 5):
                 sock.close()
                 sock = startSocket(channel)
                 socket_start = time.time()
@@ -144,8 +144,7 @@ def startSocket(channel):
 
 def main():
     if not os.path.exists(constants.config_name):
-        utils.cls()
-        print(f'\n{constants.banner}')
+        utils.printLogo()
         if(utils.createConfig() == -1):
             return -1
         utils.printBanner()
@@ -156,7 +155,6 @@ def main():
         while(channel_name == 1 or channel_name == -1):
             if(channel_name == -1):
                 utils.printError(error_messages[3])
-                input()
             utils.printBanner()
             channel_name = utils.printMenu()
         if(channel_name == 0):
@@ -168,7 +166,6 @@ def main():
     session_id = handleSession(1, channel_name)
     while(session_id == -1):
         utils.printError(error_messages[2])
-        input()
         utils.printBanner()
         channel_name = utils.printMenu()
         if(channel_name == 0):
@@ -182,10 +179,9 @@ def main():
         utils.printBanner()
         channel_name = channel_name.lower()
         session_id = handleSession(1, channel_name)
-    debug = utils.getDebugMode()
-    success = run(channel_name, session_id, debug, 1)
+    success = run(channel_name, session_id, 1)
     while(success == 1):
-        success = run(channel_name, session_id, debug, 2)
+        success = run(channel_name, session_id, 2)
     handleSession(2, channel_name)
 
 

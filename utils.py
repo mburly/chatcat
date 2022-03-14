@@ -79,6 +79,9 @@ def downloadFile(url, fileName):
                 f.write(chunk)
     return None
 
+def elapsedTime(start):
+    return (time.time() - start) / 60
+
 def getDate():
     cur = time.gmtime()
     mon = ''
@@ -162,7 +165,6 @@ def handleDatabaseOption():
                 selection = int(selection)
             except:
                 printError(error_messages[3])
-                input()
                 return 0
             if(selection == num_databases+1):
                 db.dropDatabase(databases)
@@ -176,20 +178,17 @@ def handleDatabaseOption():
                 selection = int(selection)
             except:
                 printError(error_messages[3])
-                input()
                 return 0
             if(selection == num_databases+1):
                 return 0
     try:
         if(selection <= 0):
             printError(error_messages[3])
-            input()
             return 0
         db.dropDatabase(databases[int(selection)-1])
         return 0
     except:
         printError(error_messages[3])
-        input()
         return 0
 
 def handleDebugOption(selection):
@@ -269,6 +268,10 @@ def parseUsername(message):
         return None
     return username
 
+def printLogo():
+    cls()
+    print(f'\n{constants.banner}')
+
 def printBanner():
     config = configparser.ConfigParser()
     config.read(constants.config_name)
@@ -306,6 +309,7 @@ def printDebug(text):
 
 def printError(text):
     print(f'[{bold_colors["blue"]}{getDateTime()}{colors["clear"]}] [{high_int_colors["red"]}ERROR{colors["clear"]}] {text}')
+    input()
 
 def printInfo(text):
     print(f'[{bold_colors["blue"]}{getDateTime()}{colors["clear"]}] [{high_int_colors["green"]}INFO{colors["clear"]}] {text}')
@@ -326,7 +330,6 @@ def printMenu():
             while(code != 0):
                 if(code == -1):
                     printError(error_messages[3])
-                    input()
                 code = printOptions()
             return 1
         elif(selection == 3):
