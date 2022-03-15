@@ -1,5 +1,6 @@
 import configparser
 import os
+import socket
 import sys
 import time
 
@@ -7,6 +8,7 @@ import requests
 
 import constants
 import db
+import twitch
 
 config_sections = constants.config_sections
 db_variables = constants.db_variables
@@ -19,7 +21,6 @@ bg_colors = constants.bg_colors
 bold_colors = constants.bold_colors
 colors = constants.colors
 high_int_colors = constants.high_int_colors
-os.system("")
 
 def cls():
     if not getDebugMode():
@@ -28,18 +29,17 @@ def cls():
 
 def createConfig():
     config = configparser.ConfigParser()
+    printLogo()
     printLabel(1)
     host = input(f'{input_messages[0]} ')
     user = input(f'{input_messages[1]} ')
     password = input(f'{input_messages[2]} ')
-    cls()
-    print(f'\n{constants.banner}')
+    printLogo()
     printLabel(2)
     nickname = input(f'{input_messages[3]} ')
     token = input(f'{input_messages[4]} ')
     key = input(f'{input_messages[7]} ')
-    cls()
-    print(f'\n{constants.banner}')
+    printLogo()
 
     if host == '':
         host = 'localhost'
@@ -69,7 +69,7 @@ def createConfig():
             config.write(configfile)
             configfile.close()
     except:
-        return -1
+        return None
 
 def downloadFile(url, fileName):
     r = requests.get(url)
@@ -81,6 +81,13 @@ def downloadFile(url, fileName):
 
 def elapsedTime(start):
     return (time.time() - start) / 60
+
+def getChannelName(flag=False):
+    if(len(sys.argv) < 2 or flag is True):
+        channel_name = handleMainMenu()
+    else:
+        channel_name = sys.argv[1]
+    return channel_name
 
 def getDate():
     cur = time.gmtime()
@@ -241,6 +248,37 @@ def handleDownloadOption(selection):
         config.write(configfile)
     return 0
 
+def handleMainMenu(channel_name=None):
+    while(channel_name is None):
+        printMainMenu()
+        try:
+            selection = int(input(f'{input_messages[6]} '))
+        except:
+            printError(error_messages[3])
+            continue
+        if(selection == 1):
+            channel_name = input(f'{input_messages[5]} ')
+        elif(selection == 2):
+            while(printOptions() != 0):
+                continue
+        elif(selection == 3):
+            cls()
+            return None
+        else:
+            printError(error_messages[3])
+            continue
+    return channel_name
+
+def parseEmotes(emotes, message):
+    if(type(message) == list):
+        return []
+    words = message.split(' ')
+    parsed_emotes = []
+    for word in words:
+        if word in emotes and word not in parsed_emotes:
+            parsed_emotes.append(word)
+    return parsed_emotes
+
 def parseMessage(message):
     parsed_message = ''
     for i in range(0, len(message)):
@@ -317,28 +355,9 @@ def printInfo(text):
 def printLog(channel_name, username, message, username_color):
     print(f'[{bold_colors["green"]}{channel_name}{colors["clear"]}] [{bold_colors["blue"]}{getDateTime()}{colors["clear"]}] [{high_int_colors["blue"]}LOG{colors["clear"]}] {username_color}{username}{colors["clear"]}: {message}')
 
-def printMenu():
+def printMainMenu():
+    printBanner()
     print(constants.main_menu)
-    selection = input(f'{input_messages[6]} ')
-    try:
-        selection = int(selection)
-    except:
-        return -1
-    while(selection != 1):
-        if(selection == 2):
-            code = printOptions()
-            while(code != 0):
-                if(code == -1):
-                    printError(error_messages[3])
-                code = printOptions()
-            return 1
-        elif(selection == 3):
-            cls()
-            return 0
-        else:
-            return -1
-    channel_name = input(f'{input_messages[5]} ')
-    return channel_name
 
 def printOptions():
     printOptionsHeader()
@@ -408,3 +427,98 @@ def progressbar(it, prefix="", size=60, file=sys.stdout):
         show(i+1)
     file.write("\n")
     file.flush()
+
+# (flag) 1 = first run after execution, 2 = otherwise
+def run(channel_name, session_id, flag):
+    channel = '#' + channel_name
+    sock = startSocket(channel)
+    live_clock = time.time()
+    socket_clock = time.time()
+    username = ''
+    message = ''
+    emotes = db.getEmotes(channel_name, flag)
+    if(flag == 1):
+        printBanner()
+    try:
+        while True:
+            if(elapsedTime(live_clock) >= 1):
+                if(twitch.isStreamLive(channel_name)):
+                    live_clock = time.time()
+                else:
+                    sock.close()
+                    return True
+            if(elapsedTime(socket_clock) >= 5):
+                sock.close()
+                sock = startSocket(channel)
+                socket_clock = time.time()
+            try:
+                resp = sock.recv(2048).decode('utf-8', errors='ignore')
+                if resp == '' :
+                    sock.close()
+                    return True
+            except KeyboardInterrupt:
+                try:
+                    sock.close()
+                    return False
+                except:
+                    return False
+            except:
+                sock.close()
+                return True
+            if(len(resp) > 0):
+                username = resp.split('!')[0]
+                username = username.split(':')
+                username = username[len(username)-1]
+                message = resp.split(' ')
+                occurrences = getOccurrences(message, constants.server_url)
+                if(occurrences == 1):
+                    message = parseMessage(message[3:])
+                else:
+                    username_indices = getIndices(message, constants.server_url)
+                    occurrences = len(username_indices)
+                    for i in range(0, occurrences):
+                        if(i == occurrences-1):
+                            username = parseUsername(message[username_indices[i]])
+                            if username == None:
+                                continue
+                            current_message = message[3+username_indices[i]:]
+                        else:
+                            username = parseUsername(message[username_indices[i]])
+                            if username == None:
+                                continue
+                            current_message = message[3+username_indices[i]:username_indices[i+1]+1]
+                        current_message = parseMessage(current_message)
+                        message_emotes = parseEmotes(emotes, current_message)
+                        db.log(channel_name, username, current_message, message_emotes, session_id)
+                    continue
+            if(message == []):
+                continue
+            if '\r\n' in message:
+                message = message.replace('\r\n', '')
+            message_emotes = parseEmotes(emotes, message)
+            db.log(channel_name, username, message, message_emotes, session_id)
+    except:
+        sock.close()
+        return True
+
+def setup():
+    if not os.path.exists(constants.config_name):
+        if(createConfig() is None):   # Error creating config file
+            return -1
+    return 0
+
+def startSocket(channel):
+    config = configparser.ConfigParser()
+    config.read(constants.config_name)
+    nickname = config[constants.config_sections[1]][constants.twitch_variables[0]]
+    token = config[constants.config_sections[1]][constants.twitch_variables[1]]
+    sock = socket.socket()
+    try:
+        sock.connect(constants.address)
+    except:
+        printError(error_messages[1])
+        return -1
+    sock.send(f'PASS {token}\n'.encode('utf-8'))
+    sock.send(f'NICK {nickname}\n'.encode('utf-8'))
+    sock.send(f'JOIN {channel}\n'.encode('utf-8'))
+    return sock

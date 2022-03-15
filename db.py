@@ -25,7 +25,7 @@ def connect(channel_name=None):
             )
             return db
         except:
-            return -1
+            return None
     db_name = f'cc_{channel_name}'
     try:
         db = mysql.connector.connect(
@@ -46,7 +46,7 @@ def connect(channel_name=None):
             )
             return db
         except:
-            return -1
+            return None
 
 def createDB(channel_name):
     config = configparser.ConfigParser()
@@ -79,12 +79,14 @@ def createDB(channel_name):
         cursor.execute(stmt)
         cursor.close()
         db.close()
-        populateEmotes(channel_name)
+        populateEmotesTable(channel_name)
         if(utils.getDownloadOption()):
             downloadAllEmotes(channel_name)
         utils.printBanner()
         return 0
     except:
+        cursor.close()
+        db.close()
         return -1
 
 def downloadAllEmotes(channel_name):
@@ -173,6 +175,26 @@ def dropDatabase(channel_name):
         if os.path.exists(emotes_dir):
             shutil.rmtree(emotes_dir)
 
+def endSession(channel_name):
+    channel_name = channel_name.lower()
+    if twitch.getChannelId(channel_name) is None:
+        return None
+    db = connect(channel_name)
+    if(db is None):
+        return None
+    datetime = utils.getDateTime()
+    cursor = db.cursor()
+    stmt = f'SELECT MAX(id) FROM sessions'
+    cursor.execute(stmt)
+    rows = cursor.fetchall()
+    id = rows[0][0]
+    stmt = f'UPDATE sessions SET end_datetime = "{datetime}" WHERE id = {id}'
+    cursor.execute(stmt)
+    db.commit()
+    cursor.close()
+    db.close()
+    return id
+
 def getDatabases():
     db = connect()
     if(db == -1):
@@ -192,6 +214,7 @@ def getEmotes(channel_name, flag):
     emotes = []
     db = connect(channel_name)
     if(flag == 1):
+        utils.printBanner()
         if(updateEmotes(channel_name) == -2):
             return -1
     cursor = db.cursor()
@@ -268,13 +291,12 @@ def log(channel_name, username, message, emotes, session_id):
     username_color = rand.randrange(0,5)
     utils.printLog(channel_name, username, message, constants.username_colors[username_color])
 
-def populateEmotes(channel_name):
+def populateEmotesTable(channel_name):
     emotes = twitch.getAllChannelEmotes(channel_name)
-    emote_types = list(emotes.keys())
     db = connect(channel_name)
     cursor = db.cursor()
     source = 1
-    for emote_type in emote_types:
+    for emote_type in constants.emote_types:
         if(emotes[emote_type] is None):
             source += 1
             continue
@@ -293,6 +315,27 @@ def populateEmotes(channel_name):
     db.close()
     return 0
 
+def startSession(channel_name):
+    channel_name = channel_name.lower()
+    if(twitch.getChannelId(channel_name) is None):
+        utils.printError(constants.error_messages[2])
+        return None
+    db = connect(channel_name)
+    if(db is None):
+        return None
+    cursor = db.cursor()
+    datetime = utils.getDateTime()
+    stream_title = twitch.getStreamTitle(channel_name)
+    if(stream_title is None):
+        stream_title = constants.unknown_stream_title
+    stmt = f'INSERT INTO sessions (stream_title, start_datetime) VALUES ("{stream_title}", "{datetime}")'
+    cursor.execute(stmt)
+    db.commit()
+    id = cursor.lastrowid
+    cursor.close()
+    db.close()
+    return id
+
 def updateEmotes(channel_name):
     utils.printInfo(constants.status_messages[9])
     debug = utils.getDebugMode()
@@ -304,7 +347,7 @@ def updateEmotes(channel_name):
     new_emote_count = 0
 
     for source in constants.emote_types:
-        if(channel_emotes[source] == None):
+        if(channel_emotes[source] is None):
             continue
         else:
             for emote in channel_emotes[source]:
@@ -338,6 +381,8 @@ def updateEmotes(channel_name):
         id = emote.split('-')[1]
         source = constants.emote_types.index(source_name)+1
         info = twitch.getEmoteInfoById(source, channel_id, id)
+        if(info is None):
+            break
         if('\\' in info['code']):
             info['code'] = info['code'].replace('\\', '\\\\')
         stmt = f'INSERT INTO emotes (code, emote_id, url, date_added, source, active) VALUES ("{info["code"]}","{id}","{info["url"]}","{utils.getDate()}","{source}",1);'

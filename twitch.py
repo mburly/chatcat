@@ -80,8 +80,11 @@ def getEmoteInfoById(source, channel_id, emote_id):
         url = f'https://twitchemotes.com/channels/{channel_id}/emotes/{emote_id}'
         resp = requests.get(url,params=None,headers=None)
         html = resp.text.splitlines()
-        info['code'] = html[16].split('content="')[1].split('"')[0]
-        info['url'] = html[18].split('content="')[1].split('"')[0]
+        try:
+            info['code'] = html[16].split('content="')[1].split('"')[0]
+            info['url'] = html[18].split('content="')[1].split('"')[0]
+        except:
+            return None
     elif(source == 3 or source == 4):
         url = f'https://api.frankerfacez.com/v1/emote/{emote_id}'
         emote = requests.get(url,params=None,headers=None).json()

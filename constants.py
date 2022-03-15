@@ -56,7 +56,7 @@ debug_messages = ['Checking if offline with counter =',
 'now reactivated.']
 error_messages = ['Error fetching stream title. Still trying...', 
 'Unable to connect to host. Likely lost internet connection.',
-'Channel not found on FrankerFaceZ API. Press any key to return to the previous menu.', 
+'Channel not found. Press any key to return to the main menu.', 
 'Invalid selection. Press any key to return to the previous menu.']
 input_messages = ['Enter hostname (default is typically localhost):', 
 'Enter DB account username (default is typically root):', 
