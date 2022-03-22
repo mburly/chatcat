@@ -4,23 +4,20 @@ import db
 import utils
 
 def main():
-    if(utils.setup() == -1):
+    if(utils.setup() is None):
         return -1
-
-    channel_name = utils.getChannelName()
+    channel_name = utils.getChannelNameInput()
     if(channel_name is None):
         return 0
-
     session_id = db.startSession(channel_name)
     while(session_id is None):
-        channel_name = utils.getChannelName(True)
+        channel_name = utils.getChannelNameInput(False)
         if(channel_name is None):
             return 0
         session_id = db.startSession(channel_name)
-        
-    success = utils.run(channel_name, session_id, 1)
-    while(success):
-        success = utils.run(channel_name, session_id, 2)
+    running = utils.run(channel_name, session_id, 1)
+    while(running):
+        running = utils.run(channel_name, session_id, 2)
     db.endSession(channel_name)
 
 

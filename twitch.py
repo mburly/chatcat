@@ -150,9 +150,8 @@ def getFFZEmotes(channel_id=None):
 def getHeaders():
     config = configparser.ConfigParser()
     config.read(constants.config_name)
-    headers = { "Authorization": f"Bearer {getOAuth(constants.client_id, config[constants.config_sections[1]][constants.twitch_variables[2]])}",
+    return {"Authorization": f"Bearer {getOAuth(constants.client_id, config[constants.config_sections[1]][constants.twitch_variables[2]])}",
             "Client-Id": constants.client_id}
-    return headers
 
 def getOAuth(client_id, client_secret):
     try:

@@ -6,6 +6,7 @@ port = 6667
 address = (server, port)
 client_id = 'hodl2vsgr34qf7b5kppu7y3669rot7'
 bad_file_chars = ['\\','/',':','*','?','"','<','>','|']
+bad_usernames = [' ', '.', 'GLHF']
 blacklisted_symbols = ['#', '!', ':', '.']
 config_sections = ['db', 'twitch', 'options']
 db_variables = ['host', 'user', 'password']
@@ -57,7 +58,8 @@ debug_messages = ['Checking if offline with counter =',
 error_messages = ['Error fetching stream title. Still trying...', 
 'Unable to connect to host. Likely lost internet connection.',
 'Channel not found. Press any key to return to the main menu.', 
-'Invalid selection. Press any key to return to the previous menu.']
+'Invalid selection. Press any key to return to the previous menu.',
+'Unable to connect to database. Press any key to return to the main menu.']
 input_messages = ['Enter hostname (default is typically localhost):', 
 'Enter DB account username (default is typically root):', 
 'Enter DB account password:',
