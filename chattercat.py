@@ -11,7 +11,8 @@ def main():
         return 0
     session_id = db.startSession(channel_name)
     while(session_id is None):
-        channel_name = utils.getChannelNameInput(False)
+        utils.printBanner()
+        channel_name = utils.getChannelNameInput(initial_run=False)
         if(channel_name is None):
             return 0
         session_id = db.startSession(channel_name)

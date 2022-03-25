@@ -5,25 +5,24 @@ import requests
 import constants
 import utils
 
-api_url = constants.api_url
-emote_types = constants.emote_types
-error_messages = constants.error_messages
-status_messages = constants.status_messages
+api_url = constants.API_URL
+emote_types = constants.EMOTE_TYPES
+status_messages = constants.STATUS_MESSAGES
 
 def getAllChannelEmotes(channel_name):
     channel_id = getChannelId(channel_name)
     channel_emotes = {}
-    utils.printInfo(status_messages[0])
+    utils.printInfo(status_messages['twitch'])
     channel_emotes[emote_types[0]] = getTwitchEmotes()
-    utils.printInfo(status_messages[1])
+    utils.printInfo(status_messages['subscriber'])
     channel_emotes[emote_types[1]] = getTwitchEmotes(channel_name)
-    utils.printInfo(status_messages[2])
+    utils.printInfo(status_messages['ffz_global'])
     channel_emotes[emote_types[2]] = getFFZEmotes()
-    utils.printInfo(status_messages[3])
+    utils.printInfo(status_messages['ffz_channel'])
     channel_emotes[emote_types[3]] = getFFZEmotes(channel_id)
-    utils.printInfo(status_messages[4])
+    utils.printInfo(status_messages['bttv_global'])
     channel_emotes[emote_types[4]] = getBTTVEmotes()
-    utils.printInfo(status_messages[5])
+    utils.printInfo(status_messages['bttv_channel'])
     channel_emotes[emote_types[5]] = getBTTVEmotes(channel_id)
     return channel_emotes
 
@@ -33,10 +32,7 @@ def getBTTVEmotes(channel_id=None):
         url = f'https://api.betterttv.net/3/cached/emotes/global'
         emotes = requests.get(url,params=None,headers=None).json()
         for i in utils.progressbar(range(0, len(emotes))):
-            info = {}
-            info['id'] = emotes[i]['id']
-            info['code'] = emotes[i]['code']
-            info['url'] = f'https://cdn.betterttv.net/emote/{emotes[i]["id"]}/3x.{emotes[i]["imageType"]}'
+            info = getBTTVEmoteInfo(emotes[i])
             emote_set.append(info)
     else:
         url = f'https://api.betterttv.net/3/cached/users/twitch/{channel_id}'
@@ -47,10 +43,7 @@ def getBTTVEmotes(channel_id=None):
             return None
         if(len(channel_emotes) != 0):
             for i in utils.progressbar(range(0,len(channel_emotes))):
-                info = {}
-                info['id'] = channel_emotes[i]['id']
-                info['code'] = channel_emotes[i]['code']
-                info['url'] = f'https://cdn.betterttv.net/emote/{channel_emotes[i]["id"]}/3x.{channel_emotes[i]["imageType"]}'
+                info = getBTTVEmoteInfo(channel_emotes[i])
                 emote_set.append(info)
         try:
             shared_emotes = emotes['sharedEmotes']
@@ -60,10 +53,7 @@ def getBTTVEmotes(channel_id=None):
             return emote_set
         if(len(shared_emotes) != 0):
             for i in utils.progressbar(range(0,len(shared_emotes))):
-                info = {}
-                info['id'] = shared_emotes[i]['id']
-                info['code'] = shared_emotes[i]['code']
-                info['url'] = f'https://cdn.betterttv.net/emote/{shared_emotes[i]["id"]}/3x.{shared_emotes[i]["imageType"]}'
+                info = getBTTVEmoteInfo(shared_emotes[i])
                 emote_set.append(info)
     return emote_set
 
@@ -73,6 +63,13 @@ def getChannelId(channel_name):
         return int(requests.get(url,params=None,headers=getHeaders()).json()['data'][0]['id'])
     except:
         return None
+
+def getBTTVEmoteInfo(emote):
+    info = {}
+    info['id'] = emote['id']
+    info['code'] = emote['code']
+    info['url'] = f'https://cdn.betterttv.net/emote/{emote["id"]}/3x.{emote["imageType"]}'
+    return info
 
 def getEmoteInfoById(source, channel_id, emote_id):
     info = {}
@@ -149,14 +146,14 @@ def getFFZEmotes(channel_id=None):
 
 def getHeaders():
     config = configparser.ConfigParser()
-    config.read(constants.config_name)
-    return {"Authorization": f"Bearer {getOAuth(constants.client_id, config[constants.config_sections[1]][constants.twitch_variables[2]])}",
-            "Client-Id": constants.client_id}
+    config.read(constants.CONFIG_NAME)
+    return {"Authorization": f"Bearer {getOAuth(constants.CLIENT_ID, config[constants.CONFIG_SECTIONS[1]][constants.TWITCH_VARIABLES[2]])}",
+            "Client-Id": constants.CLIENT_ID}
 
 def getOAuth(client_id, client_secret):
     try:
         response = requests.post(
-            constants.oauth_url + f'/token?client_id={client_id}&client_secret={client_secret}&grant_type=client_credentials'
+            constants.OAUTH_URL + f'/token?client_id={client_id}&client_secret={client_secret}&grant_type=client_credentials'
         )
         return response.json()['access_token']
     except:

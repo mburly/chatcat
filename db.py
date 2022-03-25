@@ -8,25 +8,44 @@ import constants
 import twitch
 import utils
 
-config_sections = constants.config_sections
-db_variables = constants.db_variables
-debug_messages = constants.debug_messages
+config_sections = constants.CONFIG_SECTIONS
+db_variables = constants.DB_VARIABLES
+debug_messages = constants.DEBUG_MESSAGES
+error_messages = constants.ERROR_MESSAGES
+status_messages = constants.STATUS_MESSAGES
+dirs = constants.DIRS
+emote_types = constants.EMOTE_TYPES
 
 def connect(channel_name=None):
-    config = configparser.ConfigParser()
-    config.read(constants.config_name)
     if(channel_name is None):
         try:
-            db = mysql.connector.connect(
-                host=config[config_sections[0]][db_variables[0]],
-                user=config[config_sections[0]][db_variables[1]],
-                password=config[config_sections[0]][db_variables[2]]
-            )
+            db = connectHelper()
             return db
         except:
             return None
     db_name = f'cc_{channel_name}'
     try:
+        db = connectHelper(db_name)
+        return db
+    except:
+        try:
+            createDB(channel_name)
+            db = connectHelper(db_name)
+            return db
+        except:
+            return -1
+
+def connectHelper(db_name=None):
+    config = configparser.ConfigParser()
+    config.read(constants.CONFIG_NAME)
+    if(db_name is None):
+        db = mysql.connector.connect(
+            host=config[config_sections[0]][db_variables[0]],
+            user=config[config_sections[0]][db_variables[1]],
+            password=config[config_sections[0]][db_variables[2]]
+        )
+        return db
+    else:
         db = mysql.connector.connect(
             host=config[config_sections[0]][db_variables[0]],
             user=config[config_sections[0]][db_variables[1]],
@@ -34,22 +53,10 @@ def connect(channel_name=None):
             database=db_name
         )
         return db
-    except:
-        try:
-            createDB(channel_name)
-            db = mysql.connector.connect(
-                host=config[config_sections[0]][db_variables[0]],
-                user=config[config_sections[0]][db_variables[1]],
-                password=config[config_sections[0]][db_variables[2]],
-                database=db_name
-            )
-            return db
-        except:
-            return -1
 
 def createDB(channel_name):
     config = configparser.ConfigParser()
-    config.read(constants.config_name)
+    config.read(constants.CONFIG_NAME)
     host = config[config_sections[0]][db_variables[0]]
     user = config[config_sections[0]][db_variables[1]]
     password = config[config_sections[0]][db_variables[2]]
@@ -79,9 +86,8 @@ def createDB(channel_name):
         cursor.close()
         db.close()
         populateEmotesTable(channel_name)
-        if(utils.getDownloadOption()):
+        if(utils.getDownloadMode()):
             downloadAllEmotes(channel_name)
-        utils.printBanner()
     except:
         cursor.close()
         db.close()
@@ -89,10 +95,10 @@ def createDB(channel_name):
 
 def downloadAllEmotesHelper(db, cursor, global_flag):
     if(global_flag):
-        utils.printInfo(constants.status_messages[8])
+        utils.printInfo(status_messages['global'])
         stmt = 'SELECT url, emote_id, code FROM emotes WHERE source LIKE "1";'
     else:
-        utils.printInfo(constants.status_messages[6])
+        utils.printInfo(status_messages['downloading'])
         stmt = 'SELECT url, emote_id, code, source FROM emotes WHERE path IS NULL;'
     cursor.execute(stmt)
     rows = cursor.fetchall()
@@ -104,7 +110,7 @@ def downloadAllEmotesHelper(db, cursor, global_flag):
             source = 1
         else:
             source = int(row[3])
-        for character in constants.bad_file_chars:
+        for character in constants.BAD_FILE_CHARS:
             if character in emote_name:
                 emote_name = emote_name.replace(character, str(counter))
                 counter += 1
@@ -137,16 +143,16 @@ def downloadAllEmotesHelper(db, cursor, global_flag):
 def downloadAllEmotes(channel_name):
     db = connect(channel_name)
     cursor = db.cursor(buffered=True)
-    if not os.path.exists(constants.dirs[0]):
-        os.mkdir(constants.dirs[0])
-    os.chdir(constants.dirs[0])
+    if not os.path.exists(dirs[0]):
+        os.mkdir(dirs[0])
+    os.chdir(dirs[0])
     if not utils.globalEmotesDirectoryExists():
-        os.mkdir(constants.dirs[1])
-        downloadAllEmotesHelper(db, cursor, global_flag=True)
+        os.mkdir(dirs[1])
+        downloadAllEmotesHelper(db, cursor, global_flag=True)   # Download global emotes
     if not os.path.exists(channel_name):
         os.mkdir(channel_name)
     os.chdir(channel_name)
-    downloadAllEmotesHelper(db, cursor, global_flag=False)
+    downloadAllEmotesHelper(db, cursor, global_flag=False)      # Download channel (subscriber, bttv, ffz) emotes
     cursor.close()
     db.close()
     os.chdir('../../')
@@ -221,10 +227,11 @@ def getChannelActiveEmotes(channel_name, flag):
     db.close()
     return emotes
 
+# Returns in format: <source>-<emote_id>
 def getEmotes(cursor, active=None, channel_emotes=None):
     emotes = []
     if(channel_emotes is not None):
-        for source in constants.emote_types:
+        for source in emote_types:
             if(channel_emotes[source] is None):
                 continue
             else:
@@ -238,16 +245,17 @@ def getEmotes(cursor, active=None, channel_emotes=None):
         rows = cursor.fetchall()
         for row in rows:
             source = int(row[1])
-            emotes.append(f'{constants.emote_types[source-1]}-{row[0]}')
+            emotes.append(f'{emote_types[source-1]}-{row[0]}')
         return emotes
 
-def getChatterId(cursor, username):
+def getChatterId(db, cursor, username):
     id = None
     stmt = f'SELECT id FROM chatters WHERE username = "{username}";'
     cursor.execute(stmt)
     for row in cursor:
         id = row[0]
         return id
+    id = logChatter(db, cursor, username)
     return id
 
 def logChatter(db, cursor, username):
@@ -260,7 +268,7 @@ def logChatter(db, cursor, username):
 def logEmote(db, cursor, emote, channel_id):
     source_name = emote.split('-')[0]
     id = emote.split('-')[1]
-    source = constants.emote_types.index(source_name)+1
+    source = emote_types.index(source_name)+1
     info = twitch.getEmoteInfoById(source, channel_id, id)
     if(info is None):
         return None
@@ -271,16 +279,14 @@ def logEmote(db, cursor, emote, channel_id):
     db.commit()
 
 def logMessage(db, cursor, chatter_id, message, session_id):
-    date = utils.getDate()
-    datetime = utils.getDateTime()
     if "\"" in message:
         message = message.replace("\"", "\'")
     if '\\' in message:
         message = message.replace('\\', '\\\\')
-    stmt = f'INSERT INTO messages (message, session_id, chatter_id, datetime) VALUES ("{message}", {session_id}, {chatter_id}, "{datetime}");'
+    stmt = f'INSERT INTO messages (message, session_id, chatter_id, datetime) VALUES ("{message}", {session_id}, {chatter_id}, "{utils.getDateTime()}");'
     cursor.execute(stmt)
     db.commit()
-    stmt = f'UPDATE chatters SET last_date = "{date}" WHERE id = {chatter_id};'
+    stmt = f'UPDATE chatters SET last_date = "{utils.getDate()}" WHERE id = {chatter_id};'
     cursor.execute(stmt)
     db.commit()
     
@@ -298,9 +304,7 @@ def log(channel_name, username, message, channel_emotes, session_id):
         return None
     db = connect(channel_name)
     cursor = db.cursor()
-    id = getChatterId(cursor, username)
-    if(id is None):
-        id = logChatter(db, cursor, username)
+    id = getChatterId(db, cursor, username)
     logMessage(db, cursor, id, message, session_id)
     logMessageEmotes(db, cursor, channel_emotes, message)
     cursor.close()
@@ -308,12 +312,13 @@ def log(channel_name, username, message, channel_emotes, session_id):
     utils.printLog(channel_name, username, message)
 
 def populateEmotesTable(channel_name):
+    utils.printBanner()
     emotes = twitch.getAllChannelEmotes(channel_name)
     db = connect(channel_name)
     cursor = db.cursor()
     source = 1
-    for emote_type in constants.emote_types:
-        if(emotes[emote_type] is None):
+    for emote_type in emote_types:
+        if(emotes[emote_type] is None):         # No emotes of type found
             source += 1
             continue
         for emote in emotes[emote_type]:
@@ -338,26 +343,23 @@ def setEmotesStatus(db, cursor, emotes, active):
         db.commit()
         if(utils.getDebugMode()):
             if(active):
-                utils.printDebug(f'{debug_messages[5]} {emote} {debug_messages[7]}')
+                utils.printDebug(f'{debug_messages["set_emote"]} {emote} {debug_messages["reactivated"]}')
             else:
-                utils.printDebug(f'{debug_messages[5]} {emote} {debug_messages[6]}')
+                utils.printDebug(f'{debug_messages["set_emote"]} {emote} {debug_messages["inactive"]}')
 
 def startSession(channel_name):
-    channel_name = channel_name.lower()
     if(twitch.getChannelId(channel_name) is None):
-        utils.printError(constants.error_messages[2])
+        utils.printError(error_messages['channel'])
         return None
     db = connect(channel_name)
     if(db == -1):
-        utils.printError(constants.error_messages[4])
+        utils.printError(error_messages['database'])
         return None
     if(db is None):
         return None
     cursor = db.cursor()
     datetime = utils.getDateTime()
     stream_title = twitch.getStreamTitle(channel_name)
-    if(stream_title is None):
-        stream_title = constants.unknown_stream_title
     stmt = f'INSERT INTO sessions (stream_title, start_datetime) VALUES ("{stream_title}", "{datetime}")'
     cursor.execute(stmt)
     db.commit()
@@ -367,7 +369,7 @@ def startSession(channel_name):
     return id
 
 def updateEmotes(channel_name):
-    utils.printInfo(constants.status_messages[9])
+    utils.printInfo(status_messages['updates'])
     new_emote_count = 0
     db = connect(channel_name)
     cursor = db.cursor()
@@ -389,7 +391,7 @@ def updateEmotes(channel_name):
         new_emote_count += 1
     setEmotesStatus(db, cursor, removed_emotes, 0)
     setEmotesStatus(db, cursor, reactivated_emotes, 1)
-    if(new_emote_count > 0 and utils.getDownloadOption()):
+    if(new_emote_count > 0 and utils.getDownloadMode()):
         downloadAllEmotes(channel_name)
         utils.printInfo(f'Downloaded {new_emote_count} newly active emotes.')
     cursor.close()
