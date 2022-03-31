@@ -1,6 +1,7 @@
 import os
 
 import db
+import interface
 import utils
 
 def main():
@@ -11,7 +12,7 @@ def main():
         return 0
     session_id = db.startSession(channel_name)
     while(session_id is None):
-        utils.printBanner()
+        interface.printBanner()
         channel_name = utils.getChannelNameInput(initial_run=False)
         if(channel_name is None):
             return 0

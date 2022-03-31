@@ -3,6 +3,7 @@ import configparser
 import requests
 
 import constants
+import interface
 import utils
 
 api_url = constants.API_URL
@@ -12,17 +13,17 @@ status_messages = constants.STATUS_MESSAGES
 def getAllChannelEmotes(channel_name):
     channel_id = getChannelId(channel_name)
     channel_emotes = {}
-    utils.printInfo(status_messages['twitch'])
+    interface.printInfo(status_messages['twitch'])
     channel_emotes[emote_types[0]] = getTwitchEmotes()
-    utils.printInfo(status_messages['subscriber'])
+    interface.printInfo(status_messages['subscriber'])
     channel_emotes[emote_types[1]] = getTwitchEmotes(channel_name)
-    utils.printInfo(status_messages['ffz_global'])
+    interface.printInfo(status_messages['ffz_global'])
     channel_emotes[emote_types[2]] = getFFZEmotes()
-    utils.printInfo(status_messages['ffz_channel'])
+    interface.printInfo(status_messages['ffz_channel'])
     channel_emotes[emote_types[3]] = getFFZEmotes(channel_id)
-    utils.printInfo(status_messages['bttv_global'])
+    interface.printInfo(status_messages['bttv_global'])
     channel_emotes[emote_types[4]] = getBTTVEmotes()
-    utils.printInfo(status_messages['bttv_channel'])
+    interface.printInfo(status_messages['bttv_channel'])
     channel_emotes[emote_types[5]] = getBTTVEmotes(channel_id)
     return channel_emotes
 
@@ -31,7 +32,7 @@ def getBTTVEmotes(channel_id=None):
     if(channel_id is None):
         url = f'https://api.betterttv.net/3/cached/emotes/global'
         emotes = requests.get(url,params=None,headers=None).json()
-        for i in utils.progressbar(range(0, len(emotes))):
+        for i in interface.progressbar(range(0, len(emotes))):
             info = getBTTVEmoteInfo(emotes[i])
             emote_set.append(info)
     else:
@@ -42,7 +43,7 @@ def getBTTVEmotes(channel_id=None):
         except:
             return None
         if(len(channel_emotes) != 0):
-            for i in utils.progressbar(range(0,len(channel_emotes))):
+            for i in interface.progressbar(range(0,len(channel_emotes))):
                 info = getBTTVEmoteInfo(channel_emotes[i])
                 emote_set.append(info)
         try:
@@ -52,7 +53,7 @@ def getBTTVEmotes(channel_id=None):
                 return None
             return emote_set
         if(len(shared_emotes) != 0):
-            for i in utils.progressbar(range(0,len(shared_emotes))):
+            for i in interface.progressbar(range(0,len(shared_emotes))):
                 info = getBTTVEmoteInfo(shared_emotes[i])
                 emote_set.append(info)
     return emote_set
@@ -133,7 +134,7 @@ def getFFZEmotes(channel_id=None):
         except:
             return None
         emotes = emotes['sets'][emote_set_id]['emoticons']
-    for i in utils.progressbar(range(0, len(emotes))):
+    for i in interface.progressbar(range(0, len(emotes))):
         info = {}
         info['id'] = emotes[i]['id']
         info['code'] = emotes[i]['name']
@@ -162,7 +163,7 @@ def getOAuth(client_id, client_secret):
 def getStreamTitle(channel_name):
     url = f'{api_url}/streams?user_login={channel_name}'
     try:
-        return requests.get(url,params=None,headers=getHeaders()).json()['data'][0]['title']
+        return requests.get(url,params=None,headers=getHeaders()).json()['data'][0]['title'].replace('\"','\'')
     except:
         return None
 
@@ -176,7 +177,7 @@ def getTwitchEmotes(channel_name=None):
         emotes = requests.get(url,params=None,headers=getHeaders()).json()['data']
         if(emotes == []):
             return None
-        for i in utils.progressbar(range(0, len(emotes))):
+        for i in interface.progressbar(range(0, len(emotes))):
             info = {}
             info['id'] = emotes[i]['id']
             info['code'] = emotes[i]['name']
