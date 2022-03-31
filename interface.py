@@ -246,7 +246,7 @@ def printOptionsHeader():
     printLabel(3)
 
 def printDebug(text):
-    print(f'[{colors["bold_blue"]}{utils.getDateTime()}{colors["clear"]}] [{colors["yellow"]}DEBUG{colors["clear"]}] {text}')
+    print(f'[{colors["bold_blue"]}{utils.getDateTime()}{colors["clear"]}] [{colors["bold_yellow"]}DEBUG{colors["clear"]}] {text}')
 
 def printError(text):
     print(f'[{colors["bold_blue"]}{utils.getDateTime()}{colors["clear"]}] [{colors["hi_red"]}ERROR{colors["clear"]}] {text}')

@@ -212,10 +212,10 @@ def getDatabases():
     db.close()
     return databases
 
-def getChannelActiveEmotes(channel_name, flag):
+def getChannelActiveEmotes(channel_name, initial_run=False):
     emotes = []
     db = connect(channel_name)
-    if(flag == 1):
+    if(initial_run is True):
         interface.printBanner()
         updateEmotes(channel_name)
     cursor = db.cursor()
