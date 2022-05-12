@@ -215,8 +215,7 @@ def getDatabases():
 def getChannelActiveEmotes(channel_name, initial_run=False):
     emotes = []
     db = connect(channel_name)
-    if(initial_run is True):
-        interface.printBanner()
+    if(initial_run):
         updateEmotes(channel_name)
     cursor = db.cursor()
     stmt = 'SELECT code FROM emotes WHERE ACTIVE = 1;'
@@ -310,7 +309,6 @@ def log(channel_name, username, message, channel_emotes, session_id):
     logMessageEmotes(db, cursor, channel_emotes, message)
     cursor.close()
     db.close()
-    interface.printLog(channel_name, username, message)
 
 def populateEmotesTable(channel_name):
     interface.printBanner()
@@ -319,7 +317,7 @@ def populateEmotesTable(channel_name):
     cursor = db.cursor()
     source = 1
     for emote_type in emote_types:
-        if(emotes[emote_type] is None):         # No emotes of type found
+        if(emotes[emote_type] is None):         # No emotes from source found
             source += 1
             continue
         for emote in emotes[emote_type]:

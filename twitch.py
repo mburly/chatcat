@@ -4,7 +4,6 @@ import requests
 
 import constants
 import interface
-import utils
 
 api_url = constants.API_URL
 emote_types = constants.EMOTE_TYPES
@@ -134,6 +133,8 @@ def getFFZEmotes(channel_id=None):
         except:
             return None
         emotes = emotes['sets'][emote_set_id]['emoticons']
+    if(emotes == []):
+        return None
     for i in interface.progressbar(range(0, len(emotes))):
         info = {}
         info['id'] = emotes[i]['id']
@@ -151,6 +152,7 @@ def getHeaders():
     return {"Authorization": f"Bearer {getOAuth(constants.CLIENT_ID, config[constants.CONFIG_SECTIONS[1]][constants.TWITCH_VARIABLES[2]])}",
             "Client-Id": constants.CLIENT_ID}
 
+
 def getOAuth(client_id, client_secret):
     try:
         response = requests.post(
@@ -159,6 +161,19 @@ def getOAuth(client_id, client_secret):
         return response.json()['access_token']
     except:
         return None
+
+def getOnlineStreams(channel_names):
+    online_streams = []
+    streams = getStreams(channel_names)
+    for stream in streams:
+        online_streams.append(stream['user_login'])
+    return online_streams
+
+def getStreams(channel_names):
+    url = f'{api_url}/streams?'
+    for name in channel_names:
+        url += f'user_login={name}&'
+    return requests.get(url.strip('&'),params=None,headers=getHeaders()).json()['data']
 
 def getStreamTitle(channel_name):
     url = f'{api_url}/streams?user_login={channel_name}'

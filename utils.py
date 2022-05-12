@@ -121,6 +121,13 @@ def getIndices(list, text):
             indices.append(i)
     return indices
 
+def getStreamNames():
+    streams = []
+    file = open('streams.txt','r')
+    for stream in file:
+        streams.append(stream.replace('\n',''))
+    return streams
+
 def globalEmotesDirectoryExists():
     return os.path.exists(f'{os.getcwd()}/global')
 
