@@ -1,6 +1,5 @@
 import configparser
 import os
-import random
 import socket
 import sys
 import time
