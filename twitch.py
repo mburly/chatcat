@@ -12,17 +12,17 @@ status_messages = constants.STATUS_MESSAGES
 def getAllChannelEmotes(channel_name):
     channel_id = getChannelId(channel_name)
     channel_emotes = {}
-    interface.printInfo(status_messages['twitch'])
+    interface.printInfo(channel_name, status_messages['twitch'])
     channel_emotes[emote_types[0]] = getTwitchEmotes()
-    interface.printInfo(status_messages['subscriber'])
+    interface.printInfo(channel_name, status_messages['subscriber'])
     channel_emotes[emote_types[1]] = getTwitchEmotes(channel_name)
-    interface.printInfo(status_messages['ffz_global'])
+    interface.printInfo(channel_name, status_messages['ffz_global'])
     channel_emotes[emote_types[2]] = getFFZEmotes()
-    interface.printInfo(status_messages['ffz_channel'])
+    interface.printInfo(channel_name, status_messages['ffz_channel'])
     channel_emotes[emote_types[3]] = getFFZEmotes(channel_id)
-    interface.printInfo(status_messages['bttv_global'])
+    interface.printInfo(channel_name, status_messages['bttv_global'])
     channel_emotes[emote_types[4]] = getBTTVEmotes()
-    interface.printInfo(status_messages['bttv_channel'])
+    interface.printInfo(channel_name, status_messages['bttv_channel'])
     channel_emotes[emote_types[5]] = getBTTVEmotes(channel_id)
     return channel_emotes
 
@@ -74,12 +74,18 @@ def getBTTVEmoteInfo(emote):
 def getEmoteInfoById(source, channel_id, emote_id):
     info = {}
     if(source == 1 or source == 2):
-        url = f'https://twitchemotes.com/channels/{channel_id}/emotes/{emote_id}'
-        resp = requests.get(url,params=None,headers=None)
-        html = resp.text.splitlines()
+        if(source == 1):
+            url = f'{api_url}/chat/emotes/global'
+        else:
+            url = f'{api_url}/chat/emotes?broadcaster_id={channel_id}'
+        resp = requests.get(url,params=None,headers=getHeaders())
         try:
-            info['code'] = html[16].split('content="')[1].split('"')[0]
-            info['url'] = html[18].split('content="')[1].split('"')[0]
+            emotes = resp.json()['data']
+            for emote in emotes:
+                if(emote_id == emote['id']):
+                    info['code'] = emote['name']
+                    info['url'] = emote['images']['url_4x']
+                    return
         except:
             return None
     elif(source == 3 or source == 4):
@@ -92,7 +98,6 @@ def getEmoteInfoById(source, channel_id, emote_id):
             info['url'] = f'https://cdn.frankerfacez.com/emote/{emote_id}/4'
     else:
         found = 0
-        url = f'https://betterttv.com/emotes/{emote_id}'
         url = f'https://api.betterttv.net/3/cached/users/twitch/{channel_id}'
         emote = requests.get(url,params=None,headers=None).json()
         emotes = emote['sharedEmotes']
@@ -103,6 +108,7 @@ def getEmoteInfoById(source, channel_id, emote_id):
                 found = 1
                 break
         try:
+            emote = requests.get(url,params=None,headers=None).json()
             emotes = emote['channelEmotes']
         except:
             if(found == 0):
@@ -116,6 +122,14 @@ def getEmoteInfoById(source, channel_id, emote_id):
                 info['code'] = emote['code']
                 info['url'] = f'https://cdn.betterttv.net/emote/{emote_id}/3x.{emote["imageType"]}'
                 break
+        if(found == 0):
+            url = 'https://api.betterttv.net/3/cached/emotes/global'
+            emotes = requests.get(url,params=None,headers=None).json()
+            for emote in emotes:
+                if(emote['id'] == emote_id):
+                    info['code'] = emote['code']
+                    info['url'] = f'https://cdn.betterttv.net/emote/{emote_id}/3x.{emote["imageType"]}'
+                    break
     info['id'] = emote_id
     return info
 

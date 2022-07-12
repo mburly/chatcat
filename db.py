@@ -88,75 +88,65 @@ def createDB(channel_name):
         db.close()
         populateEmotesTable(channel_name)
         if(utils.getDownloadMode()):
-            downloadAllEmotes(channel_name)
+            downloadEmotes(channel_name)
     except:
         cursor.close()
         db.close()
         return None
 
-def downloadAllEmotesHelper(db, cursor, global_flag):
-    if(global_flag):
-        interface.printInfo(status_messages['global'])
-        stmt = 'SELECT url, emote_id, code FROM emotes WHERE source LIKE "1";'
-    else:
-        interface.printInfo(status_messages['downloading'])
-        stmt = 'SELECT url, emote_id, code, source FROM emotes WHERE path IS NULL;'
+def downloadEmotesHelper(db, channel_name):
+    interface.printInfo(channel_name, status_messages['downloading'])
+    stmt = 'SELECT url, emote_id, code, source FROM emotes WHERE path IS NULL;'
+    cursor = db.cursor(buffered=True)
     cursor.execute(stmt)
     rows = cursor.fetchall()
     counter = 0
+    channel_emotes_dir = f'{dirs[0]}/{channel_name}'
+    global_emotes_dir = f'{dirs[0]}/{dirs[1]}'
     for row in interface.progressbar(rows):
         url = row[0]
         emote_name = row[2]
-        if(global_flag):
-            source = 1
-        else:
-            source = int(row[3])
+        source = int(row[3])
         for character in constants.BAD_FILE_CHARS:
             if character in emote_name:
                 emote_name = emote_name.replace(character, str(counter))
                 counter += 1
-        if(global_flag):
+        if(source == 1 or source == 2):
             if('animated' in url):
                 extension = 'gif'
             else:
                 extension = 'png'
-            file_name = f'global/{emote_name}-{row[1]}.{extension}'
+        elif(source == 5 or source == 6):
+            extension = url.split('.')[3]
+            url = url.split(f'.{extension}')[0]
         else:
-            if(source == 2):
-                if('animated' in url):
-                    extension = 'gif'
-                else:
-                    extension = 'png'
-            elif(source == 5 or source == 6):
-                extension = url.split('.')[3]
-                url = url.split(f'.{extension}')[0]
-            else:
-                extension = 'png'
-            file_name = f'{emote_name}-{row[1]}.{extension}'
+            extension = 'png'
+        if(source == 1):
+            file_name = f'{global_emotes_dir}/{emote_name}-{row[1]}.{extension}'
+        else:
+            file_name = f'{channel_emotes_dir}/{emote_name}-{row[1]}.{extension}'
         stmt = f'UPDATE emotes SET path = "{file_name}" WHERE emote_id LIKE "{row[1]}" AND source LIKE "{source}";'
         cursor.execute(stmt)
         db.commit()
-        if(global_flag):
-            utils.downloadFile(row[0], file_name)
-        else:
-            utils.downloadFile(url, file_name)
+        utils.downloadFile(url, file_name)
+        counter = 0
+    cursor.close()
 
-def downloadAllEmotes(channel_name):
+def downloadEmotes(channel_name):
     db = connect(channel_name)
-    cursor = db.cursor(buffered=True)
+    # Create emotes directory if doesn't exist
     if not os.path.exists(dirs[0]):
         os.mkdir(dirs[0])
-    os.chdir(dirs[0])
-    if not utils.globalEmotesDirectoryExists():
-        os.mkdir(dirs[1])
-        downloadAllEmotesHelper(db, cursor, global_flag=True)   # Download global emotes
-    if not os.path.exists(channel_name):
-        os.mkdir(channel_name)
-    os.chdir(channel_name)
-    downloadAllEmotesHelper(db, cursor, global_flag=False)      # Download channel (subscriber, bttv, ffz) emotes
-    cursor.close()
+    # Create channel emotes directory if it doesn't exist
+    channel_emotes_dir = f'{dirs[0]}/{channel_name}'
+    if not os.path.exists(channel_emotes_dir):
+        os.mkdir(channel_emotes_dir)
+    # Create global emotes directory if it doesn't exist
+    global_emotes_dir = f'{dirs[0]}/{dirs[1]}'
+    if not os.path.exists(global_emotes_dir):
+        os.mkdir(global_emotes_dir)
+    downloadEmotesHelper(db, channel_name)
     db.close()
-    os.chdir('../../')
 
 def dropDatabase(db, cursor, channel_name):
     stmt = f'DROP DATABASE cc_{channel_name};'
@@ -295,12 +285,12 @@ def logMessageEmotes(db, cursor, channel_emotes, message):
     for emote in message_emotes:
         if '\\' in emote:
             emote = emote.replace('\\','\\\\')
-        stmt = f'UPDATE emotes SET count = count + 1 WHERE code = "{emote}" AND active = 1;'
+        stmt = f'UPDATE emotes SET count = count + 1 WHERE code = BINARY "{emote}" AND active = 1;'
         cursor.execute(stmt)
         db.commit()
 
 def log(channel_name, username, message, channel_emotes, session_id):
-    if(username is None or message == ''):
+    if(username is None or message == '' or message == 'tmi.twitch.tv'):
         return None
     db = connect(channel_name)
     cursor = db.cursor()
@@ -316,6 +306,7 @@ def populateEmotesTable(channel_name):
     db = connect(channel_name)
     cursor = db.cursor()
     source = 1
+    global_emotes_dir = f'{dirs[0]}/{dirs[1]}'
     for emote_type in emote_types:
         if(emotes[emote_type] is None):         # No emotes from source found
             source += 1
@@ -325,9 +316,9 @@ def populateEmotesTable(channel_name):
             if '\\' in emote_name:
                 emote_name = emote_name.replace('\\', '\\\\')
             if(source == 1):
-                stmt = f'INSERT INTO emotes (code, emote_id, url, path, date_added, source, active) VALUES ("{emote_name}","{emote["id"]}","{emote["url"]}","global/{emote_name}","{utils.getDate()}","{source}",1);'    
+                stmt = f'INSERT INTO emotes (code, emote_id, url, path, date_added, source, active) VALUES ("{emote_name}","{emote["id"]}","{emote["url"]}","{global_emotes_dir}/{emote_name}-{emote["id"]}.png","{utils.getDate()}","{source}",1);'    
             else:
-                stmt = f'INSERT INTO emotes (code, emote_id, url, date_added, source, active) VALUES ("{emote_name}","{emote["id"]}","{emote["url"]}","{utils.getDate()}","{source}",1);'
+                stmt = f'INSERT INTO emotes (code, emote_id, url, date_added, source, active) VALUES ("{emote_name}","{emote["id"]}","{emote["url"]}","{utils.getDate()}","{source}",1);'    
             cursor.execute(stmt)
             db.commit()
         source += 1
@@ -368,7 +359,7 @@ def startSession(channel_name):
     return id
 
 def updateEmotes(channel_name):
-    interface.printInfo(status_messages['updates'])
+    interface.printInfo(channel_name, status_messages['updates'])
     new_emote_count = 0
     db = connect(channel_name)
     cursor = db.cursor()
@@ -386,12 +377,13 @@ def updateEmotes(channel_name):
     for emote in new_emotes:
         if(emote in reactivated_emotes):
             continue
+        interface.printInfo(channel_name, f'Logging {emote}')
         logEmote(db, cursor, emote, channel_id)
         new_emote_count += 1
     setEmotesStatus(db, cursor, removed_emotes, 0)
     setEmotesStatus(db, cursor, reactivated_emotes, 1)
     if(new_emote_count > 0 and utils.getDownloadMode()):
-        downloadAllEmotes(channel_name)
-        interface.printInfo(f'Downloaded {new_emote_count} newly active emotes.')
+        downloadEmotes(channel_name)
+        interface.printInfo(channel_name, f'Downloaded {new_emote_count} newly active emotes.')
     cursor.close()
     db.close()

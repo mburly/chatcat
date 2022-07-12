@@ -13,6 +13,7 @@ import twitch
 
 config_name = constants.CONFIG_NAME
 config_sections = constants.CONFIG_SECTIONS
+dirs = constants.DIRS
 db_variables = constants.DB_VARIABLES
 twitch_variables = constants.TWITCH_VARIABLES
 options_variables = constants.OPTIONS_VARIABLES
@@ -55,6 +56,20 @@ def downloadFile(url, fileName):
             if chunk:
                 f.write(chunk)
     return None
+
+def downloadGlobalEmotes():
+    emotes = twitch.getTwitchEmotes()
+    global_emotes_dir = f'{dirs[0]}/{dirs[1]}'
+    counter = 0
+    for emote in emotes:
+        emote_name = emote['code']
+        for character in constants.BAD_FILE_CHARS:
+            if character in emote_name:
+                emote_name = emote_name.replace(character, str(counter))
+                counter += 1
+        filename = f'{global_emotes_dir}/{emote_name}-{emote["id"]}.png'
+        downloadFile(emote['url'], filename)
+        counter = 0
 
 def elapsedTime(start):
     return (time.time() - start) / 60
@@ -136,6 +151,9 @@ def isBadUsername(username):
             return True
     return False
 
+def isDirectoryEmpty(path):
+    return True if len(os.listdir(path)) == 0 else False
+
 def parseMessageEmotes(channel_emotes, message):
     if(type(message) == list):
         return []
@@ -173,6 +191,13 @@ def parseUsername(message):
     username = username[len(username)-1]
     if(isBadUsername(username)):
         return None
+    if(username == ''):
+        if(message[0] == ':'):
+            return parseUsername(message.split(':!')[1])
+        elif(message[0] == '!'):
+            return parseUsername(message.strip('!'))
+        else:
+            return None
     return username
 
 # (flag) 1 = first run after execution, 2 = otherwise
@@ -230,7 +255,8 @@ def startSocket(channel):
     try:
         sock.connect(constants.ADDRESS)
     except:
-        interface.printError(error_messages['host'])
+        interface.printError(f'[{constants.COLORS["bold_green"]}{channel}{constants.COLORS["clear"]}] ' + error_messages['host'])
+        db.endSession(channel)
         return -1
     sock.send(f'PASS {token}\n'.encode('utf-8'))
     sock.send(f'NICK {nickname}\n'.encode('utf-8'))

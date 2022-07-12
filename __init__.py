@@ -2,6 +2,7 @@ import multiprocessing
 import os
 import time
 
+import constants
 import db
 import interface
 import twitch
@@ -17,7 +18,7 @@ class Chattercat:
         try:
             while(self.executing):
                 if(live):
-                    interface.printInfo(f'{self.channel_name} just went live!')
+                    interface.printInfo(self.channel_name, f'{self.channel_name} just went live!')
                     self.running = True
                     self.session_id = db.startSession(self.channel_name)
                     if(self.session_id is None):
@@ -26,7 +27,7 @@ class Chattercat:
                         self.run()
                     db.endSession(self.channel_name)
                     live = False
-                    interface.printInfo(f'{self.channel_name} is now offline.')
+                    interface.printInfo(self.channel_name, f'{self.channel_name} is now offline.')
                 else:
                     live = twitch.isStreamLive(self.channel_name)
                     time.sleep(15)
@@ -62,8 +63,12 @@ class Chattercat:
                 except KeyboardInterrupt:
                     try:
                         sock.close()
+                        db.endSession(self.channel_name)
+                        self.executing = False
                         self.running = False
                     except:
+                        db.endSession(self.channel_name)
+                        self.executing = False
                         self.running = False
                 except:
                     sock.close()
@@ -77,6 +82,15 @@ if __name__ == '__main__':
     os.system("")
     streams = utils.getStreamNames()
     pool = multiprocessing.Pool(processes=len(streams))
+    global_emotes_dir = f'{constants.DIRS[0]}/{constants.DIRS[1]}'
+    if(utils.getDownloadMode() and not os.path.exists(global_emotes_dir)):
+        try:
+            os.mkdir(constants.DIRS[0])
+            os.mkdir(global_emotes_dir)
+        except:
+            interface.printError(constants.ERROR_MESSAGES['directory'])
+        interface.printDebug(constants.STATUS_MESSAGES['global'])
+        utils.downloadGlobalEmotes()
     try:
         out = pool.map(Chattercat,streams)
         pool.close()

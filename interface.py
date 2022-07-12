@@ -40,7 +40,7 @@ def handleDatabaseMenu():
     num_databases = len(databases)
     if(num_databases == 0):
         printOptionsHeader()
-        printInfo(status_messages['no_databases'])
+        printError(error_messages['no_databases'])
         input()
         return 0
     for i in range(0, num_databases):
@@ -190,6 +190,11 @@ def printMainMenu():
     printBanner()
     print(constants.MAIN_MENU)
 
+def printOptionsHeader():
+    cls()
+    print(f'\n{constants.BANNER}')
+    printLabel(3)
+
 def handleOptionsMenu():
     printOptionsHeader()
     print(constants.OPTIONS_MENU)
@@ -240,11 +245,6 @@ def handleOptionsMenu():
         printError(error_messages['selection'])
         return -1
 
-def printOptionsHeader():
-    cls()
-    print(f'\n{constants.BANNER}')
-    printLabel(3)
-
 def printDebug(text):
     print(f'[{colors["bold_blue"]}{utils.getDateTime()}{colors["clear"]}] [{colors["bold_yellow"]}DEBUG{colors["clear"]}] {text}')
 
@@ -252,8 +252,8 @@ def printError(text):
     print(f'[{colors["bold_blue"]}{utils.getDateTime()}{colors["clear"]}] [{colors["hi_red"]}ERROR{colors["clear"]}] {text}')
     input()
 
-def printInfo(text):
-    print(f'[{colors["bold_blue"]}{utils.getDateTime()}{colors["clear"]}] [{colors["hi_green"]}INFO{colors["clear"]}] {text}')
+def printInfo(channel_name, text):
+    print(f'[{colors["bold_blue"]}{utils.getDateTime()}{colors["clear"]}] [{colors["bold_purple"]}{channel_name}{colors["clear"]}] [{colors["hi_green"]}INFO{colors["clear"]}] {text}')
 
 def printLog(channel_name, username, message):
     if '\\\\' in message:
