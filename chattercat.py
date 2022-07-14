@@ -17,10 +17,10 @@ def main():
         if(channel_name is None):
             return 0
         session_id = db.startSession(channel_name)
-    running = utils.run(channel_name, session_id, 1)
-    while(running):
-        running = utils.run(channel_name, session_id, 2)
-    db.endSession(channel_name)
+    # running = utils.run(channel_name, session_id, 1)
+    # while(running):
+    #     running = utils.run(channel_name, session_id, 2)
+    # db.endSession(channel_name)
 
 
 if __name__ == "__main__":

@@ -200,46 +200,6 @@ def parseUsername(message):
             return None
     return username
 
-# (flag) 1 = first run after execution, 2 = otherwise
-def run(channel_name, session_id, flag):
-    channel = f'#{channel_name}'
-    sock = startSocket(channel)
-    live_clock = time.time()
-    socket_clock = time.time()
-    channel_emotes = db.getChannelActiveEmotes(channel_name, flag)
-    if(flag == 1):
-        interface.printBanner()
-    try:
-        while True:
-            if(elapsedTime(live_clock) >= 1):
-                if(twitch.isStreamLive(channel_name)):
-                    live_clock = time.time()
-                else:
-                    sock.close()
-                    return False
-            if(elapsedTime(socket_clock) >= 5):
-                sock.close()
-                sock = startSocket(channel)
-                socket_clock = time.time()
-            try:
-                resp = sock.recv(2048).decode('utf-8', errors='ignore')
-                if resp == '' :
-                    sock.close()
-                    return True
-            except KeyboardInterrupt:
-                try:
-                    sock.close()
-                    return False
-                except:
-                    return False
-            except:
-                sock.close()
-                return True
-            parseResponse(resp, channel_name, channel_emotes, session_id)
-    except:
-        sock.close()
-        return True
-
 def setup():
     if not os.path.exists(config_name):
         if(interface.handleConfigMenu() is None):   # Error creating config file
