@@ -242,8 +242,11 @@ def handleOptionsMenu():
         printError(ERROR_MESSAGES['selection'])
         return -1
 
-def printDebug(text):
-    print(f'[{COLORS["bold_blue"]}{utils.getDateTime()}{COLORS["clear"]}] [{COLORS["bold_yellow"]}DEBUG{COLORS["clear"]}] {text}')
+def printDebug(text, channel_name=None):
+    if(channel_name is None):
+        print(f'[{COLORS["bold_blue"]}{utils.getDateTime()}{COLORS["clear"]}] [{COLORS["bold_yellow"]}DEBUG{COLORS["clear"]}] {text}')
+    else:
+        print(f'[{COLORS["bold_green"]}{channel_name}{COLORS["clear"]}] [{COLORS["bold_blue"]}{utils.getDateTime()}{COLORS["clear"]}] [{COLORS["bold_yellow"]}DEBUG{COLORS["clear"]}] {text}')
 
 def printError(text):
     print(f'[{COLORS["bold_blue"]}{utils.getDateTime()}{COLORS["clear"]}] [{COLORS["hi_red"]}ERROR{COLORS["clear"]}] {text}')
@@ -255,9 +258,7 @@ def printInfo(channel_name, text):
 def printLog(channel_name, username, message):
     if '\\\\' in message:
         message = message.replace('\\\\', '\\')
-    rand = random.Random()
-    username_color = rand.randrange(0,5)
-    print(f'[{COLORS["bold_green"]}{channel_name}{COLORS["clear"]}] [{COLORS["bold_blue"]}{utils.getDateTime()}{COLORS["clear"]}] [{COLORS["hi_blue"]}LOG{COLORS["clear"]}] {constants.USERNAME_COLORS[username_color]}{username}{COLORS["clear"]}: {message}')
+    print(f'[{COLORS["bold_green"]}{channel_name}{COLORS["clear"]}] [{COLORS["bold_blue"]}{utils.getDateTime()}{COLORS["clear"]}] [{COLORS["hi_blue"]}LOG{COLORS["clear"]}] {constants.USERNAME_COLORS[random.choice(list(constants.USERNAME_COLORS.keys()))]}{username}{COLORS["clear"]}: {message}')
 
 def printSpaces(color, num):
     for i in range(0, num):

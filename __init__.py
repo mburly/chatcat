@@ -82,11 +82,11 @@ if __name__ == '__main__':
     os.system("")
     streams = utils.getStreamNames()
     pool = multiprocessing.Pool(processes=len(streams))
-    global_emotes_dir = f'{constants.DIRS[0]}/{constants.DIRS[1]}'
+    global_emotes_dir = f'{constants.DIRS["emotes"]}/{constants.DIRS["global"]}'
     if(utils.getDownloadMode() and not os.path.exists(global_emotes_dir)):
         try:
-            if not os.path.exists(constants.DIRS[0]):
-                os.mkdir(constants.DIRS[0])
+            if not os.path.exists(constants.DIRS['emotes']):
+                os.mkdir(constants.DIRS['emotes'])
             os.mkdir(global_emotes_dir)
         except:
             interface.printError(constants.ERROR_MESSAGES['directory'])

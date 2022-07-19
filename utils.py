@@ -57,7 +57,7 @@ def downloadFile(url, fileName):
 
 def downloadGlobalEmotes():
     emotes = twitch.getTwitchEmotes()
-    global_emotes_dir = f'{DIRS[0]}/{DIRS[1]}'
+    global_emotes_dir = f'{DIRS["emotes"]}/{DIRS["global"]}'
     counter = 0
     for emote in emotes:
         emote_name = emote['code']

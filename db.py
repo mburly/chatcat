@@ -101,8 +101,8 @@ def downloadEmotesHelper(db, channel_name):
     cursor.execute(stmt)
     rows = cursor.fetchall()
     counter = 0
-    channel_emotes_dir = f'{DIRS[0]}/{channel_name}'
-    global_emotes_dir = f'{DIRS[0]}/{DIRS[1]}'
+    channel_emotes_dir = f'{DIRS["emotes"]}/{channel_name}'
+    global_emotes_dir = f'{DIRS["emotes"]}/{DIRS["global"]}'
     for row in interface.progressbar(rows):
         url = row[0]
         emote_name = row[2]
@@ -135,14 +135,14 @@ def downloadEmotesHelper(db, channel_name):
 def downloadEmotes(channel_name):
     db = connect(channel_name)
     # Create emotes directory if doesn't exist
-    if not os.path.exists(DIRS[0]):
-        os.mkdir(DIRS[0])
+    if not os.path.exists(DIRS["emotes"]):
+        os.mkdir(DIRS["emotes"])
     # Create channel emotes directory if it doesn't exist
-    channel_emotes_dir = f'{DIRS[0]}/{channel_name}'
+    channel_emotes_dir = f'{DIRS["emotes"]}/{channel_name}'
     if not os.path.exists(channel_emotes_dir):
         os.mkdir(channel_emotes_dir)
     # Create global emotes directory if it doesn't exist
-    global_emotes_dir = f'{DIRS[0]}/{DIRS[1]}'
+    global_emotes_dir = f'{DIRS["emotes"]}/{DIRS["global"]}'
     if not os.path.exists(global_emotes_dir):
         os.mkdir(global_emotes_dir)
     downloadEmotesHelper(db, channel_name)
@@ -306,7 +306,7 @@ def populateEmotesTable(channel_name):
     db = connect(channel_name)
     cursor = db.cursor()
     source = 1
-    global_emotes_dir = f'{DIRS[0]}/{DIRS[1]}'
+    global_emotes_dir = f'{DIRS["emotes"]}/{DIRS["global"]}'
     for emote_type in EMOTE_TYPES:
         if(emotes[emote_type] is None):         # No emotes from source found
             source += 1
@@ -325,7 +325,7 @@ def populateEmotesTable(channel_name):
     cursor.close()
     db.close()
 
-def setEmotesStatus(db, cursor, emotes, active):
+def setEmotesStatus(channel_name, db, cursor, emotes, active):
     for emote in emotes:
         id = emote.split('-')[1]
         stmt = f'UPDATE emotes SET active = {active} WHERE emote_id = "{id}";'
@@ -333,9 +333,9 @@ def setEmotesStatus(db, cursor, emotes, active):
         db.commit()
         if(utils.getDebugMode()):
             if(active):
-                interface.printDebug(f'{DEBUG_MESSAGES["set_emote"]} {emote} {DEBUG_MESSAGES["reactivated"]}')
+                interface.printDebug(f'{DEBUG_MESSAGES["set_emote"]} {emote} {DEBUG_MESSAGES["reactivated"]}', channel_name)
             else:
-                interface.printDebug(f'{DEBUG_MESSAGES["set_emote"]} {emote} {DEBUG_MESSAGES["inactive"]}')
+                interface.printDebug(f'{DEBUG_MESSAGES["set_emote"]} {emote} {DEBUG_MESSAGES["inactive"]}', channel_name)
 
 def startSession(channel_name):
     if(twitch.getChannelId(channel_name) is None):
@@ -380,8 +380,8 @@ def updateEmotes(channel_name):
         interface.printInfo(channel_name, f'Logging {emote}')
         logEmote(db, cursor, emote, channel_id)
         new_emote_count += 1
-    setEmotesStatus(db, cursor, removed_emotes, 0)
-    setEmotesStatus(db, cursor, reactivated_emotes, 1)
+    setEmotesStatus(channel_name, db, cursor, removed_emotes, 0)
+    setEmotesStatus(channel_name, db, cursor, reactivated_emotes, 1)
     if(new_emote_count > 0 and utils.getDownloadMode()):
         downloadEmotes(channel_name)
         interface.printInfo(channel_name, f'Downloaded {new_emote_count} newly active emotes.')
