@@ -5,7 +5,8 @@ import requests
 import constants
 import interface
 
-api_url = constants.API_URL
+api_urls = constants.API_URLS
+cdn_urls = constants.CDN_URLS
 emote_types = constants.EMOTE_TYPES
 status_messages = constants.STATUS_MESSAGES
 
@@ -29,13 +30,13 @@ def getAllChannelEmotes(channel_name):
 def getBTTVEmotes(channel_id=None):
     emote_set = []
     if(channel_id is None):
-        url = f'https://api.betterttv.net/3/cached/emotes/global'
+        url = f'{api_urls["bttv"]}/emotes/global'
         emotes = requests.get(url,params=None,headers=None).json()
         for i in interface.progressbar(range(0, len(emotes))):
             info = getBTTVEmoteInfo(emotes[i])
             emote_set.append(info)
     else:
-        url = f'https://api.betterttv.net/3/cached/users/twitch/{channel_id}'
+        url = f'{api_urls["bttv"]}/users/twitch/{channel_id}'
         emotes = requests.get(url,params=None,headers=None).json()
         try:
             channel_emotes = emotes['channelEmotes']
@@ -58,7 +59,7 @@ def getBTTVEmotes(channel_id=None):
     return emote_set
 
 def getChannelId(channel_name):
-    url = f'{api_url}/users?login={channel_name}'
+    url = f'{api_urls["twitch"]}/users?login={channel_name}'
     try:
         return int(requests.get(url,params=None,headers=getHeaders()).json()['data'][0]['id'])
     except:
@@ -68,43 +69,41 @@ def getBTTVEmoteInfo(emote):
     info = {}
     info['id'] = emote['id']
     info['code'] = emote['code']
-    info['url'] = f'https://cdn.betterttv.net/emote/{emote["id"]}/3x.{emote["imageType"]}'
+    info['url'] = f'{cdn_urls["bttv"]}/{emote["id"]}/3x.{emote["imageType"]}'
     return info
 
 def getEmoteInfoById(source, channel_id, emote_id):
     info = {}
     if(source == 1 or source == 2):
         if(source == 1):
-            url = f'{api_url}/chat/emotes/global'
+            url = f'{api_urls["twitch"]}/chat/emotes/global'
         else:
-            url = f'{api_url}/chat/emotes?broadcaster_id={channel_id}'
-        resp = requests.get(url,params=None,headers=getHeaders())
+            url = f'{api_urls["twitch"]}/chat/emotes?broadcaster_id={channel_id}'
         try:
-            emotes = resp.json()['data']
+            emotes = requests.get(url,params=None,headers=getHeaders()).json()['data']
             for emote in emotes:
                 if(emote_id == emote['id']):
                     info['code'] = emote['name']
                     info['url'] = emote['images']['url_4x']
-                    return
         except:
             return None
     elif(source == 3 or source == 4):
-        url = f'https://api.frankerfacez.com/v1/emote/{emote_id}'
+        url = f'{api_urls["ffz"]}/emote/{emote_id}'
         emote = requests.get(url,params=None,headers=None).json()
         info['code'] = emote['emote']['name']
         if(len(emote['emote']['urls']) == 1):
-            info['url'] = f'https://cdn.frankerfacez.com/emote/{emote_id}/1'
+            info['url'] = f'{cdn_urls["ffz"]}/{emote_id}/1'
         else:
-            info['url'] = f'https://cdn.frankerfacez.com/emote/{emote_id}/4'
+            info['url'] = f'{cdn_urls["ffz"]}/{emote_id}/4'
     else:
         found = 0
-        url = f'https://api.betterttv.net/3/cached/users/twitch/{channel_id}'
+        url = f'{api_urls["bttv"]}/users/twitch/{channel_id}'
         emote = requests.get(url,params=None,headers=None).json()
         emotes = emote['sharedEmotes']
         for emote in emotes:
             if(emote['id'] == emote_id):
                 info['code'] = emote['code']
-                info['url'] = f'https://cdn.betterttv.net/emote/{emote_id}/3x.{emote["imageType"]}'
+                info['url'] = f'{cdn_urls["bttv"]}/{emote_id}/3x.{emote["imageType"]}'
                 found = 1
                 break
         try:
@@ -120,15 +119,15 @@ def getEmoteInfoById(source, channel_id, emote_id):
                 break
             if(emote['id'] == emote_id):
                 info['code'] = emote['code']
-                info['url'] = f'https://cdn.betterttv.net/emote/{emote_id}/3x.{emote["imageType"]}'
+                info['url'] = f'{cdn_urls["bttv"]}/{emote_id}/3x.{emote["imageType"]}'
                 break
         if(found == 0):
-            url = 'https://api.betterttv.net/3/cached/emotes/global'
+            url = f'{api_urls["bttv"]}/emotes/global'
             emotes = requests.get(url,params=None,headers=None).json()
             for emote in emotes:
                 if(emote['id'] == emote_id):
                     info['code'] = emote['code']
-                    info['url'] = f'https://cdn.betterttv.net/emote/{emote_id}/3x.{emote["imageType"]}'
+                    info['url'] = f'{cdn_urls["bttv"]}/{emote_id}/3x.{emote["imageType"]}'
                     break
     info['id'] = emote_id
     return info
@@ -136,11 +135,11 @@ def getEmoteInfoById(source, channel_id, emote_id):
 def getFFZEmotes(channel_id=None):
     emote_set = []
     if(channel_id is None):
-        url = 'https://api.frankerfacez.com/v1/set/global'
+        url = '/set/global'
         emotes = requests.get(url,params=None,headers=None).json()
         emotes = emotes['sets']['3']['emoticons']
     else:
-        url = f'https://api.frankerfacez.com/v1/room/id/{channel_id}'
+        url = f'{api_urls["ffz"]}/room/id/{channel_id}'
         emotes = requests.get(url,params=None,headers=None).json()
         try:
             emote_set_id = str(emotes['room']['set'])
@@ -154,9 +153,9 @@ def getFFZEmotes(channel_id=None):
         info['id'] = emotes[i]['id']
         info['code'] = emotes[i]['name']
         if(len(emotes[i]['urls']) == 1):
-            info['url'] = f'https://cdn.frankerfacez.com/emote/{emotes[i]["id"]}/1'
+            info['url'] = f'{cdn_urls["ffz"]}/{emotes[i]["id"]}/1'
         else:
-            info['url'] = f'https://cdn.frankerfacez.com/emote/{emotes[i]["id"]}/4'
+            info['url'] = f'{cdn_urls["ffz"]}/{emotes[i]["id"]}/4'
         emote_set.append(info)
     return emote_set
 
@@ -165,7 +164,6 @@ def getHeaders():
     config.read(constants.CONFIG_NAME)
     return {"Authorization": f"Bearer {getOAuth(constants.CLIENT_ID, config[constants.CONFIG_SECTIONS[1]][constants.TWITCH_VARIABLES[2]])}",
             "Client-Id": constants.CLIENT_ID}
-
 
 def getOAuth(client_id, client_secret):
     try:
@@ -178,19 +176,18 @@ def getOAuth(client_id, client_secret):
 
 def getOnlineStreams(channel_names):
     online_streams = []
-    streams = getStreams(channel_names)
-    for stream in streams:
+    for stream in getStreams(channel_names):
         online_streams.append(stream['user_login'])
     return online_streams
 
 def getStreams(channel_names):
-    url = f'{api_url}/streams?'
+    url = f'{api_urls["twitch"]}/streams?'
     for name in channel_names:
         url += f'user_login={name}&'
     return requests.get(url.strip('&'),params=None,headers=getHeaders()).json()['data']
 
 def getStreamTitle(channel_name):
-    url = f'{api_url}/streams?user_login={channel_name}'
+    url = f'{api_urls["twitch"]}/streams?user_login={channel_name}'
     try:
         return requests.get(url,params=None,headers=getHeaders()).json()['data'][0]['title'].replace('\"','\'')
     except:
@@ -199,9 +196,9 @@ def getStreamTitle(channel_name):
 def getTwitchEmotes(channel_name=None):
     emote_set = []
     if(channel_name is None):
-        url = f'{api_url}/chat/emotes/global'
+        url = f'{api_urls["twitch"]}/chat/emotes/global'
     else:
-        url = f'{api_url}/chat/emotes?broadcaster_id={getChannelId(channel_name)}'
+        url = f'{api_urls["twitch"]}/chat/emotes?broadcaster_id={getChannelId(channel_name)}'
     try:
         emotes = requests.get(url,params=None,headers=getHeaders()).json()['data']
         if(emotes == []):
@@ -212,11 +209,11 @@ def getTwitchEmotes(channel_name=None):
             info['code'] = emotes[i]['name']
             if '3.0' in emotes[i]['scale']:
                 if 'animated' in emotes[i]['format']:
-                    url = f'https://static-cdn.jtvnw.net/emoticons/v2/{emotes[i]["id"]}/animated/light/3.0'
+                    url = f'{cdn_urls["twitch"]}/{emotes[i]["id"]}/animated/light/3.0'
                 else:
-                    url = f'https://static-cdn.jtvnw.net/emoticons/v2/{emotes[i]["id"]}/static/light/3.0'
+                    url = f'{cdn_urls["twitch"]}/{emotes[i]["id"]}/static/light/3.0'
             else:
-                url = f'https://static-cdn.jtvnw.net/emoticons/v2/{emotes[i]["id"]}/static/light/1.0'
+                url = f'{cdn_urls["twitch"]}/{emotes[i]["id"]}/static/light/1.0'
             info['url'] = url
             emote_set.append(info)
         return emote_set
@@ -224,7 +221,7 @@ def getTwitchEmotes(channel_name=None):
         return None
 
 def isStreamLive(channel_name):
-    url = f'{api_url}/streams?user_login={channel_name}'
+    url = f'{api_urls["twitch"]}/streams?user_login={channel_name}'
     try:
         return requests.get(url,params=None,headers=getHeaders()).json()['data'] != []
     except:

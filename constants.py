@@ -12,7 +12,13 @@ DB_VARIABLES = ['host', 'user', 'password']
 TWITCH_VARIABLES = ['nickname', 'token', 'secret_key']
 OPTIONS_VARIABLES = ['download', 'debug']
 DIRS = ['emotes', 'global']
-API_URL = 'https://api.twitch.tv/helix'
+API_URLS = { 'twitch':'https://api.twitch.tv/helix',
+             'ffz':'https://api.frankerfacez.com/v1',
+             'bttv':'https://api.betterttv.net/3/cached'}
+CDN_URLS = {
+             'twitch':'https://static-cdn.jtvnw.net/emoticons/v2',
+             'ffz':'https://cdn.frankerfacez.com/emote',
+             'bttv':'https://cdn.betterttv.net/emote'}
 OAUTH_URL = 'https://id.twitch.tv/oauth2'
 SERVER_URL = 'tmi.twitch.tv'
 LABEL_TITLES = ['DATABASE INFORMATION', 'TWITCH INFORMATION', 'OPTIONS']
