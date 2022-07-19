@@ -85,7 +85,8 @@ if __name__ == '__main__':
     global_emotes_dir = f'{constants.DIRS[0]}/{constants.DIRS[1]}'
     if(utils.getDownloadMode() and not os.path.exists(global_emotes_dir)):
         try:
-            os.mkdir(constants.DIRS[0])
+            if not os.path.exists(constants.DIRS[0]):
+                os.mkdir(constants.DIRS[0])
             os.mkdir(global_emotes_dir)
         except:
             interface.printError(constants.ERROR_MESSAGES['directory'])
