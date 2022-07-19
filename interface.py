@@ -38,7 +38,6 @@ def handleDatabaseMenu():
     if(num_databases == 0):
         printOptionsHeader()
         printError(ERROR_MESSAGES['no_databases'])
-        input()
         return 0
     for i in range(0, num_databases):
         print(f'[{i+1}] {databases[i]}')

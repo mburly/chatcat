@@ -299,6 +299,7 @@ def log(channel_name, username, message, channel_emotes, session_id):
     logMessageEmotes(db, cursor, channel_emotes, message)
     cursor.close()
     db.close()
+    interface.printLog(channel_name, username, message)
 
 def populateEmotesTable(channel_name):
     interface.printBanner()

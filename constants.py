@@ -59,10 +59,10 @@ DEBUG_MESSAGES = { 'check_offline':'Checking if offline with counter =',
                    'inactive':'now inactive.',
                    'reactivated':'now reactivated.' }
 ERROR_MESSAGES = { 'host':'Unable to connect to host. Likely lost internet connection.',
-                   'channel':'Channel not found. Press any key to return to the main menu.',
-                   'selection':'Invalid selection. Press any key to return to the previous menu.',
-                   'database':'Unable to connect to database. Press any key to return to the main menu.',
-                   'no_databases':'No databases found! Press any key to go back.',
+                   'channel':'Channel not found. Press enter to return to the main menu.',
+                   'selection':'Invalid selection. Press enter to return to the previous menu.',
+                   'database':'Unable to connect to database. Press enter to return to the main menu.',
+                   'no_databases':'No databases found! Press enter to go back.',
                    'directory':'Unable to create emote directories.' }
 INPUT_MESSAGES = { 'host':'Enter hostname (default is typically localhost):',
                    'db_user':'Enter DB account username (default is typically root):',
@@ -80,4 +80,5 @@ STATUS_MESSAGES = { 'twitch':'Getting Twitch emotes...',
                     'bttv_channel':'Getting BTTV Channel emotes...',
                     'downloading':'Downloading channel emotes...',
                     'global':'Downloading global emotes...',
-                    'updates':'Checking for emote updates...' }
+                    'updates':'Checking for emote updates...',
+                    'end':'Ending execution now...' }
