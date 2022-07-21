@@ -1,18 +1,24 @@
 import pyfiglet
 
+CLIENT_ID = 'hodl2vsgr34qf7b5kppu7y3669rot7'
 CONFIG_NAME = 'conf.ini'
 SERVER = 'irc.chat.twitch.tv'
 PORT = 6667
 ADDRESS = (SERVER, PORT)
-CLIENT_ID = 'hodl2vsgr34qf7b5kppu7y3669rot7'
 BAD_FILE_CHARS = ['\\','/',':','*','?','"','<','>','|']
 BAD_USERNAMES = [' ', '.', 'GLHF']
 CONFIG_SECTIONS = ['db', 'twitch', 'options']
 DB_VARIABLES = ['host', 'user', 'password']
 TWITCH_VARIABLES = ['nickname', 'token', 'secret_key']
 OPTIONS_VARIABLES = ['download', 'debug']
-DIRS = ['emotes', 'global']
-API_URL = 'https://api.twitch.tv/helix'
+DIRS = { 'emotes':'emotes', 
+         'global':'global' }
+API_URLS = { 'twitch':'https://api.twitch.tv/helix',
+             'ffz':'https://api.frankerfacez.com/v1',
+             'bttv':'https://api.betterttv.net/3/cached' }
+CDN_URLS = { 'twitch':'https://static-cdn.jtvnw.net/emoticons/v2',
+             'ffz':'https://cdn.frankerfacez.com/emote',
+             'bttv':'https://cdn.betterttv.net/emote' }
 OAUTH_URL = 'https://id.twitch.tv/oauth2'
 SERVER_URL = 'tmi.twitch.tv'
 LABEL_TITLES = ['DATABASE INFORMATION', 'TWITCH INFORMATION', 'OPTIONS']
@@ -29,8 +35,12 @@ COLORS = { 'clear':'\033[0m',
            'bold_yellow':'\033[1;33m',
            'hi_blue':'\033[0;94m',
            'hi_green':'\033[0;92m',
-           'hi_red':'\033[0;91m'}
-USERNAME_COLORS = ['\033[0;31m','\033[0;32m','\033[0;33m','\033[0;35m','\033[0;36m']
+           'hi_red':'\033[0;91m' }
+USERNAME_COLORS = { 'red':'\033[0;31m',
+                    'green':'\033[0;32m',
+                    'yellow':'\033[0;33m',
+                    'purple':'\033[0;35m',
+                    'cyan':'\033[0;36m' }
 MAIN_MENU = '[1] Enter channel name\n[2] Options\n[3] Exit'
 OPTIONS_MENU = '[1] Download settings\n[2] Delete databases\n[3] Set debug mode\n[4] Back'
 DOWNLOAD_OPTIONS_MENU = 'Download emotes to chatcat folder?\n[1] Yes *DEFAULT*\n[2] No'
@@ -47,11 +57,16 @@ DEBUG_MESSAGES = { 'check_offline':'Checking if offline with counter =',
                    'update_emotes':'Entering update_emotes function for source =',
                    'set_emote':'Setting emote:',
                    'inactive':'now inactive.',
-                   'reactivated':'now reactivated.'}
+                   'reactivated':'now reactivated.' }
 ERROR_MESSAGES = { 'host':'Unable to connect to host. Likely lost internet connection.',
-                   'channel':'Channel not found. Press any key to return to the main menu.',
-                   'selection':'Invalid selection. Press any key to return to the previous menu.',
-                   'database':'Unable to connect to database. Press any key to return to the main menu.'}
+                   'channel':'Channel not found. Press enter to return to the main menu.',
+                   'selection':'Invalid selection. Press enter to return to the previous menu.',
+                   'database':'Unable to connect to database. Press enter to return to the main menu.',
+                   'no_databases':'No databases found! Press enter to go back.',
+                   'directory':'Unable to create emote directories.',
+                   'offline':'Stream offline. Please try another channel or try again later.',
+                   'client_id':'Bad Client ID. Please provide a different Client ID in the configuration file.',
+                   'connection':'No internet connection found. Please try again.' }
 INPUT_MESSAGES = { 'host':'Enter hostname (default is typically localhost):',
                    'db_user':'Enter DB account username (default is typically root):',
                    'db_pass':'Enter DB account password:',
@@ -59,7 +74,7 @@ INPUT_MESSAGES = { 'host':'Enter hostname (default is typically localhost):',
                    'oauth':'Please visit the URL \033[4;37mhttps://twitchapps.com/tmi/\033[0m and enter the token after pressing Connect:',
                    'channel_name':'Enter channel name:',
                    'selection':'Please make a selection:',
-                   'secret':'Enter the secret key:'}
+                   'secret':'Enter the secret key:' }
 STATUS_MESSAGES = { 'twitch':'Getting Twitch emotes...',
                     'subscriber':'Getting Subscriber emotes...',
                     'ffz_global':'Getting FFZ Global emotes...',
@@ -67,6 +82,6 @@ STATUS_MESSAGES = { 'twitch':'Getting Twitch emotes...',
                     'bttv_global':'Getting BTTV Global emotes...',
                     'bttv_channel':'Getting BTTV Channel emotes...',
                     'downloading':'Downloading channel emotes...',
-                    'no_databases':'No databases found! Press any key to go back.',
                     'global':'Downloading global emotes...',
-                    'updates':'Checking for emote updates...'}
+                    'updates':'Checking for emote updates...',
+                    'end':'Ending execution now...' }

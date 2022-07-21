@@ -1,14 +1,21 @@
 import os
 
+import constants
 import db
 import interface
+import twitch
 import utils
 
 def main():
     if(utils.setup() is None):
-        return -1
+        return 0
+    if(twitch.validateToken() == False):
+        return 0
     channel_name = utils.getChannelNameInput()
     if(channel_name is None):
+        return 0
+    if(twitch.isStreamLive(channel_name) == False):
+        interface.printError(constants.ERROR_MESSAGES['offline'])
         return 0
     session_id = db.startSession(channel_name)
     while(session_id is None):

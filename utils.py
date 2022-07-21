@@ -1,6 +1,5 @@
 import configparser
 import os
-import random
 import socket
 import sys
 import time
@@ -12,14 +11,13 @@ import db
 import interface
 import twitch
 
-config_name = constants.CONFIG_NAME
-config_sections = constants.CONFIG_SECTIONS
-db_variables = constants.DB_VARIABLES
-twitch_variables = constants.TWITCH_VARIABLES
-options_variables = constants.OPTIONS_VARIABLES
-error_messages = constants.ERROR_MESSAGES
-input_messages = constants.INPUT_MESSAGES
-status_messages = constants.STATUS_MESSAGES
+CONFIG_NAME = constants.CONFIG_NAME
+CONFIG_SECTIONS = constants.CONFIG_SECTIONS
+DIRS = constants.DIRS
+DB_VARIABLES = constants.DB_VARIABLES
+TWITCH_VARIABLES = constants.TWITCH_VARIABLES
+OPTIONS_VARIABLES = constants.OPTIONS_VARIABLES
+ERROR_MESSAGES = constants.ERROR_MESSAGES
 
 def createConfig(host, user, password, nickname, token, key):
     if host == '':
@@ -27,22 +25,22 @@ def createConfig(host, user, password, nickname, token, key):
     if user == '':
         user = 'root'
     config = configparser.ConfigParser()
-    config[config_sections[0]] = {
-        db_variables[0]:host,
-        db_variables[1]:user,
-        db_variables[2]:password
+    config[CONFIG_SECTIONS[0]] = {
+        DB_VARIABLES[0]:host,
+        DB_VARIABLES[1]:user,
+        DB_VARIABLES[2]:password
     }
-    config[config_sections[1]] = {
-        twitch_variables[0]:nickname,
-        twitch_variables[1]:token,
-        twitch_variables[2]:key
+    config[CONFIG_SECTIONS[1]] = {
+        TWITCH_VARIABLES[0]:nickname,
+        TWITCH_VARIABLES[1]:token,
+        TWITCH_VARIABLES[2]:key
     }
-    config[config_sections[2]] = {
-        options_variables[0]:True,
-        options_variables[1]:False
+    config[CONFIG_SECTIONS[2]] = {
+        OPTIONS_VARIABLES[0]:True,
+        OPTIONS_VARIABLES[1]:False
     }
     try:
-        with open(config_name, 'w') as configfile:
+        with open(CONFIG_NAME, 'w') as configfile:
             config.write(configfile)
             configfile.close()
         return 0
@@ -57,6 +55,20 @@ def downloadFile(url, fileName):
                 f.write(chunk)
     return None
 
+def downloadGlobalEmotes():
+    emotes = twitch.getTwitchEmotes()
+    global_emotes_dir = f'{DIRS["emotes"]}/{DIRS["global"]}'
+    counter = 0
+    for emote in emotes:
+        emote_name = emote['code']
+        for character in constants.BAD_FILE_CHARS:
+            if character in emote_name:
+                emote_name = emote_name.replace(character, str(counter))
+                counter += 1
+        filename = f'{global_emotes_dir}/{emote_name}-{emote["id"]}.png'
+        downloadFile(emote['url'], filename)
+        counter = 0
+
 def elapsedTime(start):
     return (time.time() - start) / 60
 
@@ -67,52 +79,38 @@ def getChannelNameInput(initial_run=True):
             return None
     else:
         channel_name = sys.argv[1]
-    return channel_name.lower()
+    return channel_name.lower().strip()
 
 def getDate():
     cur = time.gmtime()
-    mon = ''
-    day = ''
-    if(cur.tm_mon < 10):
-        mon = '0'
-    if(cur.tm_mday < 10):
-        day = '0'
+    mon = '0' if cur.tm_mon < 10 else ''
+    day = '0' if cur.tm_mday < 10 else ''
     return f'{mon}{str(cur.tm_mon)}-{day}{str(cur.tm_mday)}-{str(cur.tm_year)}'
 
 def getDateTime():
     cur = time.gmtime()
-    mon = ''
-    day = ''
-    hour = ''
-    min = ''
-    sec = ''
-    if(cur.tm_mon < 10):
-        mon = '0'
-    if(cur.tm_mday < 10):
-        day = '0'
-    if(cur.tm_hour < 10):
-        hour = '0'
-    if(cur.tm_min < 10):
-        min = '0'
-    if(cur.tm_sec < 10):
-        sec = '0'
+    mon = '0' if cur.tm_mon < 10 else ''
+    day = '0' if cur.tm_mday < 10 else ''
+    hour = '0' if cur.tm_hour < 10 else ''
+    min = '0' if cur.tm_min < 10 else ''
+    sec = '0' if cur.tm_sec < 10 else ''
     return f'{mon}{str(cur.tm_mon)}-{day}{str(cur.tm_mday)}-{str(cur.tm_year)} {hour}{str(cur.tm_hour)}:{min}{str(cur.tm_min)}:{sec}{str(cur.tm_sec)}'
 
 def getDebugMode():
     config = configparser.ConfigParser()
-    config.read(config_name)
+    config.read(CONFIG_NAME)
     try:
-        return True if config[config_sections[2]][options_variables[1]] == 'True' else False
+        return True if config[CONFIG_SECTIONS[2]][OPTIONS_VARIABLES[1]] == 'True' else False
     except:
         return None
 
 def getDownloadMode():
     config = configparser.ConfigParser()
     try:
-        config.read(config_name)
+        config.read(CONFIG_NAME)
     except:
         return False
-    return True if config[config_sections[2]][options_variables[0]] == 'True' else False
+    return True if config[CONFIG_SECTIONS[2]][OPTIONS_VARIABLES[0]] == 'True' else False
 
 def getIndices(list, text):
     indices = []
@@ -120,6 +118,13 @@ def getIndices(list, text):
         if text in list[i]:
             indices.append(i)
     return indices
+
+def getStreamNames():
+    streams = []
+    file = open('streams.txt','r')
+    for stream in file:
+        streams.append(stream.replace('\n',''))
+    return streams
 
 def globalEmotesDirectoryExists():
     return os.path.exists(f'{os.getcwd()}/global')
@@ -129,6 +134,9 @@ def isBadUsername(username):
         if phrase in username:
             return True
     return False
+
+def isDirectoryEmpty(path):
+    return True if len(os.listdir(path)) == 0 else False
 
 def parseMessageEmotes(channel_emotes, message):
     if(type(message) == list):
@@ -150,11 +158,15 @@ def parseResponse(resp, channel_name, channel_emotes, session_id):
     parsed_response = {}
     if(num_messages == 1):
         parsed_response['username'] = parseUsername(unparsed_resp[0])
+        if(parsed_response['username'] is None):
+            return
         parsed_response['message'] = parseMessage(unparsed_resp[3:])
         db.log(channel_name, parsed_response['username'], parsed_response['message'], channel_emotes, session_id)
     else:
         for i in range(0, num_messages):
             parsed_response['username'] = parseUsername(unparsed_resp[username_indices[i]])
+            if(parsed_response['username'] is None):
+                continue
             if(i != num_messages-1):
                 parsed_response['message'] = parseMessage(unparsed_resp[username_indices[i]:username_indices[i+1]+1][3:]).split('\r\n')[0]
             else:
@@ -167,6 +179,13 @@ def parseUsername(message):
     username = username[len(username)-1]
     if(isBadUsername(username)):
         return None
+    if(username == ''):
+        if(message[0] == ':'):
+            return parseUsername(message.split(':!')[1])
+        elif(message[0] == '!'):
+            return parseUsername(message.strip('!'))
+        else:
+            return None
     return username
 
 # (flag) 1 = first run after execution, 2 = otherwise
@@ -196,6 +215,7 @@ def run(channel_name, session_id, flag):
                     sock.close()
                     return True
             except KeyboardInterrupt:
+                interface.printInfo(channel_name, constants.STATUS_MESSAGES['end'])
                 try:
                     sock.close()
                     return False
@@ -210,21 +230,22 @@ def run(channel_name, session_id, flag):
         return True
 
 def setup():
-    if not os.path.exists(config_name):
+    if not os.path.exists(CONFIG_NAME):
         if(interface.handleConfigMenu() is None):   # Error creating config file
             return None
     return 0
 
 def startSocket(channel):
     config = configparser.ConfigParser()
-    config.read(config_name)
-    nickname = config[config_sections[1]][twitch_variables[0]]
-    token = config[config_sections[1]][twitch_variables[1]]
+    config.read(CONFIG_NAME)
+    nickname = config[CONFIG_SECTIONS[1]][TWITCH_VARIABLES[0]]
+    token = config[CONFIG_SECTIONS[1]][TWITCH_VARIABLES[1]]
     sock = socket.socket()
     try:
         sock.connect(constants.ADDRESS)
     except:
-        interface.printError(error_messages['host'])
+        interface.printError(f'[{constants.COLORS["bold_green"]}{channel}{constants.COLORS["clear"]}] ' + constants.ERROR_MESSAGES['host'])
+        db.endSession(channel)
         return -1
     sock.send(f'PASS {token}\n'.encode('utf-8'))
     sock.send(f'NICK {nickname}\n'.encode('utf-8'))
