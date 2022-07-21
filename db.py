@@ -349,9 +349,8 @@ def startSession(channel_name):
     if(db is None):
         return None
     cursor = db.cursor()
-    datetime = utils.getDateTime()
     stream_title = twitch.getStreamTitle(channel_name)
-    stmt = f'INSERT INTO sessions (stream_title, start_datetime) VALUES ("{stream_title}", "{datetime}")'
+    stmt = f'INSERT INTO sessions (stream_title, start_datetime) VALUES ("{stream_title}", "{utils.getDateTime()}")'
     cursor.execute(stmt)
     db.commit()
     id = cursor.lastrowid

@@ -158,11 +158,15 @@ def parseResponse(resp, channel_name, channel_emotes, session_id):
     parsed_response = {}
     if(num_messages == 1):
         parsed_response['username'] = parseUsername(unparsed_resp[0])
+        if(parsed_response['username'] is None):
+            return
         parsed_response['message'] = parseMessage(unparsed_resp[3:])
         db.log(channel_name, parsed_response['username'], parsed_response['message'], channel_emotes, session_id)
     else:
         for i in range(0, num_messages):
             parsed_response['username'] = parseUsername(unparsed_resp[username_indices[i]])
+            if(parsed_response['username'] is None):
+                continue
             if(i != num_messages-1):
                 parsed_response['message'] = parseMessage(unparsed_resp[username_indices[i]:username_indices[i+1]+1][3:]).split('\r\n')[0]
             else:

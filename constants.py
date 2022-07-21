@@ -63,7 +63,10 @@ ERROR_MESSAGES = { 'host':'Unable to connect to host. Likely lost internet conne
                    'selection':'Invalid selection. Press enter to return to the previous menu.',
                    'database':'Unable to connect to database. Press enter to return to the main menu.',
                    'no_databases':'No databases found! Press enter to go back.',
-                   'directory':'Unable to create emote directories.' }
+                   'directory':'Unable to create emote directories.',
+                   'offline':'Stream offline. Please try another channel or try again later.',
+                   'client_id':'Bad Client ID. Please provide a different Client ID in the configuration file.',
+                   'connection':'No internet connection found. Please try again.' }
 INPUT_MESSAGES = { 'host':'Enter hostname (default is typically localhost):',
                    'db_user':'Enter DB account username (default is typically root):',
                    'db_pass':'Enter DB account password:',

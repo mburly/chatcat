@@ -226,3 +226,16 @@ def isStreamLive(channel_name):
         return requests.get(url,params=None,headers=getHeaders()).json()['data'] != []
     except:
         return False
+
+def validateToken():
+    config = configparser.ConfigParser()
+    config.read(constants.CONFIG_NAME)
+    headers = {"Authorization": f"OAuth {getOAuth(constants.CLIENT_ID, config[constants.CONFIG_SECTIONS[1]][constants.TWITCH_VARIABLES[2]])}"}
+    try:
+        return requests.get(f'{constants.OAUTH_URL}/validate',params=None,headers=headers).json()['client_id'] != None
+    except requests.ConnectionError:
+        interface.printError(constants.ERROR_MESSAGES['connection'])
+        return False
+    except:
+        interface.printError(constants.ERROR_MESSAGES['client_id'])
+        return False
