@@ -1,7 +1,6 @@
 import configparser
 import os
 import socket
-import sys
 import time
 
 import requests
@@ -71,15 +70,6 @@ def downloadGlobalEmotes():
 
 def elapsedTime(start):
     return (time.time() - start) / 60
-
-def getChannelNameInput(initial_run=True):
-    if(len(sys.argv) < 2 or initial_run is False):
-        channel_name = interface.handleMainMenu()
-        if(channel_name is None):
-            return None
-    else:
-        channel_name = sys.argv[1]
-    return channel_name.lower().strip()
 
 def getDate():
     cur = time.gmtime()
@@ -188,47 +178,6 @@ def parseUsername(message):
             return None
     return username
 
-# (flag) 1 = first run after execution, 2 = otherwise
-def run(channel_name, session_id, flag):
-    channel = f'#{channel_name}'
-    sock = startSocket(channel)
-    live_clock = time.time()
-    socket_clock = time.time()
-    channel_emotes = db.getChannelActiveEmotes(channel_name, flag)
-    if(flag == 1):
-        interface.printBanner()
-    try:
-        while True:
-            if(elapsedTime(live_clock) >= 1):
-                if(twitch.isStreamLive(channel_name)):
-                    live_clock = time.time()
-                else:
-                    sock.close()
-                    return False
-            if(elapsedTime(socket_clock) >= 5):
-                sock.close()
-                sock = startSocket(channel)
-                socket_clock = time.time()
-            try:
-                resp = sock.recv(2048).decode('utf-8', errors='ignore')
-                if resp == '' :
-                    sock.close()
-                    return True
-            except KeyboardInterrupt:
-                interface.printInfo(channel_name, constants.STATUS_MESSAGES['end'])
-                try:
-                    sock.close()
-                    return False
-                except:
-                    return False
-            except:
-                sock.close()
-                return True
-            parseResponse(resp, channel_name, channel_emotes, session_id)
-    except:
-        sock.close()
-        return True
-
 def setup():
     if not os.path.exists(CONFIG_NAME):
         if(interface.handleConfigMenu() is None):   # Error creating config file
@@ -244,7 +193,7 @@ def startSocket(channel):
     try:
         sock.connect(constants.ADDRESS)
     except:
-        interface.printError(f'[{constants.COLORS["bold_green"]}{channel}{constants.COLORS["clear"]}] ' + constants.ERROR_MESSAGES['host'])
+        interface.printError(f'[{constants.COLORS["bold_green"]}{channel}{constants.COLORS["clear"]}] ' + ERROR_MESSAGES['host'])
         db.endSession(channel)
         return -1
     sock.send(f'PASS {token}\n'.encode('utf-8'))

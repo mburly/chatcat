@@ -1,10 +1,8 @@
 import configparser
 import os
-import random
 import sys
 
 import constants
-import db
 import utils
 
 COLORS = constants.COLORS
@@ -31,120 +29,6 @@ def handleConfigMenu():
     key = input(f'{INPUT_MESSAGES["secret"]} ')
     printLogo()
     return utils.createConfig(host, user, password, nickname, token, key)
-
-def handleDatabaseMenu():
-    databases = db.getDatabases()
-    num_databases = len(databases)
-    if(num_databases == 0):
-        printOptionsHeader()
-        printError(ERROR_MESSAGES['no_databases'])
-        return 0
-    for i in range(0, num_databases):
-        print(f'[{i+1}] {databases[i]}')
-    else:
-        if(num_databases != 1):
-            print(f'[{num_databases+1}] {constants.DATABASE_OPTIONS_MENU[0]}\n[{num_databases+2}] {constants.DATABASE_OPTIONS_MENU[1]}')
-            selection = input(f'{INPUT_MESSAGES["selection"]} ')
-            try:
-                selection = int(selection)
-            except:
-                printError(ERROR_MESSAGES['selection'])
-                return 0
-            if(selection == num_databases+1):
-                db.dropDatabaseHandler(databases)
-                return 0
-            if(selection == num_databases+2):
-                return 0
-        else:
-            print(f'[{num_databases+1}] Back')
-            selection = input(f'{INPUT_MESSAGES["selection"]} ')
-            try:
-                selection = int(selection)
-            except:
-                printError(ERROR_MESSAGES['selection'])
-                return 0
-            if(selection == num_databases+1):
-                return 0
-    try:
-        if(selection <= 0):
-            printError(ERROR_MESSAGES['selection'])
-            return 0
-        db.dropDatabaseHandler(databases[int(selection)-1])
-        return 0
-    except:
-        printError(ERROR_MESSAGES['selection'])
-        return 0
-
-def handleDebugMenu(selection):
-    config = configparser.ConfigParser()
-    config.read(CONFIG_NAME)
-    debug = utils.getDebugMode()
-    if(selection == 1):
-        if(debug == False):
-            config[CONFIG_SECTIONS[2]] = {
-            OPTIONS_VARIABLES[0]:config[CONFIG_SECTIONS[2]][OPTIONS_VARIABLES[0]],
-            OPTIONS_VARIABLES[1]:True
-            }
-        else:
-            return 0
-    elif(selection == 2):
-        if(debug == True):
-            config[CONFIG_SECTIONS[2]] = {
-            OPTIONS_VARIABLES[0]:config[CONFIG_SECTIONS[2]][OPTIONS_VARIABLES[0]],
-            OPTIONS_VARIABLES[1]:False
-            }
-        else:
-            return 0
-    else:
-        return -1
-    with open(CONFIG_NAME, 'w') as configfile:
-        config.write(configfile)
-    return 0
-
-def handleDownloadMenu(selection):
-    config = configparser.ConfigParser()
-    config.read(CONFIG_NAME)
-    if(selection == 1):
-        if(config[CONFIG_SECTIONS[2]] == True):
-            return 0
-        else:
-            config[CONFIG_SECTIONS[2]] = {
-                OPTIONS_VARIABLES[0]:True,
-                OPTIONS_VARIABLES[1]:config[CONFIG_SECTIONS[2]][OPTIONS_VARIABLES[1]]
-            }
-    elif(selection == 2):
-        if(config[CONFIG_SECTIONS[2]] == False):
-            return 0
-        config[CONFIG_SECTIONS[2]] = {
-            OPTIONS_VARIABLES[0]:False,
-            OPTIONS_VARIABLES[1]:config[CONFIG_SECTIONS[2]][OPTIONS_VARIABLES[1]]
-        }
-    else:
-        return -1
-    with open(CONFIG_NAME, 'w') as configfile:
-        config.write(configfile)
-    return 0
-
-def handleMainMenu(channel_name=None):
-    while(channel_name is None):
-        printMainMenu()
-        try:
-            selection = int(input(f'{INPUT_MESSAGES["selection"]} '))
-        except:
-            printError(ERROR_MESSAGES['selection'])
-            continue
-        if(selection == 1):
-            channel_name = input(f'{INPUT_MESSAGES["channel_name"]} ')
-        elif(selection == 2):
-            while(handleOptionsMenu() != 0):
-                continue
-        elif(selection == 3):
-            cls()
-            return None
-        else:
-            printError(ERROR_MESSAGES['selection'])
-            continue
-    return channel_name
 
 def printLogo():
     cls()
@@ -173,73 +57,8 @@ def printLabel(flag):
         printSpaces('[0;102m',len(text)-9)
         print(text)
         printSpaces('[0;102m',len(text)-9)
-    elif(flag == 3):
-        print(f'Version [v{constants.VERSION}]\n')
-        text = f'{COLORS["bg_blue"]}{constants.LABEL_TITLES[2]}{COLORS["clear"]}'
-        printSpaces('[0;104m',len(text)-9)
-        print(text)
-        printSpaces('[0;104m',len(text)-9)
     else:
         return None
-
-def printMainMenu():
-    printBanner()
-    print(constants.MAIN_MENU)
-
-def printOptionsHeader():
-    cls()
-    print(f'\n{constants.BANNER}')
-    printLabel(3)
-
-def handleOptionsMenu():
-    printOptionsHeader()
-    print(constants.OPTIONS_MENU)
-    selection = input(f'{INPUT_MESSAGES["selection"]} ')
-    try:
-        selection = int(selection)
-    except:
-        printError(ERROR_MESSAGES['selection'])
-        return -1
-    if(selection == 1):      # Download menu 
-        printOptionsHeader()
-        print(constants.DOWNLOAD_OPTIONS_MENU)
-        selection = input(f'{INPUT_MESSAGES["selection"]} ')
-        try:
-            selection = int(selection)
-        except:
-            printError(ERROR_MESSAGES['selection'])
-            return -1
-        if(selection == 1 or selection == 2):
-            handleDownloadMenu(selection)
-        else:
-            printError(ERROR_MESSAGES['selection'])
-            return -1
-        return 1
-    elif(selection == 2):   # Database menu
-        printOptionsHeader()
-        print(constants.DATABASE_OPTIONS_HEADER)
-        handleDatabaseMenu()
-        return 1
-    elif(selection == 3):   # Debug menu
-        printOptionsHeader()
-        print(constants.DEBUG_OPTIONS_MENU)
-        selection = input(f'{INPUT_MESSAGES["selection"]} ')
-        try:
-            selection = int(selection)
-        except:
-            printError(ERROR_MESSAGES['selection'])
-            return -1
-        if(selection == 1 or selection == 2):
-            handleDebugMenu(selection)
-        else:
-            printError(ERROR_MESSAGES['selection'])
-            return -1
-        return 1
-    elif(selection == 4):
-        return 0
-    else:
-        printError(ERROR_MESSAGES['selection'])
-        return -1
 
 def printDebug(text, channel_name=None):
     if(channel_name is None):
@@ -253,11 +72,6 @@ def printError(text):
 
 def printInfo(channel_name, text):
     print(f'[{COLORS["bold_blue"]}{utils.getDateTime()}{COLORS["clear"]}] [{COLORS["bold_purple"]}{channel_name}{COLORS["clear"]}] [{COLORS["hi_green"]}INFO{COLORS["clear"]}] {text}')
-
-def printLog(channel_name, username, message):
-    if '\\\\' in message:
-        message = message.replace('\\\\', '\\')
-    print(f'[{COLORS["bold_green"]}{channel_name}{COLORS["clear"]}] [{COLORS["bold_blue"]}{utils.getDateTime()}{COLORS["clear"]}] [{COLORS["hi_blue"]}LOG{COLORS["clear"]}] {constants.USERNAME_COLORS[random.choice(list(constants.USERNAME_COLORS.keys()))]}{username}{COLORS["clear"]}: {message}')
 
 def printSpaces(color, num):
     for i in range(0, num):

@@ -32,7 +32,7 @@ def getBTTVEmotes(channel_id=None):
     if(channel_id is None):
         url = f'{API_URLS["bttv"]}/emotes/global'
         emotes = requests.get(url,params=None,headers=None).json()
-        for i in interface.progressbar(range(0, len(emotes))):
+        for i in range(0, len(emotes)):
             info = getBTTVEmoteInfo(emotes[i])
             emote_set.append(info)
     else:
@@ -43,7 +43,7 @@ def getBTTVEmotes(channel_id=None):
         except:
             return None
         if(len(channel_emotes) != 0):
-            for i in interface.progressbar(range(0,len(channel_emotes))):
+            for i in range(0, len(channel_emotes)):
                 info = getBTTVEmoteInfo(channel_emotes[i])
                 emote_set.append(info)
         try:
@@ -53,7 +53,7 @@ def getBTTVEmotes(channel_id=None):
                 return None
             return emote_set
         if(len(shared_emotes) != 0):
-            for i in interface.progressbar(range(0,len(shared_emotes))):
+            for i in range(0, len(shared_emotes)):
                 info = getBTTVEmoteInfo(shared_emotes[i])
                 emote_set.append(info)
     return emote_set
@@ -148,7 +148,7 @@ def getFFZEmotes(channel_id=None):
         emotes = emotes['sets'][emote_set_id]['emoticons']
     if(emotes == []):
         return None
-    for i in interface.progressbar(range(0, len(emotes))):
+    for i in range(0, len(emotes)):
         info = {}
         info['id'] = emotes[i]['id']
         info['code'] = emotes[i]['name']
@@ -203,7 +203,7 @@ def getTwitchEmotes(channel_name=None):
         emotes = requests.get(url,params=None,headers=getHeaders()).json()['data']
         if(emotes == []):
             return None
-        for i in interface.progressbar(range(0, len(emotes))):
+        for i in range(0, len(emotes)):
             info = {}
             info['id'] = emotes[i]['id']
             info['code'] = emotes[i]['name']

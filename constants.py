@@ -41,12 +41,6 @@ USERNAME_COLORS = { 'red':'\033[0;31m',
                     'yellow':'\033[0;33m',
                     'purple':'\033[0;35m',
                     'cyan':'\033[0;36m' }
-MAIN_MENU = '[1] Enter channel name\n[2] Options\n[3] Exit'
-OPTIONS_MENU = '[1] Download settings\n[2] Delete databases\n[3] Set debug mode\n[4] Back'
-DOWNLOAD_OPTIONS_MENU = 'Download emotes to chatcat folder?\n[1] Yes *DEFAULT*\n[2] No'
-DATABASE_OPTIONS_HEADER = 'Please select which databases to delete. They are NOT recoverable.'
-DATABASE_OPTIONS_MENU = ['Delete ALL databases', 'Back']
-DEBUG_OPTIONS_MENU = '[1] On\n[2] Off'
 BANNER = f'{COLORS["bold_purple"]}{pyfiglet.figlet_format("Chattercat", font="speed")}{COLORS["clear"]}'
 VERSION = 'DEV2'
 EMOTE_TYPES = ['twitch','subscriber','ffz','ffz_channel','bttv','bttv_channel']
@@ -72,8 +66,6 @@ INPUT_MESSAGES = { 'host':'Enter hostname (default is typically localhost):',
                    'db_pass':'Enter DB account password:',
                    'twitch_user':'Enter your twitch username:',
                    'oauth':'Please visit the URL \033[4;37mhttps://twitchapps.com/tmi/\033[0m and enter the token after pressing Connect:',
-                   'channel_name':'Enter channel name:',
-                   'selection':'Please make a selection:',
                    'secret':'Enter the secret key:' }
 STATUS_MESSAGES = { 'twitch':'Getting Twitch emotes...',
                     'subscriber':'Getting Subscriber emotes...',
@@ -83,5 +75,4 @@ STATUS_MESSAGES = { 'twitch':'Getting Twitch emotes...',
                     'bttv_channel':'Getting BTTV Channel emotes...',
                     'downloading':'Downloading channel emotes...',
                     'global':'Downloading global emotes...',
-                    'updates':'Checking for emote updates...',
-                    'end':'Ending execution now...' }
+                    'updates':'Checking for emote updates...', }
