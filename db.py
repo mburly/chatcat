@@ -106,7 +106,6 @@ def downloadEmotesHelper(db, channel_name):
         url = row[0]
         emote_name = utils.removeSymbolsFromName(row[2])
         source = int(row[3])
-        utils.removeSymbolsFromName(emote_name)
         if(source == 1 or source == 2):
             if('animated' in url):
                 extension = 'gif'
