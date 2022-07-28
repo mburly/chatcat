@@ -59,13 +59,13 @@ def downloadGlobalEmotes():
     global_emotes_dir = f'{DIRS["emotes"]}/{DIRS["global"]}'
     counter = 0
     for emote in emotes:
-        emote_name = emote['code']
+        emote_name = emote.code
         for character in constants.BAD_FILE_CHARS:
             if character in emote_name:
                 emote_name = emote_name.replace(character, str(counter))
                 counter += 1
-        filename = f'{global_emotes_dir}/{emote_name}-{emote["id"]}.png'
-        downloadFile(emote['url'], filename)
+        filename = f'{global_emotes_dir}/{emote_name}-{emote.id}.png'
+        downloadFile(emote.url, filename)
         counter = 0
 
 def elapsedTime(start):
@@ -127,6 +127,14 @@ def isBadUsername(username):
 
 def isDirectoryEmpty(path):
     return True if len(os.listdir(path)) == 0 else False
+
+def removeSymbolsFromName(emote_name):
+    counter = 0
+    for character in constants.BAD_FILE_CHARS:
+        if character in emote_name:
+            emote_name = emote_name.replace(character, str(counter))
+            counter += 1
+    return emote_name
 
 def parseMessageEmotes(channel_emotes, message):
     if(type(message) == list):
@@ -193,7 +201,7 @@ def startSocket(channel):
     try:
         sock.connect(constants.ADDRESS)
     except:
-        interface.printError(f'[{constants.COLORS["bold_green"]}{channel}{constants.COLORS["clear"]}] ' + ERROR_MESSAGES['host'])
+        interface.printError(f'[{constants.COLORS["bold_green"]}{channel.strip("#")}{constants.COLORS["clear"]}] ' + ERROR_MESSAGES['host'])
         db.endSession(channel)
         return -1
     sock.send(f'PASS {token}\n'.encode('utf-8'))

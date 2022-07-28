@@ -100,17 +100,13 @@ def downloadEmotesHelper(db, channel_name):
     cursor = db.cursor(buffered=True)
     cursor.execute(stmt)
     rows = cursor.fetchall()
-    counter = 0
     channel_emotes_dir = f'{DIRS["emotes"]}/{channel_name}'
     global_emotes_dir = f'{DIRS["emotes"]}/{DIRS["global"]}'
     for row in interface.progressbar(rows):
         url = row[0]
-        emote_name = row[2]
+        emote_name = utils.removeSymbolsFromName(row[2])
         source = int(row[3])
-        for character in constants.BAD_FILE_CHARS:
-            if character in emote_name:
-                emote_name = emote_name.replace(character, str(counter))
-                counter += 1
+        utils.removeSymbolsFromName(emote_name)
         if(source == 1 or source == 2):
             if('animated' in url):
                 extension = 'gif'
@@ -129,7 +125,6 @@ def downloadEmotesHelper(db, channel_name):
         cursor.execute(stmt)
         db.commit()
         utils.downloadFile(url, file_name)
-        counter = 0
     cursor.close()
 
 def downloadEmotes(channel_name):
@@ -226,7 +221,7 @@ def getEmotes(cursor, active=None, channel_emotes=None):
                 continue
             else:
                 for emote in channel_emotes[source]:
-                    emotes.append(f'{source}-{emote["id"]}')
+                    emotes.append(f'{source}-{emote.id}')
         return emotes
     else:
         emotes = []
@@ -259,12 +254,12 @@ def logEmote(db, cursor, emote, channel_id):
     source_name = emote.split('-')[0]
     id = emote.split('-')[1]
     source = EMOTE_TYPES.index(source_name)+1
-    info = twitch.getEmoteInfoById(source, channel_id, id)
-    if(info is None):
+    emote = twitch.getEmoteInfoById(source, channel_id, id)
+    if(emote is None):
         return None
-    if('\\' in info['code']):
-        info['code'] = info['code'].replace('\\', '\\\\')
-    stmt = f'INSERT INTO emotes (code, emote_id, url, date_added, source, active) VALUES ("{info["code"]}","{id}","{info["url"]}","{utils.getDate()}","{source}",1);'
+    if('\\' in emote.code):
+        emote.code = emote.code.replace('\\', '\\\\')
+    stmt = f'INSERT INTO emotes (code, emote_id, url, date_added, source, active) VALUES ("{emote.code}","{id}","{emote.url}","{utils.getDate()}","{source}",1);'
     cursor.execute(stmt)
     db.commit()
 
@@ -311,13 +306,13 @@ def populateEmotesTable(channel_name):
             source += 1
             continue
         for emote in emotes[emote_type]:
-            emote_name = emote['code']
+            emote_name = emote.code
             if '\\' in emote_name:
                 emote_name = emote_name.replace('\\', '\\\\')
             if(source == 1):
-                stmt = f'INSERT INTO emotes (code, emote_id, url, path, date_added, source, active) VALUES ("{emote_name}","{emote["id"]}","{emote["url"]}","{global_emotes_dir}/{emote_name}-{emote["id"]}.png","{utils.getDate()}","{source}",1);'    
+                stmt = f'INSERT INTO emotes (code, emote_id, url, path, date_added, source, active) VALUES ("{emote_name}","{emote.id}","{emote.url}","{global_emotes_dir}/{utils.removeSymbolsFromName(emote_name)}-{emote.id}.png","{utils.getDate()}","{source}",1);'    
             else:
-                stmt = f'INSERT INTO emotes (code, emote_id, url, date_added, source, active) VALUES ("{emote_name}","{emote["id"]}","{emote["url"]}","{utils.getDate()}","{source}",1);'    
+                stmt = f'INSERT INTO emotes (code, emote_id, url, date_added, source, active) VALUES ("{emote_name}","{emote.id}","{emote.url}","{utils.getDate()}","{source}",1);'    
             cursor.execute(stmt)
             db.commit()
         source += 1
