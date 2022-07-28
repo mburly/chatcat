@@ -196,11 +196,9 @@ def getDatabases():
     db.close()
     return databases
 
-def getChannelActiveEmotes(channel_name, initial_run=False):
+def getChannelActiveEmotes(channel_name):
     emotes = []
     db = connect(channel_name)
-    if(initial_run):
-        updateEmotes(channel_name)
     cursor = db.cursor()
     stmt = 'SELECT code FROM emotes WHERE ACTIVE = 1;'
     cursor.execute(stmt)

@@ -10,7 +10,6 @@ import utils
 
 class Chattercat:
     executing = True
-    initial_run = True
     running = True
     def __init__(self, channel_name):
         self.channel_name = channel_name
@@ -39,9 +38,7 @@ class Chattercat:
         sock = utils.startSocket(channel)
         live_clock = time.time()
         socket_clock = time.time()
-        channel_emotes = db.getChannelActiveEmotes(self.channel_name, self.initial_run)
-        if(self.initial_run):
-            self.initial_run = False
+        channel_emotes = db.getChannelActiveEmotes(self.channel_name)
         try:
             while self.running:
                 if(utils.elapsedTime(live_clock) >= 1):
