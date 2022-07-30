@@ -5,7 +5,6 @@ import shutil
 import mysql.connector
 
 import constants
-import interface
 import twitch
 import utils
 
@@ -95,14 +94,14 @@ def createDB(channel_name):
         return None
 
 def downloadEmotesHelper(db, channel_name):
-    interface.printInfo(channel_name, STATUS_MESSAGES['downloading'])
+    utils.printInfo(channel_name, STATUS_MESSAGES['downloading'])
     stmt = 'SELECT url, emote_id, code, source FROM emotes WHERE path IS NULL;'
     cursor = db.cursor(buffered=True)
     cursor.execute(stmt)
     rows = cursor.fetchall()
     channel_emotes_dir = f'{DIRS["emotes"]}/{channel_name}'
     global_emotes_dir = f'{DIRS["emotes"]}/{DIRS["global"]}'
-    for row in interface.progressbar(rows):
+    for row in utils.progressbar(rows):
         url = row[0]
         emote_name = utils.removeSymbolsFromName(row[2])
         source = int(row[3])
@@ -325,17 +324,17 @@ def setEmotesStatus(channel_name, db, cursor, emotes, active):
         db.commit()
         if(utils.getDebugMode()):
             if(active):
-                interface.printDebug(f'{DEBUG_MESSAGES["set_emote"]} {emote} {DEBUG_MESSAGES["reactivated"]}', channel_name)
+                utils.printDebug(f'{DEBUG_MESSAGES["set_emote"]} {emote} {DEBUG_MESSAGES["reactivated"]}', channel_name)
             else:
-                interface.printDebug(f'{DEBUG_MESSAGES["set_emote"]} {emote} {DEBUG_MESSAGES["inactive"]}', channel_name)
+                utils.printDebug(f'{DEBUG_MESSAGES["set_emote"]} {emote} {DEBUG_MESSAGES["inactive"]}', channel_name)
 
 def startSession(channel_name):
     if(twitch.getChannelId(channel_name) is None):
-        interface.printError(ERROR_MESSAGES['channel'])
+        utils.printError(ERROR_MESSAGES['channel'])
         return None
     db = connect(channel_name)
     if(db == -1):
-        interface.printError(ERROR_MESSAGES['database'])
+        utils.printError(ERROR_MESSAGES['database'])
         return None
     if(db is None):
         return None
@@ -350,7 +349,7 @@ def startSession(channel_name):
     return id
 
 def updateEmotes(channel_name):
-    interface.printInfo(channel_name, STATUS_MESSAGES['updates'])
+    utils.printInfo(channel_name, STATUS_MESSAGES['updates'])
     new_emote_count = 0
     db = connect(channel_name)
     cursor = db.cursor()
@@ -368,14 +367,14 @@ def updateEmotes(channel_name):
     for emote in new_emotes:
         if(emote in reactivated_emotes):
             continue
-        interface.printInfo(channel_name, f'Logging {emote}')
+        utils.printInfo(channel_name, f'Logging {emote}')
         logEmote(db, cursor, emote, channel_id)
         new_emote_count += 1
     setEmotesStatus(channel_name, db, cursor, removed_emotes, 0)
     setEmotesStatus(channel_name, db, cursor, reactivated_emotes, 1)
     if(new_emote_count > 0 and utils.getDownloadMode()):
         downloadEmotes(channel_name)
-        interface.printInfo(channel_name, f'Downloaded {new_emote_count} newly active emotes.')
+        utils.printInfo(channel_name, f'Downloaded {new_emote_count} newly active emotes.')
     cursor.close()
     db.close()
-    interface.printInfo(channel_name, STATUS_MESSAGES['updates_complete'])
+    utils.printInfo(channel_name, STATUS_MESSAGES['updates_complete'])

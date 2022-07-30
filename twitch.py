@@ -3,7 +3,7 @@ import configparser
 import requests
 
 import constants
-import interface
+import utils
 
 API_URLS = constants.API_URLS
 CDN_URLS = constants.CDN_URLS
@@ -210,8 +210,8 @@ def validateToken():
     try:
         return requests.get(f'{constants.OAUTH_URL}/validate',params=None,headers=headers).json()['client_id'] != None
     except requests.ConnectionError:
-        interface.printError(constants.ERROR_MESSAGES['connection'])
+        utils.printError(constants.ERROR_MESSAGES['connection'])
         return False
     except:
-        interface.printError(constants.ERROR_MESSAGES['client_id'])
+        utils.printError(constants.ERROR_MESSAGES['client_id'])
         return False

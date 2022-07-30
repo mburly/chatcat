@@ -4,7 +4,6 @@ import time
 
 import constants
 import db
-import interface
 import twitch
 import utils
 
@@ -17,7 +16,7 @@ class Chattercat:
         try:
             while(self.executing):
                 if(live):
-                    interface.printInfo(self.channel_name, f'{self.channel_name} just went live!')
+                    utils.printInfo(self.channel_name, f'{self.channel_name} just went live!')
                     self.running = True
                     self.session_id = db.startSession(self.channel_name)
                     if(self.session_id is None):
@@ -26,7 +25,7 @@ class Chattercat:
                         self.run()
                     db.endSession(self.channel_name)
                     live = False
-                    interface.printInfo(self.channel_name, f'{self.channel_name} is now offline.')
+                    utils.printInfo(self.channel_name, f'{self.channel_name} is now offline.')
                 else:
                     live = twitch.isStreamLive(self.channel_name)
                     time.sleep(15)
@@ -82,7 +81,7 @@ if __name__ == '__main__':
     if(utils.getDownloadMode() and not os.path.exists(constants.DIRS['global_emotes'])):
         utils.createAndDownloadGlobalEmotes()
     try:
-        interface.printBanner()
+        utils.printBanner()
         out = pool.map(Chattercat,streams)
         pool.close()
     except KeyboardInterrupt:

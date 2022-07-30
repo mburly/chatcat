@@ -1,15 +1,16 @@
 import configparser
 import os
 import socket
+import sys
 import time
 
 import requests
 
 import constants
 import db
-import interface
 import twitch
 
+COLORS = constants.COLORS
 CONFIG_NAME = constants.CONFIG_NAME
 CONFIG_SECTIONS = constants.CONFIG_SECTIONS
 DIRS = constants.DIRS
@@ -17,6 +18,10 @@ DB_VARIABLES = constants.DB_VARIABLES
 TWITCH_VARIABLES = constants.TWITCH_VARIABLES
 OPTIONS_VARIABLES = constants.OPTIONS_VARIABLES
 ERROR_MESSAGES = constants.ERROR_MESSAGES
+
+def cls():
+    if not getDebugMode():
+        os.system('cls' if os.name=='nt' else 'clear')
 
 def createConfig(host, user, password, nickname, token, key):
     if host == '':
@@ -52,8 +57,8 @@ def createAndDownloadGlobalEmotes():
             os.mkdir(DIRS['emotes'])
         os.mkdir(DIRS['global_emotes'])
     except:
-        interface.printError(ERROR_MESSAGES['directory'])
-    interface.printDebug(constants.STATUS_MESSAGES['global'])
+        printError(ERROR_MESSAGES['directory'])
+    printDebug(constants.STATUS_MESSAGES['global'])
     downloadGlobalEmotes()
 
 def downloadFile(url, fileName):
@@ -196,11 +201,47 @@ def parseUsername(message):
             return None
     return username
 
-def setup():
-    if not os.path.exists(CONFIG_NAME):
-        if(interface.handleConfigMenu() is None):   # Error creating config file
-            return None
-    return 0
+def printBanner():
+    config = configparser.ConfigParser()
+    config.read(CONFIG_NAME)
+    cls()
+    print(f'\n{constants.BANNER}')
+    if(getDownloadMode()):
+        print(f'\t\t\t\t\tDownload emotes: [{COLORS["green"]}ON{COLORS["clear"]}]\n')
+    else:
+        print(f'\t\t\t\t\tDownload emotes: [{COLORS["red"]}OFF{COLORS["clear"]}]')
+
+def printDebug(text, channel_name=None):
+    if(channel_name is None):
+        print(f'[{COLORS["bold_blue"]}{getDateTime()}{COLORS["clear"]}] [{COLORS["bold_yellow"]}DEBUG{COLORS["clear"]}] {text}')
+    else:
+        print(f'[{COLORS["bold_green"]}{channel_name}{COLORS["clear"]}] [{COLORS["bold_blue"]}{getDateTime()}{COLORS["clear"]}] [{COLORS["bold_yellow"]}DEBUG{COLORS["clear"]}] {text}')
+
+def printError(text):
+    print(f'[{COLORS["bold_blue"]}{getDateTime()}{COLORS["clear"]}] [{COLORS["hi_red"]}ERROR{COLORS["clear"]}] {text}')
+    input()
+
+def printInfo(channel_name, text):
+    print(f'[{COLORS["bold_blue"]}{getDateTime()}{COLORS["clear"]}] [{COLORS["bold_purple"]}{channel_name}{COLORS["clear"]}] [{COLORS["hi_green"]}INFO{COLORS["clear"]}] {text}')
+
+def progressbar(it, prefix="", size=60, file=sys.stdout):
+    count = len(it)
+    def show(j):
+        if((j/count)*100 <= 10):
+            color = COLORS['bold_red']
+        elif((j/count)*100 < 100):
+            color = COLORS['bold_yellow']
+        else:
+            color = COLORS['bold_green']
+        x = int(size*j/count)
+        file.write("%s[%s%s%s%s] %s%i/%i%s\r" % (prefix, color, "●"*x, " "*(size-x), COLORS['clear'], color, j, count, COLORS['clear']))
+        file.flush()        
+    show(0)
+    for i, item in enumerate(it):
+        yield item
+        show(i+1)
+    file.write("\n")
+    file.flush()
 
 def startSocket(channel):
     config = configparser.ConfigParser()
@@ -211,7 +252,7 @@ def startSocket(channel):
     try:
         sock.connect(constants.ADDRESS)
     except:
-        interface.printError(f'[{constants.COLORS["bold_green"]}{channel.strip("#")}{constants.COLORS["clear"]}] ' + ERROR_MESSAGES['host'])
+        printError(f'[{constants.COLORS["bold_green"]}{channel.strip("#")}{constants.COLORS["clear"]}] ' + ERROR_MESSAGES['host'])
         db.endSession(channel)
         return -1
     sock.send(f'PASS {token}\n'.encode('utf-8'))
