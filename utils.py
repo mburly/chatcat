@@ -46,6 +46,16 @@ def createConfig(host, user, password, nickname, token, key):
     except:
         return None
 
+def createAndDownloadGlobalEmotes():
+    try:
+        if not os.path.exists(DIRS['emotes']):
+            os.mkdir(DIRS['emotes'])
+        os.mkdir(DIRS['global_emotes'])
+    except:
+        interface.printError(ERROR_MESSAGES['directory'])
+    interface.printDebug(constants.STATUS_MESSAGES['global'])
+    downloadGlobalEmotes()
+
 def downloadFile(url, fileName):
     r = requests.get(url)
     with open(fileName, 'wb') as f:

@@ -79,16 +79,8 @@ if __name__ == '__main__':
     os.system("")
     streams = utils.getStreamNames()
     pool = multiprocessing.Pool(processes=len(streams))
-    global_emotes_dir = f'{constants.DIRS["emotes"]}/{constants.DIRS["global"]}'
-    if(utils.getDownloadMode() and not os.path.exists(global_emotes_dir)):
-        try:
-            if not os.path.exists(constants.DIRS['emotes']):
-                os.mkdir(constants.DIRS['emotes'])
-            os.mkdir(global_emotes_dir)
-        except:
-            interface.printError(constants.ERROR_MESSAGES['directory'])
-        interface.printDebug(constants.STATUS_MESSAGES['global'])
-        utils.downloadGlobalEmotes()
+    if(utils.getDownloadMode() and not os.path.exists(constants.DIRS['global_emotes'])):
+        utils.createAndDownloadGlobalEmotes()
     try:
         interface.printBanner()
         out = pool.map(Chattercat,streams)

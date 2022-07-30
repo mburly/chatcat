@@ -199,6 +199,7 @@ def getDatabases():
 def getChannelActiveEmotes(channel_name):
     emotes = []
     db = connect(channel_name)
+    updateEmotes(channel_name)
     cursor = db.cursor()
     stmt = 'SELECT code FROM emotes WHERE ACTIVE = 1;'
     cursor.execute(stmt)
@@ -377,3 +378,4 @@ def updateEmotes(channel_name):
         interface.printInfo(channel_name, f'Downloaded {new_emote_count} newly active emotes.')
     cursor.close()
     db.close()
+    interface.printInfo(channel_name, STATUS_MESSAGES['updates_complete'])

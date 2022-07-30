@@ -12,7 +12,8 @@ DB_VARIABLES = ['host', 'user', 'password']
 TWITCH_VARIABLES = ['nickname', 'token', 'secret_key']
 OPTIONS_VARIABLES = ['download', 'debug']
 DIRS = { 'emotes':'emotes', 
-         'global':'global' }
+         'global':'global',
+         'global_emotes':'emotes/global' }
 API_URLS = { 'twitch':'https://api.twitch.tv/helix',
              'ffz':'https://api.frankerfacez.com/v1',
              'bttv':'https://api.betterttv.net/3/cached' }
@@ -67,12 +68,7 @@ INPUT_MESSAGES = { 'host':'Enter hostname (default is typically localhost):',
                    'twitch_user':'Enter your twitch username:',
                    'oauth':'Please visit the URL \033[4;37mhttps://twitchapps.com/tmi/\033[0m and enter the token after pressing Connect:',
                    'secret':'Enter the secret key:' }
-STATUS_MESSAGES = { 'twitch':'Getting Twitch emotes...',
-                    'subscriber':'Getting Subscriber emotes...',
-                    'ffz_global':'Getting FFZ Global emotes...',
-                    'ffz_channel':'Getting FFZ Channel emotes...',
-                    'bttv_global':'Getting BTTV Global emotes...',
-                    'bttv_channel':'Getting BTTV Channel emotes...',
-                    'downloading':'Downloading channel emotes...',
+STATUS_MESSAGES = { 'downloading':'Downloading channel emotes...',
                     'global':'Downloading global emotes...',
-                    'updates':'Checking for emote updates...', }
+                    'updates':'Checking for emote updates...',
+                    'updates_complete':'Emote update complete.' }

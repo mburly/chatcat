@@ -19,17 +19,11 @@ class Emote:
 def getAllChannelEmotes(channel_name):
     channel_id = getChannelId(channel_name)
     channel_emotes = {}
-    interface.printInfo(channel_name, STATUS_MESSAGES['twitch'])
     channel_emotes[EMOTE_TYPES[0]] = getTwitchEmotes()
-    interface.printInfo(channel_name, STATUS_MESSAGES['subscriber'])
     channel_emotes[EMOTE_TYPES[1]] = getTwitchEmotes(channel_name)
-    interface.printInfo(channel_name, STATUS_MESSAGES['ffz_global'])
     channel_emotes[EMOTE_TYPES[2]] = getFFZEmotes()
-    interface.printInfo(channel_name, STATUS_MESSAGES['ffz_channel'])
     channel_emotes[EMOTE_TYPES[3]] = getFFZEmotes(channel_id)
-    interface.printInfo(channel_name, STATUS_MESSAGES['bttv_global'])
     channel_emotes[EMOTE_TYPES[4]] = getBTTVEmotes()
-    interface.printInfo(channel_name, STATUS_MESSAGES['bttv_channel'])
     channel_emotes[EMOTE_TYPES[5]] = getBTTVEmotes(channel_id)
     return channel_emotes
 
@@ -178,7 +172,7 @@ def getStreamTitle(channel_name):
     except:
         return None
 
-def getTwitchEmotes(channel_name=None) -> Emote:
+def getTwitchEmotes(channel_name=None):
     emote_set = []
     if(channel_name is None):
         url = f'{API_URLS["twitch"]}/chat/emotes/global'
