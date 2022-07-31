@@ -101,7 +101,7 @@ def downloadEmotesHelper(db, channel_name):
     rows = cursor.fetchall()
     channel_emotes_dir = f'{DIRS["emotes"]}/{channel_name}'
     global_emotes_dir = f'{DIRS["emotes"]}/{DIRS["global"]}'
-    for row in utils.progressbar(rows):
+    for row in rows:
         url = row[0]
         emote_name = utils.removeSymbolsFromName(row[2])
         source = int(row[3])
@@ -322,11 +322,10 @@ def setEmotesStatus(channel_name, db, cursor, emotes, active):
         stmt = f'UPDATE emotes SET active = {active} WHERE emote_id = "{id}";'
         cursor.execute(stmt)
         db.commit()
-        if(utils.getDebugMode()):
-            if(active):
-                utils.printDebug(f'{DEBUG_MESSAGES["set_emote"]} {emote} {DEBUG_MESSAGES["reactivated"]}', channel_name)
-            else:
-                utils.printDebug(f'{DEBUG_MESSAGES["set_emote"]} {emote} {DEBUG_MESSAGES["inactive"]}', channel_name)
+        if(active):
+            utils.printInfo(channel_name, f'{DEBUG_MESSAGES["set_emote"]} {emote} {DEBUG_MESSAGES["reactivated"]}')
+        else:
+            utils.printInfo(channel_name, f'{DEBUG_MESSAGES["set_emote"]} {emote} {DEBUG_MESSAGES["inactive"]}')
 
 def startSession(channel_name):
     if(twitch.getChannelId(channel_name) is None):

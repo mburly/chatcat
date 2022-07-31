@@ -1,7 +1,6 @@
 import configparser
 import os
 import socket
-import sys
 import time
 
 import requests
@@ -20,8 +19,7 @@ OPTIONS_VARIABLES = constants.OPTIONS_VARIABLES
 ERROR_MESSAGES = constants.ERROR_MESSAGES
 
 def cls():
-    if not getDebugMode():
-        os.system('cls' if os.name=='nt' else 'clear')
+    os.system('cls' if os.name=='nt' else 'clear')
 
 def createConfig(host, user, password, nickname, token, key):
     if host == '':
@@ -58,7 +56,7 @@ def createAndDownloadGlobalEmotes():
         os.mkdir(DIRS['global_emotes'])
     except:
         printError(ERROR_MESSAGES['directory'])
-    printDebug(constants.STATUS_MESSAGES['global'])
+    print(constants.STATUS_MESSAGES['global'])
     downloadGlobalEmotes()
 
 def downloadFile(url, fileName):
@@ -86,6 +84,11 @@ def downloadGlobalEmotes():
 def elapsedTime(start):
     return (time.time() - start) / 60
 
+def endExecution(Chattercat):
+    db.endSession(Chattercat.channel_name)
+    Chattercat.executing = False
+    Chattercat.running = False
+
 def getDate():
     cur = time.gmtime()
     mon = '0' if cur.tm_mon < 10 else ''
@@ -100,14 +103,6 @@ def getDateTime():
     min = '0' if cur.tm_min < 10 else ''
     sec = '0' if cur.tm_sec < 10 else ''
     return f'{mon}{str(cur.tm_mon)}-{day}{str(cur.tm_mday)}-{str(cur.tm_year)} {hour}{str(cur.tm_hour)}:{min}{str(cur.tm_min)}:{sec}{str(cur.tm_sec)}'
-
-def getDebugMode():
-    config = configparser.ConfigParser()
-    config.read(CONFIG_NAME)
-    try:
-        return True if config[CONFIG_SECTIONS[2]][OPTIONS_VARIABLES[1]] == 'True' else False
-    except:
-        return None
 
 def getDownloadMode():
     config = configparser.ConfigParser()
@@ -164,7 +159,7 @@ def parseMessageEmotes(channel_emotes, message):
 def parseMessage(message):
     return ' '.join(message).strip('\r\n')[1:]
 
-def parseResponse(resp, channel_name, channel_emotes, session_id):
+def parseResponse(resp, Chattercat):
     unparsed_resp = resp.split(' ')
     username_indices = getIndices(unparsed_resp, constants.SERVER_URL)
     num_messages = len(username_indices)
@@ -174,7 +169,7 @@ def parseResponse(resp, channel_name, channel_emotes, session_id):
         if(parsed_response['username'] is None):
             return
         parsed_response['message'] = parseMessage(unparsed_resp[3:])
-        db.log(channel_name, parsed_response['username'], parsed_response['message'], channel_emotes, session_id)
+        db.log(Chattercat.channel_name, parsed_response['username'], parsed_response['message'], Chattercat.channel_emotes, Chattercat.session_id)
     else:
         for i in range(0, num_messages):
             parsed_response['username'] = parseUsername(unparsed_resp[username_indices[i]])
@@ -184,7 +179,7 @@ def parseResponse(resp, channel_name, channel_emotes, session_id):
                 parsed_response['message'] = parseMessage(unparsed_resp[username_indices[i]:username_indices[i+1]+1][3:]).split('\r\n')[0]
             else:
                 parsed_response['message'] = parseMessage(unparsed_resp[username_indices[i]:][3:]).split('\r\n')[0]
-            db.log(channel_name, parsed_response['username'], parsed_response['message'], channel_emotes, session_id)
+            db.log(Chattercat.channel_name, parsed_response['username'], parsed_response['message'], Chattercat.channel_emotes, Chattercat.session_id)
 
 # [message] format = :<USERNAME>!<USERNAME>@<USERNAME>.tmi.twitch.tv PRIVMSG #<CHANNELNAME> :<MESSAGE>
 def parseUsername(message):
@@ -211,12 +206,6 @@ def printBanner():
     else:
         print(f'\t\t\t\t\tDownload emotes: [{COLORS["red"]}OFF{COLORS["clear"]}]')
 
-def printDebug(text, channel_name=None):
-    if(channel_name is None):
-        print(f'[{COLORS["bold_blue"]}{getDateTime()}{COLORS["clear"]}] [{COLORS["bold_yellow"]}DEBUG{COLORS["clear"]}] {text}')
-    else:
-        print(f'[{COLORS["bold_green"]}{channel_name}{COLORS["clear"]}] [{COLORS["bold_blue"]}{getDateTime()}{COLORS["clear"]}] [{COLORS["bold_yellow"]}DEBUG{COLORS["clear"]}] {text}')
-
 def printError(text):
     print(f'[{COLORS["bold_blue"]}{getDateTime()}{COLORS["clear"]}] [{COLORS["hi_red"]}ERROR{COLORS["clear"]}] {text}')
     input()
@@ -224,26 +213,13 @@ def printError(text):
 def printInfo(channel_name, text):
     print(f'[{COLORS["bold_blue"]}{getDateTime()}{COLORS["clear"]}] [{COLORS["bold_purple"]}{channel_name}{COLORS["clear"]}] [{COLORS["hi_green"]}INFO{COLORS["clear"]}] {text}')
 
-def progressbar(it, prefix="", size=60, file=sys.stdout):
-    count = len(it)
-    def show(j):
-        if((j/count)*100 <= 10):
-            color = COLORS['bold_red']
-        elif((j/count)*100 < 100):
-            color = COLORS['bold_yellow']
-        else:
-            color = COLORS['bold_green']
-        x = int(size*j/count)
-        file.write("%s[%s%s%s%s] %s%i/%i%s\r" % (prefix, color, "●"*x, " "*(size-x), COLORS['clear'], color, j, count, COLORS['clear']))
-        file.flush()        
-    show(0)
-    for i, item in enumerate(it):
-        yield item
-        show(i+1)
-    file.write("\n")
-    file.flush()
+def restartSocket(Chattercat):
+    Chattercat.sock.close()
+    Chattercat.socket_clock = time.time()
+    return startSocket(Chattercat.channel_name)
 
-def startSocket(channel):
+def startSocket(channel_name):
+    channel_name = f'#{channel_name}'
     config = configparser.ConfigParser()
     config.read(CONFIG_NAME)
     nickname = config[CONFIG_SECTIONS[1]][TWITCH_VARIABLES[0]]
@@ -252,10 +228,10 @@ def startSocket(channel):
     try:
         sock.connect(constants.ADDRESS)
     except:
-        printError(f'[{constants.COLORS["bold_green"]}{channel.strip("#")}{constants.COLORS["clear"]}] ' + ERROR_MESSAGES['host'])
-        db.endSession(channel)
+        printError(f'[{constants.COLORS["bold_green"]}{channel_name.strip("#")}{constants.COLORS["clear"]}] ' + ERROR_MESSAGES['host'])
+        db.endSession(channel_name)
         return -1
     sock.send(f'PASS {token}\n'.encode('utf-8'))
     sock.send(f'NICK {nickname}\n'.encode('utf-8'))
-    sock.send(f'JOIN {channel}\n'.encode('utf-8'))
+    sock.send(f'JOIN {channel_name}\n'.encode('utf-8'))
     return sock
