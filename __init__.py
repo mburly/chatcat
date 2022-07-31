@@ -61,7 +61,6 @@ class Chattercat:
                     self.sock = utils.restartSocket(self)
                 utils.parseResponse(resp, self)
         except:
-            utils.printInfo(self.channel_name, 'Entered exception in main.')
             self.sock.close()
 
 if __name__ == '__main__':
