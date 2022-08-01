@@ -86,8 +86,7 @@ def createDB(channel_name):
         cursor.close()
         db.close()
         populateEmotesTable(channel_name)
-        if(utils.getDownloadMode()):
-            downloadEmotes(channel_name)
+        downloadEmotes(channel_name)
     except:
         cursor.close()
         db.close()
@@ -371,7 +370,7 @@ def updateEmotes(channel_name):
         new_emote_count += 1
     setEmotesStatus(channel_name, db, cursor, removed_emotes, 0)
     setEmotesStatus(channel_name, db, cursor, reactivated_emotes, 1)
-    if(new_emote_count > 0 and utils.getDownloadMode()):
+    if(new_emote_count > 0):
         downloadEmotes(channel_name)
         utils.printInfo(channel_name, f'Downloaded {new_emote_count} newly active emotes.')
     cursor.close()

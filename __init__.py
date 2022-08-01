@@ -67,7 +67,7 @@ if __name__ == '__main__':
     os.system("")
     streams = utils.getStreamNames()
     pool = multiprocessing.Pool(processes=len(streams))
-    if(utils.getDownloadMode() and not os.path.exists(constants.DIRS['global_emotes'])):
+    if not os.path.exists(constants.DIRS['global_emotes']):
         utils.createAndDownloadGlobalEmotes()
     try:
         utils.printBanner()

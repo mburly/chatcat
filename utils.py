@@ -15,39 +15,10 @@ CONFIG_SECTIONS = constants.CONFIG_SECTIONS
 DIRS = constants.DIRS
 DB_VARIABLES = constants.DB_VARIABLES
 TWITCH_VARIABLES = constants.TWITCH_VARIABLES
-OPTIONS_VARIABLES = constants.OPTIONS_VARIABLES
 ERROR_MESSAGES = constants.ERROR_MESSAGES
 
 def cls():
     os.system('cls' if os.name=='nt' else 'clear')
-
-def createConfig(host, user, password, nickname, token, key):
-    if host == '':
-        host = 'localhost'
-    if user == '':
-        user = 'root'
-    config = configparser.ConfigParser()
-    config[CONFIG_SECTIONS[0]] = {
-        DB_VARIABLES[0]:host,
-        DB_VARIABLES[1]:user,
-        DB_VARIABLES[2]:password
-    }
-    config[CONFIG_SECTIONS[1]] = {
-        TWITCH_VARIABLES[0]:nickname,
-        TWITCH_VARIABLES[1]:token,
-        TWITCH_VARIABLES[2]:key
-    }
-    config[CONFIG_SECTIONS[2]] = {
-        OPTIONS_VARIABLES[0]:True,
-        OPTIONS_VARIABLES[1]:False
-    }
-    try:
-        with open(CONFIG_NAME, 'w') as configfile:
-            config.write(configfile)
-            configfile.close()
-        return 0
-    except:
-        return None
 
 def createAndDownloadGlobalEmotes():
     try:
@@ -103,14 +74,6 @@ def getDateTime():
     min = '0' if cur.tm_min < 10 else ''
     sec = '0' if cur.tm_sec < 10 else ''
     return f'{mon}{str(cur.tm_mon)}-{day}{str(cur.tm_mday)}-{str(cur.tm_year)} {hour}{str(cur.tm_hour)}:{min}{str(cur.tm_min)}:{sec}{str(cur.tm_sec)}'
-
-def getDownloadMode():
-    config = configparser.ConfigParser()
-    try:
-        config.read(CONFIG_NAME)
-    except:
-        return False
-    return True if config[CONFIG_SECTIONS[2]][OPTIONS_VARIABLES[0]] == 'True' else False
 
 def getIndices(list, text):
     indices = []
@@ -197,14 +160,8 @@ def parseUsername(message):
     return username
 
 def printBanner():
-    config = configparser.ConfigParser()
-    config.read(CONFIG_NAME)
     cls()
     print(f'\n{constants.BANNER}')
-    if(getDownloadMode()):
-        print(f'\t\t\t\t\tDownload emotes: [{COLORS["green"]}ON{COLORS["clear"]}]\n')
-    else:
-        print(f'\t\t\t\t\tDownload emotes: [{COLORS["red"]}OFF{COLORS["clear"]}]')
 
 def printError(text):
     print(f'[{COLORS["bold_blue"]}{getDateTime()}{COLORS["clear"]}] [{COLORS["hi_red"]}ERROR{COLORS["clear"]}] {text}')
