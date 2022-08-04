@@ -64,7 +64,7 @@ def getDate():
     cur = time.gmtime()
     mon = '0' if cur.tm_mon < 10 else ''
     day = '0' if cur.tm_mday < 10 else ''
-    return f'{mon}{str(cur.tm_mon)}-{day}{str(cur.tm_mday)}-{str(cur.tm_year)}'
+    return f'{str(cur.tm_year)}-{mon}{str(cur.tm_mon)}-{day}{str(cur.tm_mday)}'
 
 def getDateTime():
     cur = time.gmtime()
@@ -73,7 +73,7 @@ def getDateTime():
     hour = '0' if cur.tm_hour < 10 else ''
     min = '0' if cur.tm_min < 10 else ''
     sec = '0' if cur.tm_sec < 10 else ''
-    return f'{mon}{str(cur.tm_mon)}-{day}{str(cur.tm_mday)}-{str(cur.tm_year)} {hour}{str(cur.tm_hour)}:{min}{str(cur.tm_min)}:{sec}{str(cur.tm_sec)}'
+    return f'{str(cur.tm_year)}-{mon}{str(cur.tm_mon)}-{day}{str(cur.tm_mday)} {hour}{str(cur.tm_hour)}:{min}{str(cur.tm_min)}:{sec}{str(cur.tm_sec)}'
 
 def getIndices(list, text):
     indices = []

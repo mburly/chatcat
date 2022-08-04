@@ -75,14 +75,21 @@ def createDB(channel_name):
         cursor.execute(stmt)
         db = connect(channel_name)
         cursor = db.cursor()
-        stmt = f'CREATE TABLE chatters (id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(512), first_date VARCHAR(255), last_date VARCHAR(255)) COLLATE utf8mb4_general_ci;'
+        stmt = f'CREATE TABLE chatters (id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(512), first_date DATETIME, last_date DATETIME) COLLATE utf8mb4_general_ci;'
         cursor.execute(stmt)
-        stmt = f'CREATE TABLE messages (id INT AUTO_INCREMENT PRIMARY KEY, message VARCHAR(512) COLLATE utf8mb4_general_ci, session_id INT, chatter_id INT, datetime VARCHAR(255)) COLLATE utf8mb4_general_ci;'
+        stmt = f'CREATE TABLE sessions (id INT AUTO_INCREMENT PRIMARY KEY, stream_title VARCHAR(512) COLLATE utf8mb4_general_ci, start_datetime DATETIME, end_datetime DATETIME) COLLATE utf8mb4_general_ci;'
         cursor.execute(stmt)
-        stmt = f'CREATE TABLE sessions (id INT AUTO_INCREMENT PRIMARY KEY, stream_title VARCHAR(512) COLLATE utf8mb4_general_ci, start_datetime VARCHAR(255), end_datetime VARCHAR(255)) COLLATE utf8mb4_general_ci;'
+        stmt = f'CREATE TABLE messages (id INT AUTO_INCREMENT PRIMARY KEY, message VARCHAR(512) COLLATE utf8mb4_general_ci, session_id INT, chatter_id INT, datetime DATETIME, FOREIGN KEY (session_id) REFERENCES sessions(id), FOREIGN KEY (chatter_id) REFERENCES chatters(id)) COLLATE utf8mb4_general_ci;'
         cursor.execute(stmt)
-        stmt = f'CREATE TABLE emotes (id INT AUTO_INCREMENT PRIMARY KEY, code VARCHAR(255) COLLATE utf8mb4_general_ci, emote_id VARCHAR(255) COLLATE utf8mb4_general_ci, count INT DEFAULT 0, url VARCHAR(512) COLLATE utf8mb4_general_ci, path VARCHAR(512) COLLATE utf8mb4_general_ci, date_added VARCHAR(255) COLLATE utf8mb4_general_ci, source VARCHAR(255) COLLATE utf8mb4_general_ci, active BOOLEAN) COLLATE utf8mb4_general_ci;'
+        stmt = f'CREATE TABLE emotes (id INT AUTO_INCREMENT PRIMARY KEY, code VARCHAR(255) COLLATE utf8mb4_general_ci, emote_id VARCHAR(255) COLLATE utf8mb4_general_ci, count INT DEFAULT 0, url VARCHAR(512) COLLATE utf8mb4_general_ci, path VARCHAR(512) COLLATE utf8mb4_general_ci, date_added DATE, source VARCHAR(255) COLLATE utf8mb4_general_ci, active BOOLEAN) COLLATE utf8mb4_general_ci;'
         cursor.execute(stmt)
+        stmt = f'CREATE PROCEDURE {db_name}.topEmotes() BEGIN SELECT code, count, path FROM {db_name}.EMOTES GROUP BY code ORDER BY count DESC LIMIT 10; END'
+        cursor.execute(stmt)
+        stmt = f'CREATE PROCEDURE {db_name}.topChatters() BEGIN SELECT c.username, COUNT(m.id) FROM {db_name}.MESSAGES m INNER JOIN {db_name}.CHATTERS c ON m.chatter_id=c.id GROUP BY c.username ORDER BY COUNT(m.id) DESC LIMIT 10; END'
+        cursor.execute(stmt)
+        stmt = f'CREATE PROCEDURE {db_name}.recentSessions() BEGIN SELECT stream_title, start_datetime FROM {db_name}.SESSIONS LIMIT 5; END'
+        cursor.execute(stmt)
+
         cursor.close()
         db.close()
         populateEmotesTable(channel_name)
