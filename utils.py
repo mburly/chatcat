@@ -66,8 +66,8 @@ def getDate():
     day = '0' if cur.tm_mday < 10 else ''
     return f'{str(cur.tm_year)}-{mon}{str(cur.tm_mon)}-{day}{str(cur.tm_mday)}'
 
-def getDateTime():
-    cur = time.gmtime()
+def getDateTime(sys=False):
+    cur = time.localtime() if sys else time.gmtime()
     mon = '0' if cur.tm_mon < 10 else ''
     day = '0' if cur.tm_mday < 10 else ''
     hour = '0' if cur.tm_hour < 10 else ''
@@ -164,11 +164,11 @@ def printBanner():
     print(f'\n{constants.BANNER}')
 
 def printError(text):
-    print(f'[{COLORS["bold_blue"]}{getDateTime()}{COLORS["clear"]}] [{COLORS["hi_red"]}ERROR{COLORS["clear"]}] {text}')
+    print(f'[{COLORS["bold_blue"]}{getDateTime(True)}{COLORS["clear"]}] [{COLORS["hi_red"]}ERROR{COLORS["clear"]}] {text}')
     input()
 
 def printInfo(channel_name, text):
-    print(f'[{COLORS["bold_blue"]}{getDateTime()}{COLORS["clear"]}] [{COLORS["bold_purple"]}{channel_name}{COLORS["clear"]}] [{COLORS["hi_green"]}INFO{COLORS["clear"]}] {text}')
+    print(f'[{COLORS["bold_blue"]}{getDateTime(True)}{COLORS["clear"]}] [{COLORS["bold_purple"]}{channel_name}{COLORS["clear"]}] [{COLORS["hi_green"]}INFO{COLORS["clear"]}] {text}')
 
 def restartSocket(Chattercat):
     Chattercat.sock.close()
