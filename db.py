@@ -15,6 +15,13 @@ STATUS_MESSAGES = constants.STATUS_MESSAGES
 DIRS = constants.DIRS
 EMOTE_TYPES = constants.EMOTE_TYPES
 
+class Database:
+    def __init__(self, channel_name):
+        self.channel_name = channel_name
+        self.db = connect(channel_name)
+        self.cursor = self.db.cursor()
+
+
 def connect(channel_name=None):
     if(channel_name is None):
         try:
@@ -22,17 +29,18 @@ def connect(channel_name=None):
             return db
         except:
             return None
-    db_name = f'cc_{channel_name}'
-    try:
-        db = connectHelper(db_name)
-        return db
-    except:
+    else:
+        db_name = f'cc_{channel_name}'
         try:
-            createDb(channel_name)
             db = connectHelper(db_name)
             return db
         except:
-            return -1
+            try:
+                createDb(channel_name)
+                db = connectHelper(db_name)
+                return db
+            except:
+                return -1
 
 def connectHelper(db_name=None):
     config = configparser.ConfigParser()
@@ -99,7 +107,6 @@ def downloadEmotesHelper(db, channel_name):
     cursor.execute(stmtSelectEmotesToDownload())
     rows = cursor.fetchall()
     channel_emotes_dir = f'{DIRS["emotes"]}/{channel_name}'
-    global_emotes_dir = f'{DIRS["emotes"]}/{DIRS["global"]}'
     for row in rows:
         url = row[0]
         emote_name = utils.removeSymbolsFromName(row[2])
@@ -115,7 +122,7 @@ def downloadEmotesHelper(db, channel_name):
         else:
             extension = 'png'
         if(source == 1):
-            path = f'{global_emotes_dir}/{emote_name}-{row[1]}.{extension}'
+            path = f'{DIRS["global_emotes"]}/{emote_name}-{row[1]}.{extension}'
         else:
             path = f'{channel_emotes_dir}/{emote_name}-{row[1]}.{extension}'
         cursor.execute(stmtUpdateEmotePath(path, row[1], source))
@@ -207,7 +214,7 @@ def logEmote(db, cursor, emote, channel_id):
     source_name = emote.split('-')[0]
     id = emote.split('-')[1]
     source = EMOTE_TYPES.index(source_name)+1
-    emote = twitch.getEmoteInfoById(source, channel_id, id)
+    emote = twitch.getEmoteInfoById(channel_id, id, source)
     if(emote is None):
         return None
     if('\\' in emote.code):
