@@ -8,7 +8,6 @@ import utils
 API_URLS = constants.API_URLS
 CDN_URLS = constants.CDN_URLS
 EMOTE_TYPES = constants.EMOTE_TYPES
-STATUS_MESSAGES = constants.STATUS_MESSAGES
 
 class Emote:
     def __init__(self, id, code, url):
@@ -128,7 +127,7 @@ def getFFZEmotes(channel_id=None):
 def getHeaders():
     config = configparser.ConfigParser()
     config.read(constants.CONFIG_NAME)
-    return {"Authorization": f"Bearer {getOAuth(constants.CLIENT_ID, config[constants.CONFIG_SECTIONS[1]][constants.TWITCH_VARIABLES[2]])}",
+    return {"Authorization": f"Bearer {getOAuth(constants.CLIENT_ID, config[constants.CONFIG_SECTIONS['twitch']][constants.TWITCH_VARIABLES['secret_key']])}",
             "Client-Id": constants.CLIENT_ID}
 
 def getOAuth(client_id, client_secret):
@@ -203,7 +202,7 @@ def isStreamLive(channel_name):
 def validateToken():
     config = configparser.ConfigParser()
     config.read(constants.CONFIG_NAME)
-    headers = {"Authorization": f"OAuth {getOAuth(constants.CLIENT_ID, config[constants.CONFIG_SECTIONS[1]][constants.TWITCH_VARIABLES[2]])}"}
+    headers = {"Authorization": f"OAuth {getOAuth(constants.CLIENT_ID, config[constants.CONFIG_SECTIONS['twitch']][constants.TWITCH_VARIABLES['secret_key']])}"}
     try:
         return requests.get(f'{constants.OAUTH_URL}/validate',params=None,headers=headers).json()['client_id'] != None
     except requests.ConnectionError:

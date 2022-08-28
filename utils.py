@@ -13,7 +13,6 @@ COLORS = constants.COLORS
 CONFIG_NAME = constants.CONFIG_NAME
 CONFIG_SECTIONS = constants.CONFIG_SECTIONS
 DIRS = constants.DIRS
-DB_VARIABLES = constants.DB_VARIABLES
 TWITCH_VARIABLES = constants.TWITCH_VARIABLES
 ERROR_MESSAGES = constants.ERROR_MESSAGES
 
@@ -44,7 +43,7 @@ class Chattercat:
         self.channel_emotes = self.db.getChannelActiveEmotes()
         try:
             while self.running:
-                resp = ''
+                self.resp = ''
                 if(elapsedTime(self.live_clock) >= 1):
                     if(twitch.isStreamLive(self.channel_name)):
                         self.live_clock = time.time()
@@ -54,8 +53,8 @@ class Chattercat:
                 if(elapsedTime(self.socket_clock) >= 5):
                     self.sock = self.restartSocket()
                 try:
-                    resp = self.sock.recv(2048).decode('utf-8', errors='ignore')
-                    if resp == '' :
+                    self.resp = self.sock.recv(2048).decode('utf-8', errors='ignore')
+                    if self.resp == '' :
                         self.sock = self.restartSocket()
                 except KeyboardInterrupt:
                     try:
@@ -65,7 +64,7 @@ class Chattercat:
                         self.endExecution()
                 except:
                     self.sock = self.restartSocket()
-                self.parseResponse(resp)
+                self.parseResponse()
         except:
             self.sock.close()
             self.endExecution()
@@ -95,8 +94,8 @@ class Chattercat:
     def startSocket(self):
         config = configparser.ConfigParser()
         config.read(CONFIG_NAME)
-        nickname = config[CONFIG_SECTIONS[1]][TWITCH_VARIABLES[0]]
-        token = config[CONFIG_SECTIONS[1]][TWITCH_VARIABLES[1]]
+        nickname = config[CONFIG_SECTIONS['twitch']][TWITCH_VARIABLES['nickname']]
+        token = config[CONFIG_SECTIONS['twitch']][TWITCH_VARIABLES['token']]
         sock = socket.socket()
         try:
             sock.connect(constants.ADDRESS)
@@ -114,17 +113,17 @@ class Chattercat:
         self.socket_clock = time.time()
         return self.startSocket()
 
-    def getResponses(self, resp):
+    def getResponses(self):
         try:
-            return resp.split('\r\n')[:-1]
+            return self.resp.split('\r\n')[:-1]
         except:
             return None
 
-    def parseResponse(self, resp):
-        for response in self.getResponses(resp):
+    def parseResponse(self):
+        for response in self.getResponses():
             username = self.parseUsername(response)
             message = self.parseMessage(response)
-            if(username is None or message is None):
+            if(username is None or message is None or ' ' in message):
                 return None
             self.db.log(username, message, self.channel_emotes, self.session_id)
 
@@ -150,7 +149,7 @@ def createAndDownloadGlobalEmotes():
         os.mkdir(DIRS['global_emotes'])
     except:
         printError(ERROR_MESSAGES['directory'])
-    print(constants.STATUS_MESSAGES['global'])
+    printInfo(None, constants.STATUS_MESSAGES['global'])
     downloadGlobalEmotes()
 
 def downloadFile(url, fileName):
@@ -245,4 +244,4 @@ def printError(channel_name, text):
     print(f'[{COLORS["bold_blue"]}{getDateTime(True)}{COLORS["clear"]}] [{COLORS["bold_purple"]}{channel_name}{COLORS["clear"]}] [{COLORS["hi_red"]}ERROR{COLORS["clear"]}] {text}')
 
 def printInfo(channel_name, text):
-    print(f'[{COLORS["bold_blue"]}{getDateTime(True)}{COLORS["clear"]}] [{COLORS["bold_purple"]}{channel_name}{COLORS["clear"]}] [{COLORS["hi_green"]}INFO{COLORS["clear"]}] {text}')
+    print(f'[{COLORS["bold_blue"]}{getDateTime(True)}{COLORS["clear"]}] [{COLORS["bold_purple"]}{channel_name if(channel_name is not None) else "Chattercat"}{COLORS["clear"]}] [{COLORS["hi_green"]}INFO{COLORS["clear"]}] {text}')

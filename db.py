@@ -40,9 +40,9 @@ class Database:
         config = configparser.ConfigParser()
         config.read(constants.CONFIG_NAME)
         db = mysql.connector.connect(
-            host=config[CONFIG_SECTIONS[0]][DB_VARIABLES[0]],
-            user=config[CONFIG_SECTIONS[0]][DB_VARIABLES[1]],
-            password=config[CONFIG_SECTIONS[0]][DB_VARIABLES[2]],
+            host=config[CONFIG_SECTIONS['db']][DB_VARIABLES['host']],
+            user=config[CONFIG_SECTIONS['db']][DB_VARIABLES['user']],
+            password=config[CONFIG_SECTIONS['db']][DB_VARIABLES['password']],
             database=db_name if(db_name is not None) else None
         )
         return db
@@ -263,9 +263,9 @@ class Database:
             self.cursor.execute(stmtUpdateEmoteStatus(active, id))
             self.db.commit()
             if(active):
-                utils.printInfo(self.channel_name, f'{DEBUG_MESSAGES["set_emote"]} {emote} {DEBUG_MESSAGES["reactivated"]}')
+                utils.printInfo(self.channel_name, f'{STATUS_MESSAGES["set_emote"]} {emote} {STATUS_MESSAGES["reactivated"]}')
             else:
-                utils.printInfo(self.channel_name, f'{DEBUG_MESSAGES["set_emote"]} {emote} {DEBUG_MESSAGES["inactive"]}')
+                utils.printInfo(self.channel_name, f'{STATUS_MESSAGES["set_emote"]} {emote} {STATUS_MESSAGES["inactive"]}')
 
 def stmtCreateDatabase(channel_name):
     return f'CREATE DATABASE IF NOT EXISTS cc_{channel_name} COLLATE utf8mb4_general_ci;'

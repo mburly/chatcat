@@ -8,9 +8,14 @@ PORT = 6667
 ADDRESS = (SERVER, PORT)
 BAD_FILE_CHARS = ['\\','/',':','*','?','"','<','>','|']
 BAD_USERNAMES = [' ', '.', 'GLHF']
-CONFIG_SECTIONS = ['db', 'twitch', 'options']
-DB_VARIABLES = ['host', 'user', 'password']
-TWITCH_VARIABLES = ['nickname', 'token', 'secret_key']
+CONFIG_SECTIONS = { 'db':'db',
+                    'twitch':'twitch' }
+DB_VARIABLES = { 'host':'host',
+                 'user':'user',
+                 'password':'password' }
+TWITCH_VARIABLES = { 'nickname':'nickname',
+                     'token':'token',
+                     'secret_key':'secret_key' }
 DIRS = { 'emotes':'emotes', 
          'global':'global',
          'global_emotes':'emotes/global' }
@@ -52,4 +57,7 @@ ERROR_MESSAGES = { 'host':'Unable to connect to host. Likely lost internet conne
 STATUS_MESSAGES = { 'downloading':'Downloading channel emotes...',
                     'global':'Downloading global emotes...',
                     'updates':'Checking for emote updates...',
-                    'updates_complete':'Emote update complete.' }
+                    'updates_complete':'Emote update complete.',
+                    'set_emote':'Setting emote:',
+                    'inactive':'now inactive.',
+                    'reactivated':'now reactivated.' }
