@@ -17,6 +17,129 @@ DB_VARIABLES = constants.DB_VARIABLES
 TWITCH_VARIABLES = constants.TWITCH_VARIABLES
 ERROR_MESSAGES = constants.ERROR_MESSAGES
 
+class Chattercat:
+    executing = True
+    running = True
+    def __init__(self, channel_name):
+        self.channel_name = channel_name.lower()
+        self.live = twitch.isStreamLive(self.channel_name)
+        try:
+            while(self.executing):
+                if(self.live):
+                    if(self.start() is None):
+                        return -1
+                    while(self.running):
+                        self.run()
+                    self.end()
+                else:
+                    self.live = twitch.isStreamLive(self.channel_name)
+                    time.sleep(15)
+        except KeyboardInterrupt:
+            return None
+
+    def run(self):
+        self.sock = self.startSocket()
+        self.live_clock = time.time()
+        self.socket_clock = time.time()
+        self.channel_emotes = self.db.getChannelActiveEmotes()
+        try:
+            while self.running:
+                resp = ''
+                if(elapsedTime(self.live_clock) >= 1):
+                    if(twitch.isStreamLive(self.channel_name)):
+                        self.live_clock = time.time()
+                    else:
+                        self.sock.close()
+                        self.running = False
+                if(elapsedTime(self.socket_clock) >= 5):
+                    self.sock = self.restartSocket()
+                try:
+                    resp = self.sock.recv(2048).decode('utf-8', errors='ignore')
+                    if resp == '' :
+                        self.sock = self.restartSocket()
+                except KeyboardInterrupt:
+                    try:
+                        self.sock.close()
+                        self.endExecution()
+                    except:
+                        self.endExecution()
+                except:
+                    self.sock = self.restartSocket()
+                self.parseResponse(resp)
+        except:
+            self.sock.close()
+            self.endExecution()
+
+    def start(self):
+        printInfo(self.channel_name, f'{self.channel_name} just went live!')
+        try:
+            self.db = db.Database(self.channel_name)
+            self.session_id = self.db.startSession()
+            self.running = True
+            return None if self.session_id is None else self.session_id
+        except:
+            return None
+
+    def end(self):
+        printInfo(self.channel_name, f'{self.channel_name} is now offline.')
+        self.db.endSession()
+        self.db.cursor.close()
+        self.db.db.close()
+        self.live = False
+
+    def endExecution(self):
+        self.db.endSession()
+        self.running = False
+        self.executing = False
+
+    def startSocket(self):
+        config = configparser.ConfigParser()
+        config.read(CONFIG_NAME)
+        nickname = config[CONFIG_SECTIONS[1]][TWITCH_VARIABLES[0]]
+        token = config[CONFIG_SECTIONS[1]][TWITCH_VARIABLES[1]]
+        sock = socket.socket()
+        try:
+            sock.connect(constants.ADDRESS)
+        except:
+            printError(f'[{constants.COLORS["bold_green"]}{self.channel_name}{constants.COLORS["clear"]}] ' + ERROR_MESSAGES['host'])
+            self.db.endSession()
+            return -1
+        sock.send(f'PASS {token}\n'.encode('utf-8'))
+        sock.send(f'NICK {nickname}\n'.encode('utf-8'))
+        sock.send(f'JOIN #{self.channel_name}\n'.encode('utf-8'))
+        return sock
+
+    def restartSocket(self):
+        self.sock.close()
+        self.socket_clock = time.time()
+        return self.startSocket()
+
+    def getResponses(self, resp):
+        try:
+            return resp.split('\r\n')[:-1]
+        except:
+            return None
+
+    def parseResponse(self, resp):
+        for response in self.getResponses(resp):
+            username = self.parseUsername(response)
+            message = self.parseMessage(response)
+            if(username is None or message is None):
+                return None
+            self.db.log(username, message, self.channel_emotes, self.session_id)
+
+    def parseUsername(self, resp):
+        try:
+            return resp.split('!')[0].split(':')[1]
+        except:
+            return None
+
+    def parseMessage(self, resp):
+        try:
+            return resp.split(f'#{self.channel_name} :')[1]
+        except:
+            return None
+
 def cls():
     os.system('cls' if os.name=='nt' else 'clear')
 
@@ -55,11 +178,6 @@ def downloadGlobalEmotes():
 def elapsedTime(start):
     return (time.time() - start) / 60
 
-def endExecution(Chattercat):
-    db.endSession(Chattercat.channel_name)
-    Chattercat.executing = False
-    Chattercat.running = False
-
 def getDate():
     cur = time.gmtime()
     mon = '0' if cur.tm_mon < 10 else ''
@@ -84,7 +202,7 @@ def getIndices(list, text):
 
 def getStreamNames():
     streams = []
-    file = open('streams.txt','r')
+    file = open(constants.STREAMS, 'r')
     for stream in file:
         streams.append(stream.replace('\n',''))
     return streams
@@ -119,76 +237,12 @@ def parseMessageEmotes(channel_emotes, message):
             parsed_emotes.append(word)
     return parsed_emotes
 
-def parseMessage(message):
-    return ' '.join(message).strip('\r\n')[1:]
-
-def parseResponse(resp, Chattercat):
-    unparsed_resp = resp.split(' ')
-    username_indices = getIndices(unparsed_resp, constants.SERVER_URL)
-    num_messages = len(username_indices)
-    parsed_response = {}
-    if(num_messages == 1):
-        parsed_response['username'] = parseUsername(unparsed_resp[0])
-        if(parsed_response['username'] is None):
-            return
-        parsed_response['message'] = parseMessage(unparsed_resp[3:])
-        db.log(Chattercat.channel_name, parsed_response['username'], parsed_response['message'], Chattercat.channel_emotes, Chattercat.session_id)
-    else:
-        for i in range(0, num_messages):
-            parsed_response['username'] = parseUsername(unparsed_resp[username_indices[i]])
-            if(parsed_response['username'] is None):
-                continue
-            if(i != num_messages-1):
-                parsed_response['message'] = parseMessage(unparsed_resp[username_indices[i]:username_indices[i+1]+1][3:]).split('\r\n')[0]
-            else:
-                parsed_response['message'] = parseMessage(unparsed_resp[username_indices[i]:][3:]).split('\r\n')[0]
-            db.log(Chattercat.channel_name, parsed_response['username'], parsed_response['message'], Chattercat.channel_emotes, Chattercat.session_id)
-
-# [message] format = :<USERNAME>!<USERNAME>@<USERNAME>.tmi.twitch.tv PRIVMSG #<CHANNELNAME> :<MESSAGE>
-def parseUsername(message):
-    username = message.split('!')[0].split(':')
-    username = username[len(username)-1]
-    if(isBadUsername(username)):
-        return None
-    if(username == ''):
-        if(message[0] == ':'):
-            return parseUsername(message.split(':!')[1])
-        elif(message[0] == '!'):
-            return parseUsername(message.strip('!'))
-        else:
-            return None
-    return username
-
 def printBanner():
     cls()
     print(f'\n{constants.BANNER}')
 
-def printError(text):
-    print(f'[{COLORS["bold_blue"]}{getDateTime(True)}{COLORS["clear"]}] [{COLORS["hi_red"]}ERROR{COLORS["clear"]}] {text}')
-    input()
+def printError(channel_name, text):
+    print(f'[{COLORS["bold_blue"]}{getDateTime(True)}{COLORS["clear"]}] [{COLORS["bold_purple"]}{channel_name}{COLORS["clear"]}] [{COLORS["hi_red"]}ERROR{COLORS["clear"]}] {text}')
 
 def printInfo(channel_name, text):
     print(f'[{COLORS["bold_blue"]}{getDateTime(True)}{COLORS["clear"]}] [{COLORS["bold_purple"]}{channel_name}{COLORS["clear"]}] [{COLORS["hi_green"]}INFO{COLORS["clear"]}] {text}')
-
-def restartSocket(Chattercat):
-    Chattercat.sock.close()
-    Chattercat.socket_clock = time.time()
-    return startSocket(Chattercat.channel_name)
-
-def startSocket(channel_name):
-    channel_name = f'#{channel_name}'
-    config = configparser.ConfigParser()
-    config.read(CONFIG_NAME)
-    nickname = config[CONFIG_SECTIONS[1]][TWITCH_VARIABLES[0]]
-    token = config[CONFIG_SECTIONS[1]][TWITCH_VARIABLES[1]]
-    sock = socket.socket()
-    try:
-        sock.connect(constants.ADDRESS)
-    except:
-        printError(f'[{constants.COLORS["bold_green"]}{channel_name.strip("#")}{constants.COLORS["clear"]}] ' + ERROR_MESSAGES['host'])
-        db.endSession(channel_name)
-        return -1
-    sock.send(f'PASS {token}\n'.encode('utf-8'))
-    sock.send(f'NICK {nickname}\n'.encode('utf-8'))
-    sock.send(f'JOIN {channel_name}\n'.encode('utf-8'))
-    return sock

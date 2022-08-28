@@ -2,6 +2,7 @@ import pyfiglet
 
 CLIENT_ID = 'hodl2vsgr34qf7b5kppu7y3669rot7'
 CONFIG_NAME = 'conf.ini'
+STREAMS = 'streams.txt'
 SERVER = 'irc.chat.twitch.tv'
 PORT = 6667
 ADDRESS = (SERVER, PORT)

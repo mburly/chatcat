@@ -82,7 +82,7 @@ def getChannelId(channel_name):
     except:
         return None
 
-def getEmoteInfoById(channel_id, emote_id, source) -> Emote:
+def getEmoteById(channel_id, emote_id, source) -> Emote:
     if(source == 1 or source == 2):
         return getTwitchEmoteById(channel_id, emote_id, source)
     elif(source == 3 or source == 4):
