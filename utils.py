@@ -123,7 +123,7 @@ class Chattercat:
         for response in self.getResponses():
             username = self.parseUsername(response)
             message = self.parseMessage(response)
-            if(username is None or message is None or ' ' in message):
+            if(username is None or ' ' in username or message is None):
                 return None
             self.db.log(username, message, self.channel_emotes, self.session_id)
 
