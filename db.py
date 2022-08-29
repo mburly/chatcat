@@ -34,7 +34,7 @@ class Database:
                 self.downloadEmotes(db)
                 return db
             except:
-                return -1
+                return None
 
     def connectHelper(self, db_name=None):
         config = configparser.ConfigParser()
@@ -80,8 +80,7 @@ class Database:
         stream_title = twitch.getStreamTitle(self.channel_name)
         self.cursor.execute(stmtInsertNewSession(stream_title))
         self.db.commit()
-        id = self.cursor.lastrowid
-        return id
+        return self.cursor.lastrowid
 
     def endSession(self):
         self.cursor.execute(stmtSelectMostRecentSession())
@@ -191,21 +190,20 @@ class Database:
                     extension = 'gif'
                 else:
                     extension = 'png'
-                path = path = f'{DIRS[1]}/{emote_name}-{row[1]}.{extension}'
+                path = path = f'{DIRS["twitch"]}/{emote_name}-{row[1]}.{extension}'
             elif(source == 3 or source == 4):
-                path = f'{DIRS[2]}/{emote_name}-{row[1]}.{extension}'
+                path = f'{DIRS["ffz"]}/{emote_name}-{row[1]}.{extension}'
             elif(source == 5 or source == 6):
                 extension = url.split('.')[3]
                 url = url.split(f'.{extension}')[0]
-                path = f'{DIRS[3]}/{emote_name}-{row[1]}.{extension}'
-
+                path = f'{DIRS["bttv"]}/{emote_name}-{row[1]}.{extension}'
             cursor.execute(stmtUpdateEmotePath(path, row[1], source))
             db.commit()
             utils.downloadFile(url, path)
         cursor.close()
 
     def downloadEmotes(self, db):
-        for dir in DIRS:
+        for dir in DIRS.values():
             if not os.path.exists(dir):
                 os.mkdir(dir)
         self.downloadEmotesHelper(db)
@@ -323,7 +321,7 @@ def stmtUpdateEmoteCount(emote):
     return f'UPDATE emotes SET count = count + 1 WHERE code = BINARY "{emote}" AND active = 1;'
 
 def stmtInsertNewGlobalEmote(emote_name, emote_id, url, source):
-    return f'INSERT INTO emotes (code, emote_id, url, path, date_added, source, active) VALUES ("{emote_name}","{emote_id}","{url}","{DIRS[1]}/{utils.removeSymbolsFromName(emote_name)}-{emote_id}.png","{utils.getDate()}","{source}",1);'
+    return f'INSERT INTO emotes (code, emote_id, url, path, date_added, source, active) VALUES ("{emote_name}","{emote_id}","{url}","{DIRS["twitch"]}/{utils.removeSymbolsFromName(emote_name)}-{emote_id}.png","{utils.getDate()}","{source}",1);'
 
 def stmtInsertNewThirdPartyEmote(emote_name, emote_id, url, source):
     return f'INSERT INTO emotes (code, emote_id, url, date_added, source, active) VALUES ("{emote_name}","{emote_id}","{url}","{utils.getDate()}","{source}",1);'  

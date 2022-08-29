@@ -147,23 +147,24 @@ def cls():
 
 def createAndDownloadGlobalEmotes():
     try:
-        if not os.path.exists(DIRS[0]):
-            os.mkdir(DIRS[0])
-        os.mkdir(DIRS[1])
+        if not os.path.exists(DIRS['emotes']):
+            os.mkdir(DIRS['emotes'])
+        os.mkdir(DIRS['twitch'])
     except:
         printError(ERROR_MESSAGES['directory'])
-    printInfo(None, constants.STATUS_MESSAGES['global'])
     downloadGlobalEmotes()
 
 def downloadFile(url, fileName):
     r = requests.get(url)
-    with open(fileName, 'wb') as f:
-        for chunk in r.iter_content(chunk_size=1024): 
-            if chunk:
-                f.write(chunk)
+    if not os.path.exists(fileName):
+        with open(fileName, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=1024): 
+                if chunk:
+                    f.write(chunk)
     return None
 
 def downloadGlobalEmotes():
+    printInfo(None, constants.STATUS_MESSAGES['global'])
     emotes = twitch.getTwitchEmotes()
     counter = 0
     for emote in emotes:
@@ -172,7 +173,7 @@ def downloadGlobalEmotes():
             if character in emote_name:
                 emote_name = emote_name.replace(character, str(counter))
                 counter += 1
-        filename = f'{DIRS[1]}/{emote_name}-{emote.id}.png'
+        filename = f'{DIRS["twitch"]}/{emote_name}-{emote.id}.png'
         downloadFile(emote.url, filename)
         counter = 0
 
@@ -208,17 +209,11 @@ def getStreamNames():
         streams.append(stream.replace('\n',''))
     return streams
 
-def globalEmotesDirectoryExists():
-    return os.path.exists(f'{os.getcwd()}/global')
-
 def isBadUsername(username):
     for phrase in constants.BAD_USERNAMES:
         if phrase in username:
             return True
     return False
-
-def isDirectoryEmpty(path):
-    return True if len(os.listdir(path)) == 0 else False
 
 def removeSymbolsFromName(emote_name):
     counter = 0
@@ -243,7 +238,7 @@ def printBanner():
     print(f'\n{constants.BANNER}')
 
 def printError(channel_name, text):
-    print(f'[{COLORS["bold_blue"]}{getDateTime(True)}{COLORS["clear"]}] [{COLORS["bold_purple"]}{channel_name}{COLORS["clear"]}] [{COLORS["hi_red"]}ERROR{COLORS["clear"]}] {text}')
+    print(f'[{COLORS["bold_blue"]}{getDateTime(True)}{COLORS["clear"]}] [{COLORS["bold_purple"]}{channel_name if(channel_name is not None) else "Chattercat"}{COLORS["clear"]}] [{COLORS["hi_red"]}ERROR{COLORS["clear"]}] {text}')
 
 def printInfo(channel_name, text):
     print(f'[{COLORS["bold_blue"]}{getDateTime(True)}{COLORS["clear"]}] [{COLORS["bold_purple"]}{channel_name if(channel_name is not None) else "Chattercat"}{COLORS["clear"]}] [{COLORS["hi_green"]}INFO{COLORS["clear"]}] {text}')
