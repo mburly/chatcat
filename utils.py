@@ -35,6 +35,8 @@ class Chattercat:
                     time.sleep(15)
         except KeyboardInterrupt:
             return None
+        except Exception as e:
+            printError(self.channel_name, e)
 
     def run(self):
         self.sock = self.startSocket()
@@ -65,7 +67,8 @@ class Chattercat:
                 except:
                     self.sock = self.restartSocket()
                 self.parseResponse()
-        except:
+        except Exception as e:
+            printError(self.channel_name, e)
             self.sock.close()
             self.endExecution()
 
@@ -144,9 +147,9 @@ def cls():
 
 def createAndDownloadGlobalEmotes():
     try:
-        if not os.path.exists(DIRS['emotes']):
-            os.mkdir(DIRS['emotes'])
-        os.mkdir(DIRS['global_emotes'])
+        if not os.path.exists(DIRS[0]):
+            os.mkdir(DIRS[0])
+        os.mkdir(DIRS[1])
     except:
         printError(ERROR_MESSAGES['directory'])
     printInfo(None, constants.STATUS_MESSAGES['global'])
@@ -162,7 +165,6 @@ def downloadFile(url, fileName):
 
 def downloadGlobalEmotes():
     emotes = twitch.getTwitchEmotes()
-    global_emotes_dir = f'{DIRS["emotes"]}/{DIRS["global"]}'
     counter = 0
     for emote in emotes:
         emote_name = emote.code
@@ -170,7 +172,7 @@ def downloadGlobalEmotes():
             if character in emote_name:
                 emote_name = emote_name.replace(character, str(counter))
                 counter += 1
-        filename = f'{global_emotes_dir}/{emote_name}-{emote.id}.png'
+        filename = f'{DIRS[1]}/{emote_name}-{emote.id}.png'
         downloadFile(emote.url, filename)
         counter = 0
 

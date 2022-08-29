@@ -182,9 +182,7 @@ class Database:
         utils.printInfo(self.channel_name, STATUS_MESSAGES['downloading'])
         cursor = db.cursor(buffered=True)
         cursor.execute(stmtSelectEmotesToDownload())
-        rows = cursor.fetchall()
-        channel_emotes_dir = f'{DIRS["emotes"]}/{self.channel_name}'
-        for row in rows:
+        for row in cursor.fetchall():
             url = row[0]
             emote_name = utils.removeSymbolsFromName(row[2])
             source = int(row[3])
@@ -193,32 +191,23 @@ class Database:
                     extension = 'gif'
                 else:
                     extension = 'png'
+                path = path = f'{DIRS[1]}/{emote_name}-{row[1]}.{extension}'
+            elif(source == 3 or source == 4):
+                path = f'{DIRS[2]}/{emote_name}-{row[1]}.{extension}'
             elif(source == 5 or source == 6):
                 extension = url.split('.')[3]
                 url = url.split(f'.{extension}')[0]
-            else:
-                extension = 'png'
-            if(source == 1):
-                path = f'{DIRS["global_emotes"]}/{emote_name}-{row[1]}.{extension}'
-            else:
-                path = f'{channel_emotes_dir}/{emote_name}-{row[1]}.{extension}'
+                path = f'{DIRS[3]}/{emote_name}-{row[1]}.{extension}'
+
             cursor.execute(stmtUpdateEmotePath(path, row[1], source))
             db.commit()
             utils.downloadFile(url, path)
         cursor.close()
 
     def downloadEmotes(self, db):
-        # Create emotes directory if doesn't exist
-        if not os.path.exists(DIRS["emotes"]):
-            os.mkdir(DIRS["emotes"])
-        # Create channel emotes directory if it doesn't exist
-        channel_emotes_dir = f'{DIRS["emotes"]}/{self.channel_name}'
-        if not os.path.exists(channel_emotes_dir):
-            os.mkdir(channel_emotes_dir)
-        # Create global emotes directory if it doesn't exist
-        global_emotes_dir = f'{DIRS["emotes"]}/{DIRS["global"]}'
-        if not os.path.exists(global_emotes_dir):
-            os.mkdir(global_emotes_dir)
+        for dir in DIRS:
+            if not os.path.exists(dir):
+                os.mkdir(dir)
         self.downloadEmotesHelper(db)
 
     def getChannelActiveEmotes(self):
@@ -334,7 +323,7 @@ def stmtUpdateEmoteCount(emote):
     return f'UPDATE emotes SET count = count + 1 WHERE code = BINARY "{emote}" AND active = 1;'
 
 def stmtInsertNewGlobalEmote(emote_name, emote_id, url, source):
-    return f'INSERT INTO emotes (code, emote_id, url, path, date_added, source, active) VALUES ("{emote_name}","{emote_id}","{url}","{DIRS["global_emotes"]}/{utils.removeSymbolsFromName(emote_name)}-{emote_id}.png","{utils.getDate()}","{source}",1);'
+    return f'INSERT INTO emotes (code, emote_id, url, path, date_added, source, active) VALUES ("{emote_name}","{emote_id}","{url}","{DIRS[1]}/{utils.removeSymbolsFromName(emote_name)}-{emote_id}.png","{utils.getDate()}","{source}",1);'
 
 def stmtInsertNewThirdPartyEmote(emote_name, emote_id, url, source):
     return f'INSERT INTO emotes (code, emote_id, url, date_added, source, active) VALUES ("{emote_name}","{emote_id}","{url}","{utils.getDate()}","{source}",1);'  

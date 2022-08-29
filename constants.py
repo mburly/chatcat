@@ -16,9 +16,7 @@ DB_VARIABLES = { 'host':'host',
 TWITCH_VARIABLES = { 'nickname':'nickname',
                      'token':'token',
                      'secret_key':'secret_key' }
-DIRS = { 'emotes':'emotes', 
-         'global':'global',
-         'global_emotes':'emotes/global' }
+DIRS = ['emotes', 'emotes/twitch', 'emotes/bttv', 'emotes/ffz']
 API_URLS = { 'twitch':'https://api.twitch.tv/helix',
              'ffz':'https://api.frankerfacez.com/v1',
              'bttv':'https://api.betterttv.net/3/cached' }
