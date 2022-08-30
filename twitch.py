@@ -206,8 +206,8 @@ def validateToken():
     try:
         return requests.get(f'{constants.OAUTH_URL}/validate',params=None,headers=headers).json()['client_id'] != None
     except requests.ConnectionError:
-        utils.printError(constants.ERROR_MESSAGES['connection'])
+        utils.printError(None, constants.ERROR_MESSAGES['connection'])
         return False
     except:
-        utils.printError(constants.ERROR_MESSAGES['client_id'])
+        utils.printError(None, constants.ERROR_MESSAGES['client_id'])
         return False

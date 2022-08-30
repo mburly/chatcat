@@ -103,7 +103,7 @@ class Chattercat:
         try:
             sock.connect(constants.ADDRESS)
         except:
-            printError(f'[{constants.COLORS["bold_green"]}{self.channel_name}{constants.COLORS["clear"]}] ' + ERROR_MESSAGES['host'])
+            printError(self.channel_name, ERROR_MESSAGES['host'])
             self.db.endSession()
             return -1
         sock.send(f'PASS {token}\n'.encode('utf-8'))
@@ -151,7 +151,7 @@ def createAndDownloadGlobalEmotes():
             os.mkdir(DIRS['emotes'])
         os.mkdir(DIRS['twitch'])
     except:
-        printError(ERROR_MESSAGES['directory'])
+        printError(None, ERROR_MESSAGES['directory'])
     downloadGlobalEmotes()
 
 def downloadFile(url, fileName):
