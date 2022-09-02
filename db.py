@@ -91,6 +91,8 @@ class Database:
         return id
 
     def log(self, username, message, channel_emotes, session_id):
+        if(username is None or message is None or username == '' or ' ' in username):
+            return None
         id = self.getChatterId(username)
         self.logMessage(id, message, session_id)
         self.logMessageEmotes(channel_emotes, message)
@@ -173,7 +175,7 @@ class Database:
         self.setEmotesStatus(removed_emotes, 0)
         self.setEmotesStatus(reactivated_emotes, 1)
         if(new_emote_count > 0):
-            self.downloadEmotes(self.channel_name, self.db)
+            self.downloadEmotes(self.db)
             utils.printInfo(self.channel_name, f'Downloaded {new_emote_count} newly active emotes.')
         utils.printInfo(self.channel_name, STATUS_MESSAGES['updates_complete'])
 

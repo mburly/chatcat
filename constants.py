@@ -53,7 +53,7 @@ ERROR_MESSAGES = { 'host':'Unable to connect to host. Likely lost internet conne
                    'database':'Unable to connect to database.',
                    'directory':'Unable to create emote directories.',
                    'offline':'Stream offline. Please try another channel or try again later.',
-                   'client_id':'Bad Client ID. Please provide a different Client ID in the configuration file.',
+                   'secret_key':'Bad secret key. Please provide the appropriate secret key in the configuration file.',
                    'connection':'No internet connection found. Please try again.',
                    'no_streams':'No streams provided. Please add at least one channel to streams.txt' }
 STATUS_MESSAGES = { 'downloading':'Downloading channel emotes...',

@@ -26,7 +26,7 @@ class Chattercat:
             while(self.executing):
                 if(self.live):
                     if(self.start() is None):
-                        return -1
+                        return None
                     while(self.running):
                         self.run()
                     self.end()
@@ -69,7 +69,8 @@ class Chattercat:
                 self.parseResponse()
         except Exception as e:
             printError(self.channel_name, e)
-            self.sock.close()
+            print('Something is going on with the socket here...')
+            self.sock.close()       # 'NoneType' object has no attribute 'close'
             self.endExecution()
 
     def start(self):
@@ -105,7 +106,7 @@ class Chattercat:
         except:
             printError(self.channel_name, ERROR_MESSAGES['host'])
             self.db.endSession()
-            return -1
+            return None
         sock.send(f'PASS {token}\n'.encode('utf-8'))
         sock.send(f'NICK {nickname}\n'.encode('utf-8'))
         sock.send(f'JOIN #{self.channel_name}\n'.encode('utf-8'))
@@ -126,8 +127,10 @@ class Chattercat:
         for response in self.getResponses():
             username = self.parseUsername(response)
             message = self.parseMessage(response)
-            if(username is None or ' ' in username or message is None):
-                return None
+            if(message is None):
+                continue
+            if(username == message):
+                username = parseIncompleteResponse(response)
             self.db.log(username, message, self.channel_emotes, self.session_id)
 
     def parseUsername(self, resp):
@@ -223,6 +226,12 @@ def removeSymbolsFromName(emote_name):
             counter += 1
     return emote_name
 
+def parseIncompleteResponse(resp):
+    if('PRIVMSG' in resp):
+        if('@' in resp.split('PRIVMSG')[0]):
+            return resp.split("PRIVMSG")[0].split("@")[1].split(".")[0]
+    return None
+            
 def parseMessageEmotes(channel_emotes, message):
     if(type(message) == list):
         return []

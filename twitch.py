@@ -209,5 +209,5 @@ def validateToken():
         utils.printError(None, constants.ERROR_MESSAGES['connection'])
         return False
     except:
-        utils.printError(None, constants.ERROR_MESSAGES['client_id'])
+        utils.printError(None, constants.ERROR_MESSAGES['secret_key'])
         return False
