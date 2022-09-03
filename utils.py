@@ -212,12 +212,6 @@ def getStreamNames():
         streams.append(stream.replace('\n',''))
     return streams
 
-def isBadUsername(username):
-    for phrase in constants.BAD_USERNAMES:
-        if phrase in username:
-            return True
-    return False
-
 def removeSymbolsFromName(emote_name):
     counter = 0
     for character in constants.BAD_FILE_CHARS:

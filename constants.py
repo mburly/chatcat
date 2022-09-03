@@ -7,7 +7,6 @@ SERVER = 'irc.chat.twitch.tv'
 PORT = 6667
 ADDRESS = (SERVER, PORT)
 BAD_FILE_CHARS = ['\\','/',':','*','?','"','<','>','|']
-BAD_USERNAMES = [' ', '.', 'GLHF']
 CONFIG_SECTIONS = { 'db':'db',
                     'twitch':'twitch' }
 DB_VARIABLES = { 'host':'host',
@@ -30,16 +29,8 @@ OAUTH_URL = 'https://id.twitch.tv/oauth2'
 SERVER_URL = 'tmi.twitch.tv'
 COLORS = { 'clear':'\033[0m',
            'red':'\033[0;31m',
-           'green':'\033[0;32m',
-           'bg_blue':'\033[44m',
-           'bg_green':'\033[42m',
-           'bg_pink':'\033[45m',
            'bold_blue':'\033[1;34m',
-           'bold_green':'\033[1;32m',
            'bold_purple':'\033[1;35m',
-           'bold_red':'\033[1;31m',
-           'bold_yellow':'\033[1;33m',
-           'hi_blue':'\033[0;94m',
            'hi_green':'\033[0;92m',
            'hi_red':'\033[0;91m' }
 BANNER = f'{COLORS["bold_purple"]}{pyfiglet.figlet_format("Chattercat", font="speed")}{COLORS["clear"]}'

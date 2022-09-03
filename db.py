@@ -141,13 +141,12 @@ class Database:
                 source += 1
                 continue
             for emote in emotes[emote_type]:
-                emote_name = emote.code
-                if '\\' in emote_name:
-                    emote_name = emote_name.replace('\\', '\\\\')
+                if '\\' in emote.code:
+                    emote.code = emote.code.replace('\\', '\\\\')
                 if(source == 1):
-                    cursor.execute(stmtInsertNewGlobalEmote(emote_name, emote.id, emote.url, source))
+                    cursor.execute(stmtInsertNewGlobalEmote(emote, source))
                 else:
-                    cursor.execute(stmtInsertNewThirdPartyEmote(emote_name, emote.id, emote.url, source))
+                    cursor.execute(stmtInsertNewThirdPartyEmote(emote, source))
                 db.commit()
             source += 1
         cursor.close()
@@ -192,7 +191,7 @@ class Database:
                     extension = 'gif'
                 else:
                     extension = 'png'
-                path = path = f'{DIRS["twitch"]}/{emote_name}-{row[1]}.{extension}'
+                path = f'{DIRS["twitch"]}/{emote_name}-{row[1]}.{extension}'
             elif(source == 3 or source == 4):
                 path = f'{DIRS["ffz"]}/{emote_name}-{row[1]}.{extension}'
             elif(source == 5 or source == 6):
@@ -322,11 +321,11 @@ def stmtUpdateChatterLastDate(chatter_id):
 def stmtUpdateEmoteCount(emote):
     return f'UPDATE emotes SET count = count + 1 WHERE code = BINARY "{emote}" AND active = 1;'
 
-def stmtInsertNewGlobalEmote(emote_name, emote_id, url, source):
-    return f'INSERT INTO emotes (code, emote_id, url, path, date_added, source, active) VALUES ("{emote_name}","{emote_id}","{url}","{DIRS["twitch"]}/{utils.removeSymbolsFromName(emote_name)}-{emote_id}.png","{utils.getDate()}","{source}",1);'
+def stmtInsertNewGlobalEmote(emote, source):
+    return f'INSERT INTO emotes (code, emote_id, url, path, date_added, source, active) VALUES ("{emote.code}","{emote.id}","{emote.url}","{DIRS["twitch"]}/{utils.removeSymbolsFromName(emote.code)}-{emote.id}.png","{utils.getDate()}","{source}",1);'
 
-def stmtInsertNewThirdPartyEmote(emote_name, emote_id, url, source):
-    return f'INSERT INTO emotes (code, emote_id, url, date_added, source, active) VALUES ("{emote_name}","{emote_id}","{url}","{utils.getDate()}","{source}",1);'  
+def stmtInsertNewThirdPartyEmote(emote, source):
+    return f'INSERT INTO emotes (code, emote_id, url, date_added, source, active) VALUES ("{emote.code}","{emote.id}","{emote.url}","{utils.getDate()}","{source}",1);'  
 
 def stmtUpdateEmoteStatus(active, emote_id):
     return f'UPDATE emotes SET active = {active} WHERE emote_id = "{emote_id}";'
