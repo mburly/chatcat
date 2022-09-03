@@ -2,8 +2,9 @@ import multiprocessing
 import os
 import sys
 
-from constants import ERROR_MESSAGES, DIRS
-from utils import Chattercat, getStreamNames, createAndDownloadGlobalEmotes, printBanner, printError
+from chattercat.chattercat import Chattercat
+from chattercat.constants import ERROR_MESSAGES, DIRS
+from chattercat.utils import getStreamNames, createAndDownloadGlobalEmotes, printBanner, printError
 
 if __name__ == '__main__':
     os.system("")

@@ -2,8 +2,8 @@ import configparser
 
 import requests
 
-import constants
-import utils
+import chattercat.constants as constants
+import chattercat.utils as utils
 
 API_URLS = constants.API_URLS
 CDN_URLS = constants.CDN_URLS
