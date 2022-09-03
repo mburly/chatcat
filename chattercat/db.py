@@ -3,9 +3,9 @@ import os
 
 import mysql.connector
 
-import constants
-import twitch
-import utils
+import chattercat.constants as constants
+import chattercat.twitch as twitch
+import chattercat.utils as utils
 
 CONFIG_SECTIONS = constants.CONFIG_SECTIONS
 DB_VARIABLES = constants.DB_VARIABLES
