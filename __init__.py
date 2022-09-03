@@ -14,7 +14,10 @@ if __name__ == '__main__':
     pool = multiprocessing.Pool(processes=len(streams))
     printBanner()
     if not os.path.exists(DIRS['emotes']):
-        createAndDownloadGlobalEmotes()
+        try:
+            createAndDownloadGlobalEmotes()
+        except Exception as e:
+            print(e)
     try:
         out = pool.map(Chattercat,streams)
         pool.close()

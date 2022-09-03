@@ -35,8 +35,6 @@ class Chattercat:
                     time.sleep(15)
         except KeyboardInterrupt:
             return None
-        except Exception as e:
-            printError(self.channel_name, e)
 
     def run(self):
         self.sock = self.startSocket()
@@ -47,10 +45,24 @@ class Chattercat:
             while self.running:
                 self.resp = ''
                 if(elapsedTime(self.live_clock) >= 1):
-                    if(twitch.isStreamLive(self.channel_name)):
+                    stream = twitch.getStreamInfo(self.channel_name)
+                    if(stream is not None):
+                        current_game_id = int(stream['game_id'])
+                        if(self.db.game_id != current_game_id):
+                            self.db.stream_title = stream['title']
+                            self.db.game_id = current_game_id
+                            self.db.cursor.execute(db.stmtSelectGameById(self.db.game_id))
+                            if(len(self.db.cursor.fetchall()) == 0):
+                                self.db.cursor.execute(db.stmtInsertNewGame(self.db.game_id, stream['game_name']))
+                                self.db.db.commit()
+                            self.db.segment = self.db.segment + 1
+                            self.db.cursor.execute(db.stmtInsertNewSegment(self.session_id, self.db.stream_title, self.db.segment, self.db.game_id))
+                            self.db.db.commit()
+                            self.db.segment_id = self.db.cursor.lastrowid
                         self.live_clock = time.time()
                     else:
-                        self.sock.close()
+                        if(self.sock is not None):
+                            self.sock.close()
                         self.running = False
                 if(elapsedTime(self.socket_clock) >= 5):
                     self.sock = self.restartSocket()
@@ -67,10 +79,9 @@ class Chattercat:
                 except:
                     self.sock = self.restartSocket()
                 self.parseResponse()
-        except Exception as e:
-            printError(self.channel_name, e)
-            print('Something is going on with the socket here...')
-            self.sock.close()       # 'NoneType' object has no attribute 'close'
+        except:
+            if(self.sock is not None):
+                self.sock.close()
             self.endExecution()
 
     def start(self):
@@ -155,7 +166,10 @@ def createAndDownloadGlobalEmotes():
         os.mkdir(DIRS['twitch'])
     except:
         printError(None, ERROR_MESSAGES['directory'])
-    downloadGlobalEmotes()
+    try:
+        downloadGlobalEmotes()
+    except:
+        return None
 
 def downloadFile(url, fileName):
     r = requests.get(url)
