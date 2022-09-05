@@ -97,12 +97,11 @@ class Database:
         self.db.commit()
         return id
 
-    def log(self, username, message, channel_emotes, session_id):
-        if(username is None or message is None or username == '' or ' ' in username):
+    def log(self, resp):
+        if(resp is None or resp.username is None or resp.message is None or resp.username == '' or ' ' in resp.username):
             return None
-        id = self.getChatterId(username)
-        self.logMessage(id, message, session_id)
-        self.logMessageEmotes(channel_emotes, message)
+        self.logMessage(self.getChatterId(resp.username), resp.message)
+        self.logMessageEmotes(resp.message)
 
     def logChatter(self, username):
         self.cursor.execute(stmtInsertNewChatter(username))
@@ -121,18 +120,18 @@ class Database:
         self.cursor.execute(stmtInsertNewEmote(emote.code, id, emote.url, source))
         self.db.commit()
 
-    def logMessage(self, chatter_id, message, session_id):
+    def logMessage(self, chatter_id, message):
         if "\"" in message:
             message = message.replace("\"", "\'")
         if '\\' in message:
             message = message.replace('\\', '\\\\')
-        self.cursor.execute(stmtInsertNewMessage(message, session_id, self.segment_id, chatter_id))
+        self.cursor.execute(stmtInsertNewMessage(message, self.session_id, self.segment_id, chatter_id))
         self.db.commit()
         self.cursor.execute(stmtUpdateChatterLastDate(chatter_id))
         self.db.commit()
         
-    def logMessageEmotes(self, channel_emotes, message):
-        message_emotes = utils.parseMessageEmotes(channel_emotes, message)
+    def logMessageEmotes(self, message):
+        message_emotes = utils.parseMessageEmotes(self.channel_emotes, message)
         for emote in message_emotes:
             if '\\' in emote:
                 emote = emote.replace('\\','\\\\')

@@ -10,6 +10,33 @@ COLORS = constants.COLORS
 DIRS = constants.DIRS
 ERROR_MESSAGES = constants.ERROR_MESSAGES
 
+class Response:
+        def __init__(self, channel_name, response):
+            self.response = response
+            self.channel_name = channel_name
+            self.username = self.parseUsername()
+            self.message = self.parseMessage()
+            if(self.username == self.message):
+                self.username = self.parseIncompleteResponse()
+
+        def parseIncompleteResponse(self):
+            if('PRIVMSG' in self.response):
+                if('@' in self.response.split('PRIVMSG')[0]):
+                    return self.response.split("PRIVMSG")[0].split("@")[1].split(".")[0]
+            return None
+
+        def parseUsername(self):
+            try:
+                return self.response.split('!')[0].split(':')[1]
+            except:
+                return None
+
+        def parseMessage(self):
+            try:
+                return self.response.split(f'#{self.channel_name} :')[1]
+            except:
+                return None
+
 def cls():
     os.system('cls' if os.name=='nt' else 'clear')
 
@@ -84,12 +111,6 @@ def removeSymbolsFromName(emote_name):
             emote_name = emote_name.replace(character, str(counter))
             counter += 1
     return emote_name
-
-def parseIncompleteResponse(resp):
-    if('PRIVMSG' in resp):
-        if('@' in resp.split('PRIVMSG')[0]):
-            return resp.split("PRIVMSG")[0].split("@")[1].split(".")[0]
-    return None
             
 def parseMessageEmotes(channel_emotes, message):
     if(type(message) == list):

@@ -5,7 +5,7 @@ import time
 from chattercat.db import Database
 import chattercat.constants as constants
 import chattercat.twitch as twitch
-from chattercat.utils import printError, elapsedTime, parseIncompleteResponse, printInfo
+from chattercat.utils import Response, printError, elapsedTime, printInfo
 
 CONFIG_SECTIONS = constants.CONFIG_SECTIONS
 ERROR_MESSAGES = constants.ERROR_MESSAGES
@@ -35,7 +35,7 @@ class Chattercat:
         self.sock = self.startSocket()
         self.live_clock = time.time()
         self.socket_clock = time.time()
-        self.channel_emotes = self.db.getChannelActiveEmotes()
+        self.db.channel_emotes = self.db.getChannelActiveEmotes()
         try:
             while self.running:
                 self.resp = ''
@@ -44,7 +44,7 @@ class Chattercat:
                     if(self.db.stream is not None):
                         game_id = int(self.db.stream['game_id'])
                         if(self.db.game_id != game_id):
-                            self.db.addSegment(game_id, self.session_id)
+                            self.db.addSegment(game_id, self.db.session_id)
                         self.live_clock = time.time()
                     else:
                         if(self.sock is not None):
@@ -65,7 +65,8 @@ class Chattercat:
                 except:
                     self.sock = self.restartSocket()
                 self.parseResponse()
-        except:
+        except Exception as e:
+            print(e)
             if(self.sock is not None):
                 self.sock.close()
             self.endExecution()
@@ -74,9 +75,9 @@ class Chattercat:
         printInfo(self.channel_name, f'{self.channel_name} just went live!')
         try:
             self.db = Database(self.channel_name)
-            self.session_id = self.db.startSession()
+            self.db.session_id = self.db.startSession()
             self.running = True
-            return None if self.session_id is None else self.session_id
+            return None if self.db.session_id is None else self.db.session_id
         except:
             return None
 
@@ -121,23 +122,5 @@ class Chattercat:
             return None
 
     def parseResponse(self):
-        for response in self.getResponses():
-            username = self.parseUsername(response)
-            message = self.parseMessage(response)
-            if(message is None):
-                continue
-            if(username == message):
-                username = parseIncompleteResponse(response)
-            self.db.log(username, message, self.channel_emotes, self.session_id)
-
-    def parseUsername(self, resp):
-        try:
-            return resp.split('!')[0].split(':')[1]
-        except:
-            return None
-
-    def parseMessage(self, resp):
-        try:
-            return resp.split(f'#{self.channel_name} :')[1]
-        except:
-            return None
+        for resp in self.getResponses():
+            self.db.log(Response(self.channel_name, resp))
