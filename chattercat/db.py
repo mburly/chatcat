@@ -82,20 +82,18 @@ class Database:
             return None
         self.segment = 0
         self.stream_title = self.stream['title']
-        self.cursor.execute(stmtInsertNewSession(self.stream_title))        
+        self.cursor.execute(stmtInsertNewSession())        
         self.db.commit()
-        session_id = self.cursor.lastrowid
-        self.addSegment(int(self.stream['game_id']), session_id)
-        return session_id
+        self.session_id = self.cursor.lastrowid
+        self.addSegment(int(self.stream['game_id']))
+        return self.session_id
 
     def endSession(self):
-        self.cursor.execute(stmtSelectMostRecentSession())
-        rows = self.cursor.fetchall()
-        id = rows[0][0]
-        self.cursor.execute(stmtUpdateSessionEndDatetime(id))
-        self.cursor.execute(stmtUpdateSessionLength(id))
+        self.cursor.execute(stmtUpdateSessionEndDatetime(self.session_id))
+        self.cursor.execute(stmtUpdateSessionLength(self.session_id))
+        self.cursor.execute(stmtUpdateSegmentEndDatetime(self.segment_id))
+        self.cursor.execute(stmtUpdateSegmentLength(self.segment_id))
         self.db.commit()
-        return id
 
     def log(self, resp):
         if(resp is None or resp.username is None or resp.message is None or resp.username == '' or ' ' in resp.username):
@@ -262,7 +260,10 @@ class Database:
             else:
                 utils.printInfo(self.channel_name, f'{STATUS_MESSAGES["set_emote"]} {emote} {STATUS_MESSAGES["inactive"]}')
                 
-    def addSegment(self, new_game_id, session_id):
+    def addSegment(self, new_game_id):
+        if(self.segment != 0):
+            self.cursor.execute(stmtUpdateSegmentEndDatetime(self.segment_id))
+            self.cursor.execute(stmtUpdateSegmentLength(self.segment_id))
         self.stream_title = self.stream['title']
         self.game_id = new_game_id
         self.cursor.execute(stmtSelectGameById(self.game_id))
@@ -270,7 +271,7 @@ class Database:
             self.cursor.execute(stmtInsertNewGame(self.game_id, self.stream['game_name']))
             self.db.commit()
         self.segment += 1
-        self.cursor.execute(stmtInsertNewSegment(session_id, self.stream_title, self.segment, self.game_id))
+        self.cursor.execute(stmtInsertNewSegment(self.session_id, self.stream_title, self.segment, self.game_id))
         self.db.commit()
         self.segment_id = self.cursor.lastrowid
         
@@ -281,7 +282,7 @@ def stmtCreateChattersTable():
     return f'CREATE TABLE chatters (id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(512), first_date DATE, last_date DATE) COLLATE utf8mb4_general_ci;'
 
 def stmtCreateSessionsTable():
-    return f'CREATE TABLE sessions (id INT AUTO_INCREMENT PRIMARY KEY, stream_title VARCHAR(512) COLLATE utf8mb4_general_ci, start_datetime DATETIME, end_datetime DATETIME, length TIME) COLLATE utf8mb4_general_ci;'
+    return f'CREATE TABLE sessions (id INT AUTO_INCREMENT PRIMARY KEY, start_datetime DATETIME, end_datetime DATETIME, length TIME) COLLATE utf8mb4_general_ci;'
 
 def stmtCreateMessagesTable():
     return  f'CREATE TABLE messages (id INT AUTO_INCREMENT PRIMARY KEY, message VARCHAR(512) COLLATE utf8mb4_general_ci, session_id INT, segment_id INT, chatter_id INT, datetime DATETIME, FOREIGN KEY (session_id) REFERENCES sessions(id), FOREIGN KEY (segment_id) REFERENCES segments(id), FOREIGN KEY (chatter_id) REFERENCES chatters(id)) COLLATE utf8mb4_general_ci;'
@@ -296,7 +297,7 @@ def stmtCreateTopChattersProcedure(channel_name):
     return f'CREATE PROCEDURE cc_{channel_name}.topChatters() BEGIN SELECT c.username, COUNT(m.id) FROM cc_{channel_name}.MESSAGES m INNER JOIN cc_{channel_name}.CHATTERS c ON m.chatter_id=c.id GROUP BY c.username ORDER BY COUNT(m.id) DESC LIMIT 10; END'
 
 def stmtCreateRecentSessionsProcedure(channel_name):
-    return f'CREATE PROCEDURE cc_{channel_name}.recentSessions() BEGIN SELECT id, stream_title, DATE_FORMAT(end_datetime, "%c/%e/%Y"), length FROM cc_{channel_name}.SESSIONS ORDER BY id DESC LIMIT 5; END'
+    return f'CREATE PROCEDURE cc_{channel_name}.recentSessions() BEGIN SELECT id, (SELECT seg.stream_title FROM cc_{channel_name}.sessions ses INNER JOIN cc_{channel_name}.segments seg ON ses.id = seg.session_id ORDER BY seg.id DESC LIMIT 1), DATE_FORMAT(end_datetime, "%c/%e/%Y"), length FROM cc_{channel_name}.sessions ORDER BY id DESC LIMIT 5; END'
 
 def stmtCreateLogsTable():
     return f'CREATE TABLE logs (id INT AUTO_INCREMENT PRIMARY KEY, emote_id INT, old INT, new INT, user_id VARCHAR(512), datetime DATETIME, FOREIGN KEY (emote_id) REFERENCES emotes(id)) COLLATE utf8mb4_general_ci;'
@@ -305,7 +306,7 @@ def stmtCreateGamesTable():
     return f'CREATE TABLE games (id INT PRIMARY KEY, name VARCHAR(255)) COLLATE utf8mb4_general_ci;'
 
 def stmtCreateSegmentsTable():
-    return f'CREATE TABLE segments (id INT AUTO_INCREMENT PRIMARY KEY, segment INT, stream_title VARCHAR(512), session_id INT, game_id INT, FOREIGN KEY (session_id) REFERENCES sessions(id), FOREIGN KEY (game_id) REFERENCES games(id)) COLLATE utf8mb4_general_ci;'
+    return f'CREATE TABLE segments (id INT AUTO_INCREMENT PRIMARY KEY, segment INT, stream_title VARCHAR(512), start_datetime DATETIME, end_datetime DATETIME, length TIME, session_id INT, game_id INT, FOREIGN KEY (session_id) REFERENCES sessions(id), FOREIGN KEY (game_id) REFERENCES games(id)) COLLATE utf8mb4_general_ci;'
 
 def stmtCreateEmoteStatusChangeTrigger():
     return f'CREATE TRIGGER emote_status_change AFTER UPDATE ON emotes FOR EACH ROW IF OLD.active != NEW.active THEN INSERT INTO logs (emote_id, new, old, user_id, datetime) VALUES (OLD.id, NEW.active, OLD.active, NULL, UTC_TIMESTAMP()); END IF;//'
@@ -358,8 +359,8 @@ def stmtInsertNewThirdPartyEmote(emote, source):
 def stmtUpdateEmoteStatus(active, emote_id):
     return f'UPDATE emotes SET active = {active} WHERE emote_id = "{emote_id}";'
 
-def stmtInsertNewSession(stream_title):
-    return f'INSERT INTO sessions (stream_title, start_datetime, end_datetime, length) VALUES ("{stream_title}", "{utils.getDateTime()}", NULL, NULL);'
+def stmtInsertNewSession():
+    return f'INSERT INTO sessions (start_datetime, end_datetime, length) VALUES ("{utils.getDateTime()}", NULL, NULL);'
 
 def stmtSelectGameById(game_id):
     return f'SELECT id FROM games WHERE id = {game_id};'
@@ -370,7 +371,13 @@ def stmtInsertNewGame(game_id, game_name):
     return f'INSERT INTO games (id, name) VALUES ({game_id}, "{game_name}");'
 
 def stmtInsertNewSegment(session_id, stream_title, segment, game_id):
-    return f'INSERT INTO segments (session_id, stream_title, segment, game_id) VALUES ({session_id}, "{stream_title}", {segment}, {game_id});'
+    return f'INSERT INTO segments (session_id, stream_title, segment, start_datetime, end_datetime, length, game_id) VALUES ({session_id}, "{stream_title}", {segment}, "{utils.getDateTime()}", NULL, NULL, {game_id});'
 
 def stmtSelectSegmentNumberBySessionId(session_id):
     return f'SELECT MAX(segment) FROM segments WHERE session_id = {session_id};'
+
+def stmtUpdateSegmentEndDatetime(segment_id):
+    return f'UPDATE segments SET end_datetime = "{utils.getDateTime()}" WHERE id = {segment_id};'
+
+def stmtUpdateSegmentLength(segment_id):
+    return f'UPDATE segments SET length = (SELECT TIMEDIFF(end_datetime, start_datetime)) WHERE id = {segment_id}'

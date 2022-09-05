@@ -2,8 +2,8 @@ import configparser
 import socket
 import time
 
-from chattercat.db import Database
 import chattercat.constants as constants
+from chattercat.db import Database
 import chattercat.twitch as twitch
 from chattercat.utils import Response, printError, elapsedTime, printInfo
 
@@ -44,7 +44,7 @@ class Chattercat:
                     if(self.db.stream is not None):
                         game_id = int(self.db.stream['game_id'])
                         if(self.db.game_id != game_id):
-                            self.db.addSegment(game_id, self.db.session_id)
+                            self.db.addSegment(game_id)
                         self.live_clock = time.time()
                     else:
                         if(self.sock is not None):
@@ -65,8 +65,7 @@ class Chattercat:
                 except:
                     self.sock = self.restartSocket()
                 self.parseResponse()
-        except Exception as e:
-            print(e)
+        except:
             if(self.sock is not None):
                 self.sock.close()
             self.endExecution()

@@ -3,8 +3,8 @@ import time
 
 import requests
 
-from chattercat import constants as constants
-from chattercat import twitch as twitch
+import chattercat.constants as constants
+import chattercat.twitch as twitch
 
 COLORS = constants.COLORS
 DIRS = constants.DIRS
