@@ -138,7 +138,7 @@ def getOAuth(client_id, client_secret):
         return response.json()['access_token']
     except:
         return None
-
+        
 def getStreamInfo(channel_name):
     url = f'{API_URLS["twitch"]}/streams?user_login={channel_name}'
     try:

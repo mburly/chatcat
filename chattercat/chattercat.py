@@ -2,9 +2,8 @@ import configparser
 import socket
 import time
 
-import chattercat.constants as constants
 from chattercat.db import Database
-import chattercat.db as db
+import chattercat.constants as constants
 import chattercat.twitch as twitch
 from chattercat.utils import printError, elapsedTime, parseIncompleteResponse, printInfo
 

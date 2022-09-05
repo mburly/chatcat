@@ -3,14 +3,11 @@ import time
 
 import requests
 
-import chattercat.constants as constants
-import chattercat.twitch as twitch
+from chattercat import constants as constants
+from chattercat import twitch as twitch
 
 COLORS = constants.COLORS
-CONFIG_NAME = constants.CONFIG_NAME
-CONFIG_SECTIONS = constants.CONFIG_SECTIONS
 DIRS = constants.DIRS
-TWITCH_VARIABLES = constants.TWITCH_VARIABLES
 ERROR_MESSAGES = constants.ERROR_MESSAGES
 
 def cls():
@@ -23,10 +20,7 @@ def createAndDownloadGlobalEmotes():
         os.mkdir(DIRS['twitch'])
     except:
         printError(None, ERROR_MESSAGES['directory'])
-    try:
-        downloadGlobalEmotes()
-    except:
-        return None
+    downloadGlobalEmotes()
 
 def downloadFile(url, fileName):
     r = requests.get(url)
@@ -82,12 +76,6 @@ def getStreamNames():
     for stream in file:
         streams.append(stream.replace('\n',''))
     return streams
-
-def isBadUsername(username):
-    for phrase in constants.BAD_USERNAMES:
-        if phrase in username:
-            return True
-    return False
 
 def removeSymbolsFromName(emote_name):
     counter = 0

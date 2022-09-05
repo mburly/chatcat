@@ -148,13 +148,12 @@ class Database:
                 source += 1
                 continue
             for emote in emotes[emote_type]:
-                emote_name = emote.code
-                if '\\' in emote_name:
-                    emote_name = emote_name.replace('\\', '\\\\')
+                if '\\' in emote.code:
+                    emote.code = emote.code.replace('\\', '\\\\')
                 if(source == 1):
-                    cursor.execute(stmtInsertNewGlobalEmote(emote_name, emote.id, emote.url, source))
+                    cursor.execute(stmtInsertNewGlobalEmote(emote, source))
                 else:
-                    cursor.execute(stmtInsertNewThirdPartyEmote(emote_name, emote.id, emote.url, source))
+                    cursor.execute(stmtInsertNewThirdPartyEmote(emote, source))
                 db.commit()
             source += 1
         cursor.close()
@@ -263,7 +262,7 @@ class Database:
                 utils.printInfo(self.channel_name, f'{STATUS_MESSAGES["set_emote"]} {emote} {STATUS_MESSAGES["reactivated"]}')
             else:
                 utils.printInfo(self.channel_name, f'{STATUS_MESSAGES["set_emote"]} {emote} {STATUS_MESSAGES["inactive"]}')
-
+                
     def addSegment(self, new_game_id, session_id):
         self.stream_title = self.stream['title']
         self.game_id = new_game_id
@@ -275,7 +274,7 @@ class Database:
         self.cursor.execute(stmtInsertNewSegment(session_id, self.stream_title, self.segment, self.game_id))
         self.db.commit()
         self.segment_id = self.cursor.lastrowid
-
+        
 def stmtCreateDatabase(channel_name):
     return f'CREATE DATABASE IF NOT EXISTS cc_{channel_name} COLLATE utf8mb4_general_ci;'
 
@@ -341,7 +340,7 @@ def stmtInsertNewChatter(username):
 
 def stmtInsertNewEmote(code, emote_id, url, source):
     return f'INSERT INTO emotes (code, emote_id, url, date_added, source, active) VALUES ("{code}","{emote_id}","{url}","{utils.getDate()}","{source}",1);'    
-
+    
 def stmtInsertNewMessage(message, session_id, segment_id, chatter_id):
     return f'INSERT INTO messages (message, session_id, segment_id, chatter_id, datetime) VALUES ("{message}", {session_id}, {segment_id}, {chatter_id}, "{utils.getDateTime()}");'    
 
@@ -351,11 +350,11 @@ def stmtUpdateChatterLastDate(chatter_id):
 def stmtUpdateEmoteCount(emote):
     return f'UPDATE emotes SET count = count + 1 WHERE code = BINARY "{emote}" AND active = 1;'
 
-def stmtInsertNewGlobalEmote(emote_name, emote_id, url, source):
-    return f'INSERT INTO emotes (code, emote_id, url, path, date_added, source, active) VALUES ("{emote_name}","{emote_id}","{url}","{DIRS["twitch"]}/{utils.removeSymbolsFromName(emote_name)}-{emote_id}.png","{utils.getDate()}","{source}",1);'
+def stmtInsertNewGlobalEmote(emote, source):
+    return f'INSERT INTO emotes (code, emote_id, url, path, date_added, source, active) VALUES ("{emote.code}","{emote.id}","{emote.url}","{DIRS["twitch"]}/{utils.removeSymbolsFromName(emote.code)}-{emote.id}.png","{utils.getDate()}","{source}",1);'
 
-def stmtInsertNewThirdPartyEmote(emote_name, emote_id, url, source):
-    return f'INSERT INTO emotes (code, emote_id, url, date_added, source, active) VALUES ("{emote_name}","{emote_id}","{url}","{utils.getDate()}","{source}",1);'  
+def stmtInsertNewThirdPartyEmote(emote, source):
+    return f'INSERT INTO emotes (code, emote_id, url, date_added, source, active) VALUES ("{emote.code}","{emote.id}","{emote.url}","{utils.getDate()}","{source}",1);'
 
 def stmtUpdateEmoteStatus(active, emote_id):
     return f'UPDATE emotes SET active = {active} WHERE emote_id = "{emote_id}";'
