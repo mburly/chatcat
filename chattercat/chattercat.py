@@ -41,20 +41,11 @@ class Chattercat:
             while self.running:
                 self.resp = ''
                 if(elapsedTime(self.live_clock) >= 1):
-                    stream = twitch.getStreamInfo(self.channel_name)
-                    if(stream is not None):
-                        current_game_id = int(stream['game_id'])
-                        if(self.db.game_id != current_game_id):
-                            self.db.stream_title = stream['title']
-                            self.db.game_id = current_game_id
-                            self.db.cursor.execute(db.stmtSelectGameById(self.db.game_id))
-                            if(len(self.db.cursor.fetchall()) == 0):
-                                self.db.cursor.execute(db.stmtInsertNewGame(self.db.game_id, stream['game_name']))
-                                self.db.db.commit()
-                            self.db.segment = self.db.segment + 1
-                            self.db.cursor.execute(db.stmtInsertNewSegment(self.session_id, self.db.stream_title, self.db.segment, self.db.game_id))
-                            self.db.db.commit()
-                            self.db.segment_id = self.db.cursor.lastrowid
+                    self.db.stream = twitch.getStreamInfo(self.channel_name)
+                    if(self.db.stream is not None):
+                        game_id = int(self.db.stream['game_id'])
+                        if(self.db.game_id != game_id):
+                            self.db.addSegment(game_id, self.session_id)
                         self.live_clock = time.time()
                     else:
                         if(self.sock is not None):

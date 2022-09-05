@@ -76,24 +76,16 @@ class Database:
             return None
 
     def startSession(self):
+        self.stream = twitch.getStreamInfo(self.channel_name)
         if(twitch.getChannelId(self.channel_name) is None):
             utils.printError(None, ERROR_MESSAGES['channel'])
             return None
-        info = twitch.getStreamInfo(self.channel_name)
-        self.stream_title = info['title'].replace('\"','\'')
+        self.segment = 0
+        self.stream_title = self.stream['title']
         self.cursor.execute(stmtInsertNewSession(self.stream_title))        
         self.db.commit()
         session_id = self.cursor.lastrowid
-        self.game_id = int(info['game_id'])
-        game_name = info['game_name']
-        self.cursor.execute(stmtSelectGameById(self.game_id))
-        if(len(self.cursor.fetchall()) == 0):
-            self.cursor.execute(stmtInsertNewGame(self.game_id, game_name))
-            self.db.commit()
-        self.segment = 1
-        self.cursor.execute(stmtInsertNewSegment(session_id, self.stream_title, self.segment, self.game_id))
-        self.db.commit()
-        self.segment_id = self.cursor.lastrowid
+        self.addSegment(int(self.stream['game_id']), session_id)
         return session_id
 
     def endSession(self):
@@ -271,6 +263,18 @@ class Database:
                 utils.printInfo(self.channel_name, f'{STATUS_MESSAGES["set_emote"]} {emote} {STATUS_MESSAGES["reactivated"]}')
             else:
                 utils.printInfo(self.channel_name, f'{STATUS_MESSAGES["set_emote"]} {emote} {STATUS_MESSAGES["inactive"]}')
+
+    def addSegment(self, new_game_id, session_id):
+        self.stream_title = self.stream['title']
+        self.game_id = new_game_id
+        self.cursor.execute(stmtSelectGameById(self.game_id))
+        if(len(self.cursor.fetchall()) == 0):
+            self.cursor.execute(stmtInsertNewGame(self.game_id, self.stream['game_name']))
+            self.db.commit()
+        self.segment += 1
+        self.cursor.execute(stmtInsertNewSegment(session_id, self.stream_title, self.segment, self.game_id))
+        self.db.commit()
+        self.segment_id = self.cursor.lastrowid
 
 def stmtCreateDatabase(channel_name):
     return f'CREATE DATABASE IF NOT EXISTS cc_{channel_name} COLLATE utf8mb4_general_ci;'
