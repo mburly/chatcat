@@ -34,7 +34,7 @@ COLORS = { 'clear':'\033[0m',
            'hi_green':'\033[0;92m',
            'hi_red':'\033[0;91m' }
 BANNER = f'{COLORS["bold_purple"]}{pyfiglet.figlet_format("Chattercat", font="speed")}{COLORS["clear"]}'
-VERSION = '1.0'
+VERSION = '1.1'
 EMOTE_TYPES = ['twitch','subscriber','ffz','ffz_channel','bttv','bttv_channel']
 DEBUG_MESSAGES = { 'set_emote':'Setting emote:',
                    'inactive':'now inactive.',
