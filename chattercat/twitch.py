@@ -138,23 +138,11 @@ def getOAuth(client_id, client_secret):
         return response.json()['access_token']
     except:
         return None
-
-def getOnlineStreams(channel_names):
-    online_streams = []
-    for stream in getStreams(channel_names):
-        online_streams.append(stream['user_login'])
-    return online_streams
-
-def getStreams(channel_names):
-    url = f'{API_URLS["twitch"]}/streams?'
-    for name in channel_names:
-        url += f'user_login={name}&'
-    return requests.get(url.strip('&'),params=None,headers=getHeaders()).json()['data']
-
-def getStreamTitle(channel_name):
+        
+def getStreamInfo(channel_name):
     url = f'{API_URLS["twitch"]}/streams?user_login={channel_name}'
     try:
-        return requests.get(url,params=None,headers=getHeaders()).json()['data'][0]['title'].replace('\"','\'')
+        return requests.get(url,params=None,headers=getHeaders()).json()['data'][0]
     except:
         return None
 

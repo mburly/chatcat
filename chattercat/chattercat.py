@@ -30,8 +30,6 @@ class Chattercat:
                     time.sleep(15)
         except KeyboardInterrupt:
             return None
-        except Exception as e:
-            printError(self.channel_name, e)
 
     def run(self):
         self.sock = self.startSocket()
@@ -42,10 +40,15 @@ class Chattercat:
             while self.running:
                 self.resp = ''
                 if(elapsedTime(self.live_clock) >= 1):
-                    if(twitch.isStreamLive(self.channel_name)):
+                    self.db.stream = twitch.getStreamInfo(self.channel_name)
+                    if(self.db.stream is not None):
+                        game_id = int(self.db.stream['game_id'])
+                        if(self.db.game_id != game_id):
+                            self.db.addSegment(game_id, self.session_id)
                         self.live_clock = time.time()
                     else:
-                        self.sock.close()
+                        if(self.sock is not None):
+                            self.sock.close()
                         self.running = False
                 if(elapsedTime(self.socket_clock) >= 5):
                     self.sock = self.restartSocket()
@@ -62,8 +65,7 @@ class Chattercat:
                 except:
                     self.sock = self.restartSocket()
                 self.parseResponse()
-        except Exception as e:
-            printError(self.channel_name, e)
+        except:
             if(self.sock is not None):
                 self.sock.close()
             self.endExecution()

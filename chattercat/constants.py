@@ -28,7 +28,6 @@ CDN_URLS = { 'twitch':'https://static-cdn.jtvnw.net/emoticons/v2',
 OAUTH_URL = 'https://id.twitch.tv/oauth2'
 SERVER_URL = 'tmi.twitch.tv'
 COLORS = { 'clear':'\033[0m',
-           'red':'\033[0;31m',
            'bold_blue':'\033[1;34m',
            'bold_purple':'\033[1;35m',
            'hi_green':'\033[0;92m',
