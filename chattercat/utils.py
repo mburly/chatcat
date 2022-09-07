@@ -5,7 +5,6 @@ import time
 import requests
 
 import chattercat.constants as constants
-import chattercat.twitch as twitch
 
 COLORS = constants.COLORS
 CONFIG_SECTIONS = constants.CONFIG_SECTIONS
@@ -55,15 +54,6 @@ class Response:
 def cls():
     os.system('cls' if os.name=='nt' else 'clear')
 
-def createAndDownloadGlobalEmotes():
-    try:
-        if not os.path.exists(DIRS['emotes']):
-            os.mkdir(DIRS['emotes'])
-        os.mkdir(DIRS['twitch'])
-    except:
-        printError(None, ERROR_MESSAGES['directory'])
-    downloadGlobalEmotes()
-
 def downloadFile(url, fileName):
     r = requests.get(url)
     if not os.path.exists(fileName):
@@ -72,19 +62,6 @@ def downloadFile(url, fileName):
                 if chunk:
                     f.write(chunk)
     return None
-
-def downloadGlobalEmotes():
-    printInfo(None, constants.STATUS_MESSAGES['global'])
-    emotes = twitch.getTwitchEmotes()
-    counter = 0
-    for emote in emotes:
-        for character in constants.BAD_FILE_CHARS:
-            if character in emote.code:
-                emote.code = emote.code.replace(character, str(counter))
-                counter += 1
-        filename = f'{DIRS["twitch"]}/{emote.code}-{emote.id}.png'
-        downloadFile(emote.url, filename)
-        counter = 0
 
 def elapsedTime(start):
     return (time.time() - start) / 60
@@ -103,13 +80,6 @@ def getDateTime(sys=False):
     min = '0' if cur.tm_min < 10 else ''
     sec = '0' if cur.tm_sec < 10 else ''
     return f'{str(cur.tm_year)}-{mon}{str(cur.tm_mon)}-{day}{str(cur.tm_mday)} {hour}{str(cur.tm_hour)}:{min}{str(cur.tm_min)}:{sec}{str(cur.tm_sec)}'
-
-def getIndices(list, text):
-    indices = []
-    for i in range(0, len(list)):
-        if text in list[i]:
-            indices.append(i)
-    return indices
 
 def getStreamNames():
     streams = []
