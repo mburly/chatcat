@@ -1,6 +1,5 @@
 import pyfiglet
 
-CLIENT_ID = 'hodl2vsgr34qf7b5kppu7y3669rot7'
 CONFIG_NAME = 'conf.ini'
 STREAMS = 'streams.txt'
 SERVER = 'irc.chat.twitch.tv'
@@ -14,7 +13,8 @@ DB_VARIABLES = { 'host':'host',
                  'password':'password' }
 TWITCH_VARIABLES = { 'nickname':'nickname',
                      'token':'token',
-                     'secret_key':'secret_key' }
+                     'secret_key':'secret_key',
+                     'client_id':'client_id' }
 DIRS = { 'emotes':'emotes', 
          'twitch':'emotes/twitch', 
          'bttv':'emotes/bttv', 
@@ -47,7 +47,6 @@ ERROR_MESSAGES = { 'host':'Unable to connect to host. Likely lost internet conne
                    'connection':'No internet connection found. Please try again.',
                    'no_streams':'No streams provided. Please add at least one channel to streams.txt' }
 STATUS_MESSAGES = { 'downloading':'Downloading channel emotes...',
-                    'global':'Downloading global emotes...',
                     'updates':'Checking for emote updates...',
                     'updates_complete':'Emote update complete.',
                     'set_emote':'Setting emote:',

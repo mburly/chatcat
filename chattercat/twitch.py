@@ -127,8 +127,8 @@ def getFFZEmotes(channel_id=None):
 def getHeaders():
     config = configparser.ConfigParser()
     config.read(constants.CONFIG_NAME)
-    return {"Authorization": f"Bearer {getOAuth(constants.CLIENT_ID, config[constants.CONFIG_SECTIONS['twitch']][constants.TWITCH_VARIABLES['secret_key']])}",
-            "Client-Id": constants.CLIENT_ID}
+    return {"Authorization": f"Bearer {getOAuth(config[constants.CONFIG_SECTIONS['twitch']][constants.TWITCH_VARIABLES['client_id']], config[constants.CONFIG_SECTIONS['twitch']][constants.TWITCH_VARIABLES['secret_key']])}",
+            "Client-Id": config[constants.CONFIG_SECTIONS['twitch']][constants.TWITCH_VARIABLES['client_id']]}
 
 def getOAuth(client_id, client_secret):
     try:
@@ -190,7 +190,7 @@ def isStreamLive(channel_name):
 def validateToken():
     config = configparser.ConfigParser()
     config.read(constants.CONFIG_NAME)
-    headers = {"Authorization": f"OAuth {getOAuth(constants.CLIENT_ID, config[constants.CONFIG_SECTIONS['twitch']][constants.TWITCH_VARIABLES['secret_key']])}"}
+    headers = {"Authorization": f"OAuth {getOAuth(config[constants.CONFIG_SECTIONS['twitch']][constants.TWITCH_VARIABLES['client_id']], config[constants.CONFIG_SECTIONS['twitch']][constants.TWITCH_VARIABLES['secret_key']])}"}
     try:
         return requests.get(f'{constants.OAUTH_URL}/validate',params=None,headers=headers).json()['client_id'] != None
     except requests.ConnectionError:

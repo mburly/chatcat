@@ -15,8 +15,7 @@ class Chattercat:
         try:
             while(self.executing):
                 if(self.live):
-                    if(self.start() is None):
-                        return None
+                    self.start()
                     while(self.running):
                         self.run()
                     self.end()
@@ -55,7 +54,8 @@ class Chattercat:
                     self.endExecution()
                 except:
                     self.restartSocket()
-                self.parseResponse()
+                for resp in self.getResponses():
+                    self.db.log(Response(self.channel_name, resp))
         except:
             self.endExecution()
 
@@ -63,9 +63,9 @@ class Chattercat:
         printInfo(self.channel_name, statusMessage(self.channel_name))
         try:
             self.db = Database(self.channel_name)
-            self.db.startSession()
+            if(self.db.startSession() is None):
+                return None
             self.running = True
-            return None if self.db.session_id is None else self.db.session_id
         except:
             return None
 
@@ -84,19 +84,20 @@ class Chattercat:
         self.executing = False
 
     def startSocket(self):
-        self.sock = socket.socket()
         try:
+            self.sock = socket.socket()
             self.sock.connect(constants.ADDRESS)
+            self.sock.send(f'PASS {self.db.config.token}\n'.encode('utf-8'))
+            self.sock.send(f'NICK {self.db.config.nickname}\n'.encode('utf-8'))
+            self.sock.send(f'JOIN #{self.channel_name}\n'.encode('utf-8'))
         except:
             printError(self.channel_name, constants.ERROR_MESSAGES['host'])
             self.db.endSession()
             return None
-        self.sock.send(f'PASS {self.db.config.token}\n'.encode('utf-8'))
-        self.sock.send(f'NICK {self.db.config.nickname}\n'.encode('utf-8'))
-        self.sock.send(f'JOIN #{self.channel_name}\n'.encode('utf-8'))
 
     def restartSocket(self):
-        self.sock.close()
+        if(self.sock is not None):
+            self.sock.close()
         self.socket_clock = time.time()
         self.startSocket()
 
@@ -105,7 +106,3 @@ class Chattercat:
             return self.resp.split('\r\n')[:-1]
         except:
             return None
-
-    def parseResponse(self):
-        for resp in self.getResponses():
-            self.db.log(Response(self.channel_name, resp))

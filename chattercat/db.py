@@ -17,8 +17,9 @@ class Database:
         self.channel_name = channel_name
         self.config = Config()
         self.db_name = f'cc_{channel_name}'
-        self.db = self.connect()
-        self.cursor = self.db.cursor()
+        self.db = None
+        self.cursor = None
+        self.connect()
 
     def commit(self, sql):
         if(type(sql) == list):
@@ -31,53 +32,53 @@ class Database:
 
     def connect(self):
         try:
-            db = self.connectHelper(self.db_name)
-            return db
+            self.connectHelper(self.db_name)
         except:
             try:
                 self.createDb()
-                db = self.connectHelper(self.db_name)
-                self.populateEmotesTable(db)
-                self.downloadEmotes(db)
-                return db
+                self.connectHelper(self.db_name)
+                self.populateEmotesTable()
+                self.downloadEmotes()
             except:
                 return None
 
     def connectHelper(self, db_name=None):
-        db = mysql.connector.connect(
+        if(self.cursor is not None):
+            self.cursor.close()
+        if(self.db is not None):
+            self.db.close()
+        self.db = mysql.connector.connect(
             host=self.config.host,
             user=self.config.user,
             password=self.config.password,
             database=db_name if db_name is not None else None
         )
-        return db
+        self.cursor = self.db.cursor()
 
     def createDb(self):
         try:
-            db = self.connectHelper()
-            cursor = db.cursor()
-            cursor.execute(stmtCreateDatabase(self.channel_name))
-            db = self.connect()
-            cursor = db.cursor()
-            cursor.execute(stmtCreateChattersTable())
-            cursor.execute(stmtCreateSessionsTable())
-            cursor.execute(stmtCreateGamesTable())
-            cursor.execute(stmtCreateSegmentsTable())
-            cursor.execute(stmtCreateMessagesTable())
-            cursor.execute(stmtCreateEmotesTable())
-            cursor.execute(stmtCreateLogsTable())
-            cursor.execute(stmtCreateTopEmotesProcedure(self.channel_name))
-            cursor.execute(stmtCreateTopChattersProcedure(self.channel_name))
-            cursor.execute(stmtCreateRecentSessionsProcedure(self.channel_name))
+            self.connectHelper()
+            self.cursor.execute(stmtCreateDatabase(self.channel_name))
+            self.cursor.close()
+            self.db.close()
+            self.connect()
+            self.cursor.execute(stmtCreateChattersTable())
+            self.cursor.execute(stmtCreateSessionsTable())
+            self.cursor.execute(stmtCreateGamesTable())
+            self.cursor.execute(stmtCreateSegmentsTable())
+            self.cursor.execute(stmtCreateMessagesTable())
+            self.cursor.execute(stmtCreateEmotesTable())
+            self.cursor.execute(stmtCreateLogsTable())
+            self.cursor.execute(stmtCreateTopEmotesProcedure(self.channel_name))
+            self.cursor.execute(stmtCreateTopChattersProcedure(self.channel_name))
+            self.cursor.execute(stmtCreateRecentSessionsProcedure(self.channel_name))
             try:
-                cursor.execute(stmtCreateEmoteStatusChangeTrigger())
+                self.cursor.execute(stmtCreateEmoteStatusChangeTrigger())
             except:
                 pass
-            cursor.close()
-            db.close()
         except:
-            cursor.close()
-            db.close()
+            self.cursor.close()
+            self.db.close()
             return None
 
     def startSession(self):
@@ -90,6 +91,7 @@ class Database:
         self.commit(stmtInsertNewSession())
         self.session_id = self.cursor.lastrowid
         self.addSegment(int(self.stream['game_id']))
+        return self.session_id
 
     def endSession(self):
         self.commit([stmtUpdateSessionEndDatetime(self.session_id),stmtUpdateSessionLength(self.session_id),stmtUpdateSegmentEndDatetime(self.segment_id),stmtUpdateSegmentLength(self.segment_id)])
@@ -129,8 +131,7 @@ class Database:
                 emote = emote.replace('\\','\\\\')
             self.commit(stmtUpdateEmoteCount(emote))
 
-    def populateEmotesTable(self, db):
-        cursor = db.cursor()
+    def populateEmotesTable(self):
         emotes = twitch.getAllChannelEmotes(self.channel_name)
         source = 1
         for emote_type in EMOTE_TYPES:
@@ -140,10 +141,8 @@ class Database:
             for emote in emotes[emote_type]:
                 if '\\' in emote.code:
                     emote.code = emote.code.replace('\\', '\\\\')
-                cursor.execute(stmtInsertNewEmote(emote, source))
-                db.commit()
+                self.commit(stmtInsertNewEmote(emote, source))
             source += 1
-        cursor.close()
 
     def updateEmotes(self):
         utils.printInfo(self.channel_name, STATUS_MESSAGES['updates'])
@@ -162,21 +161,19 @@ class Database:
         for emote in new_emotes:
             if(emote in reactivated_emotes):
                 continue
-            utils.printInfo(self.channel_name, f'Logging {emote}')
             self.logEmote(emote, channel_id)
             new_emote_count += 1
         self.setEmotesStatus(removed_emotes, 0)
         self.setEmotesStatus(reactivated_emotes, 1)
         if(new_emote_count > 0):
-            self.downloadEmotes(self.db)
-            utils.printInfo(self.channel_name, f'Downloaded {new_emote_count} newly active emotes.')
+            self.downloadEmotes()
+            utils.printInfo(self.channel_name, utils.downloadMessage(new_emote_count))
         utils.printInfo(self.channel_name, STATUS_MESSAGES['updates_complete'])
 
-    def downloadEmotesHelper(self, db):
+    def downloadEmotesHelper(self):
         utils.printInfo(self.channel_name, STATUS_MESSAGES['downloading'])
-        cursor = db.cursor(buffered=True)
-        cursor.execute(stmtSelectEmotesToDownload())
-        for row in cursor.fetchall():
+        self.cursor.execute(stmtSelectEmotesToDownload())
+        for row in self.cursor.fetchall():
             url = row[0]
             emote_id = row[1]
             emote_name = utils.removeSymbolsFromName(row[2])
@@ -194,16 +191,14 @@ class Database:
                 extension = url.split('.')[3]
                 url = url.split(f'.{extension}')[0]
                 path = f'{DIRS["bttv"]}/{emote_name}-{emote_id}.{extension}'
-            cursor.execute(stmtUpdateEmotePath(path, emote_id, source))
-            db.commit()
+            self.commit(stmtUpdateEmotePath(path, emote_id, source))
             utils.downloadFile(url, path)
-        cursor.close()
 
-    def downloadEmotes(self, db):
+    def downloadEmotes(self):
         for dir in DIRS.values():
             if not os.path.exists(dir):
                 os.mkdir(dir)
-        self.downloadEmotesHelper(db)
+        self.downloadEmotesHelper()
 
     def getChannelActiveEmotes(self):
         emotes = []

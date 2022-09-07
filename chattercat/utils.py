@@ -55,8 +55,8 @@ def cls():
     os.system('cls' if os.name=='nt' else 'clear')
 
 def downloadFile(url, fileName):
-    r = requests.get(url)
     if not os.path.exists(fileName):
+        r = requests.get(url)
         with open(fileName, 'wb') as f:
             for chunk in r.iter_content(chunk_size=1024): 
                 if chunk:
@@ -83,8 +83,7 @@ def getDateTime(sys=False):
 
 def getStreamNames():
     streams = []
-    file = open(constants.STREAMS, 'r')
-    for stream in file:
+    for stream in open(constants.STREAMS, 'r'):
         streams.append(stream.replace('\n',''))
     return streams
 
@@ -118,3 +117,6 @@ def printInfo(channel_name, text):
 
 def statusMessage(channel_name, online=True):
     return f'{channel_name} just went live!' if online else f'{channel_name} is now offline.'
+
+def downloadMessage(new_emote_count):
+    return f'Downloaded {new_emote_count} newly active emotes.'
