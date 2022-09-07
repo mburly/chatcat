@@ -5,7 +5,7 @@ import time
 import chattercat.constants as constants
 from chattercat.db import Database
 import chattercat.twitch as twitch
-from chattercat.utils import Response, printError, elapsedTime, printInfo
+from chattercat.utils import Response, elapsedTime, printError, printInfo, statusMessage
 
 CONFIG_SECTIONS = constants.CONFIG_SECTIONS
 ERROR_MESSAGES = constants.ERROR_MESSAGES
@@ -32,10 +32,10 @@ class Chattercat:
             return None
 
     def run(self):
-        self.sock = self.startSocket()
+        self.startSocket()
         self.live_clock = time.time()
         self.socket_clock = time.time()
-        self.db.channel_emotes = self.db.getChannelActiveEmotes()
+        self.db.getChannelActiveEmotes()
         try:
             while self.running:
                 self.resp = ''
@@ -51,43 +51,39 @@ class Chattercat:
                             self.sock.close()
                         self.running = False
                 if(elapsedTime(self.socket_clock) >= 5):
-                    self.sock = self.restartSocket()
+                    self.restartSocket()
                 try:
                     self.resp = self.sock.recv(2048).decode('utf-8', errors='ignore')
                     if self.resp == '' :
-                        self.sock = self.restartSocket()
+                        self.restartSocket()
                 except KeyboardInterrupt:
-                    try:
-                        self.sock.close()
-                        self.endExecution()
-                    except:
-                        self.endExecution()
+                    self.endExecution()
                 except:
-                    self.sock = self.restartSocket()
+                    self.restartSocket()
                 self.parseResponse()
         except:
-            if(self.sock is not None):
-                self.sock.close()
             self.endExecution()
 
     def start(self):
-        printInfo(self.channel_name, f'{self.channel_name} just went live!')
+        printInfo(self.channel_name, statusMessage(self.channel_name))
         try:
             self.db = Database(self.channel_name)
-            self.db.session_id = self.db.startSession()
+            self.db.startSession()
             self.running = True
             return None if self.db.session_id is None else self.db.session_id
         except:
             return None
 
     def end(self):
-        printInfo(self.channel_name, f'{self.channel_name} is now offline.')
+        printInfo(self.channel_name, statusMessage(self.channel_name, online=False))
         self.db.endSession()
         self.db.cursor.close()
         self.db.db.close()
         self.live = False
 
     def endExecution(self):
+        if(self.sock is not None):
+                self.sock.close()
         self.db.endSession()
         self.running = False
         self.executing = False
@@ -97,22 +93,21 @@ class Chattercat:
         config.read(constants.CONFIG_NAME)
         nickname = config[CONFIG_SECTIONS['twitch']][TWITCH_VARIABLES['nickname']]
         token = config[CONFIG_SECTIONS['twitch']][TWITCH_VARIABLES['token']]
-        sock = socket.socket()
+        self.sock = socket.socket()
         try:
-            sock.connect(constants.ADDRESS)
+            self.sock.connect(constants.ADDRESS)
         except:
             printError(self.channel_name, ERROR_MESSAGES['host'])
             self.db.endSession()
             return None
-        sock.send(f'PASS {token}\n'.encode('utf-8'))
-        sock.send(f'NICK {nickname}\n'.encode('utf-8'))
-        sock.send(f'JOIN #{self.channel_name}\n'.encode('utf-8'))
-        return sock
+        self.sock.send(f'PASS {token}\n'.encode('utf-8'))
+        self.sock.send(f'NICK {nickname}\n'.encode('utf-8'))
+        self.sock.send(f'JOIN #{self.channel_name}\n'.encode('utf-8'))
 
     def restartSocket(self):
         self.sock.close()
         self.socket_clock = time.time()
-        return self.startSocket()
+        self.startSocket()
 
     def getResponses(self):
         try:

@@ -131,3 +131,6 @@ def printError(channel_name, text):
 
 def printInfo(channel_name, text):
     print(f'[{COLORS["bold_blue"]}{getDateTime(True)}{COLORS["clear"]}] [{COLORS["bold_purple"]}{channel_name if(channel_name is not None) else "Chattercat"}{COLORS["clear"]}] [{COLORS["hi_green"]}INFO{COLORS["clear"]}] {text}')
+
+def statusMessage(channel_name, online=True):
+    return f'{channel_name} just went live!' if online else f'{channel_name} is now offline.'

@@ -22,6 +22,15 @@ class Database:
         self.db = self.connect()
         self.cursor = self.db.cursor()
 
+    def commit(self, sql):
+        if(type(sql) == list):
+            for stmt in sql:
+                self.cursor.execute(stmt)
+            self.db.commit()
+        else:
+            self.cursor.execute(sql)
+            self.db.commit()
+
     def connect(self):
         try:
             db = self.connectHelper(self.db_name)
@@ -82,18 +91,12 @@ class Database:
             return None
         self.segment = 0
         self.stream_title = self.stream['title']
-        self.cursor.execute(stmtInsertNewSession())        
-        self.db.commit()
+        self.commit(stmtInsertNewSession())
         self.session_id = self.cursor.lastrowid
         self.addSegment(int(self.stream['game_id']))
-        return self.session_id
 
     def endSession(self):
-        self.cursor.execute(stmtUpdateSessionEndDatetime(self.session_id))
-        self.cursor.execute(stmtUpdateSessionLength(self.session_id))
-        self.cursor.execute(stmtUpdateSegmentEndDatetime(self.segment_id))
-        self.cursor.execute(stmtUpdateSegmentLength(self.segment_id))
-        self.db.commit()
+        self.commit([stmtUpdateSessionEndDatetime(self.session_id),stmtUpdateSessionLength(self.session_id),stmtUpdateSegmentEndDatetime(self.segment_id),stmtUpdateSegmentLength(self.segment_id)])
 
     def log(self, resp):
         if(resp is None or resp.username is None or resp.message is None or resp.username == '' or ' ' in resp.username):
@@ -102,8 +105,7 @@ class Database:
         self.logMessageEmotes(resp.message)
 
     def logChatter(self, username):
-        self.cursor.execute(stmtInsertNewChatter(username))
-        self.db.commit()
+        self.commit(stmtInsertNewChatter(username))
         return self.cursor.lastrowid
 
     def logEmote(self, emote, channel_id):
@@ -115,26 +117,21 @@ class Database:
             return None
         if('\\' in emote.code):
             emote.code = emote.code.replace('\\', '\\\\')
-        self.cursor.execute(stmtInsertNewEmote(emote.code, id, emote.url, source))
-        self.db.commit()
+        self.commit(stmtInsertNewEmote(emote.code, id, emote.url, source))
 
     def logMessage(self, chatter_id, message):
         if "\"" in message:
             message = message.replace("\"", "\'")
         if '\\' in message:
             message = message.replace('\\', '\\\\')
-        self.cursor.execute(stmtInsertNewMessage(message, self.session_id, self.segment_id, chatter_id))
-        self.db.commit()
-        self.cursor.execute(stmtUpdateChatterLastDate(chatter_id))
-        self.db.commit()
+        self.commit([stmtInsertNewMessage(message, self.session_id, self.segment_id, chatter_id),stmtUpdateChatterLastDate(chatter_id)])
         
     def logMessageEmotes(self, message):
         message_emotes = utils.parseMessageEmotes(self.channel_emotes, message)
         for emote in message_emotes:
             if '\\' in emote:
                 emote = emote.replace('\\','\\\\')
-            self.cursor.execute(stmtUpdateEmoteCount(emote))
-            self.db.commit()
+            self.commit(stmtUpdateEmoteCount(emote))
 
     def populateEmotesTable(self, db):
         cursor = db.cursor()
@@ -220,7 +217,7 @@ class Database:
         self.cursor.execute(stmtSelectActiveEmotes())
         for emote in self.cursor.fetchall():
             emotes.append(str(emote[0]))
-        return emotes
+        self.channel_emotes = emotes
 
     def getChatterId(self, username):
         id = None
@@ -253,8 +250,7 @@ class Database:
     def setEmotesStatus(self, emotes, active):
         for emote in emotes:
             id = emote.split('-')[1]
-            self.cursor.execute(stmtUpdateEmoteStatus(active, id))
-            self.db.commit()
+            self.commit(stmtUpdateEmoteStatus(active, id))
             if(active):
                 utils.printInfo(self.channel_name, f'{STATUS_MESSAGES["set_emote"]} {emote} {STATUS_MESSAGES["reactivated"]}')
             else:
@@ -262,17 +258,14 @@ class Database:
                 
     def addSegment(self, new_game_id):
         if(self.segment != 0):
-            self.cursor.execute(stmtUpdateSegmentEndDatetime(self.segment_id))
-            self.cursor.execute(stmtUpdateSegmentLength(self.segment_id))
+            self.commit([stmtUpdateSegmentEndDatetime(self.segment_id),stmtUpdateSegmentLength(self.segment_id)])
         self.stream_title = self.stream['title']
         self.game_id = new_game_id
         self.cursor.execute(stmtSelectGameById(self.game_id))
         if(len(self.cursor.fetchall()) == 0):
-            self.cursor.execute(stmtInsertNewGame(self.game_id, self.stream['game_name']))
-            self.db.commit()
+            self.commit(stmtInsertNewGame(self.game_id, self.stream['game_name']))
         self.segment += 1
-        self.cursor.execute(stmtInsertNewSegment(self.session_id, self.stream_title, self.segment, self.game_id))
-        self.db.commit()
+        self.commit(stmtInsertNewSegment(self.session_id, self.stream_title, self.segment, self.game_id))
         self.segment_id = self.cursor.lastrowid
         
 def stmtCreateDatabase(channel_name):
