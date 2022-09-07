@@ -1,3 +1,4 @@
+import configparser
 import os
 import time
 
@@ -7,35 +8,49 @@ import chattercat.constants as constants
 import chattercat.twitch as twitch
 
 COLORS = constants.COLORS
+CONFIG_SECTIONS = constants.CONFIG_SECTIONS
+DB_VARIABLES = constants.DB_VARIABLES
 DIRS = constants.DIRS
 ERROR_MESSAGES = constants.ERROR_MESSAGES
+TWITCH_VARIABLES = constants.TWITCH_VARIABLES
+
+class Config:
+    def __init__(self):
+        self.config = configparser.ConfigParser()
+        self.config.read(constants.CONFIG_NAME)
+        self.host= self.config[CONFIG_SECTIONS['db']][DB_VARIABLES['host']]
+        self.user= self.config[CONFIG_SECTIONS['db']][DB_VARIABLES['user']]
+        self.password = self.config[CONFIG_SECTIONS['db']][DB_VARIABLES['password']]
+        self.nickname = self.config[CONFIG_SECTIONS['twitch']][TWITCH_VARIABLES['nickname']]
+        self.token = self.config[CONFIG_SECTIONS['twitch']][TWITCH_VARIABLES['token']]
+        self.secret_key = self.config[CONFIG_SECTIONS['twitch']][TWITCH_VARIABLES['secret_key']]
 
 class Response:
-        def __init__(self, channel_name, response):
-            self.response = response
-            self.channel_name = channel_name
-            self.username = self.parseUsername()
-            self.message = self.parseMessage()
-            if(self.username == self.message):
-                self.username = self.parseIncompleteResponse()
+    def __init__(self, channel_name, response):
+        self.response = response
+        self.channel_name = channel_name
+        self.username = self.parseUsername()
+        self.message = self.parseMessage()
+        if(self.username == self.message):
+            self.username = self.parseIncompleteResponse()
 
-        def parseIncompleteResponse(self):
-            if('PRIVMSG' in self.response):
-                if('@' in self.response.split('PRIVMSG')[0]):
-                    return self.response.split("PRIVMSG")[0].split("@")[1].split(".")[0]
+    def parseIncompleteResponse(self):
+        if('PRIVMSG' in self.response):
+            if('@' in self.response.split('PRIVMSG')[0]):
+                return self.response.split("PRIVMSG")[0].split("@")[1].split(".")[0]
+        return None
+
+    def parseUsername(self):
+        try:
+            return self.response.split('!')[0].split(':')[1]
+        except:
             return None
 
-        def parseUsername(self):
-            try:
-                return self.response.split('!')[0].split(':')[1]
-            except:
-                return None
-
-        def parseMessage(self):
-            try:
-                return self.response.split(f'#{self.channel_name} :')[1]
-            except:
-                return None
+    def parseMessage(self):
+        try:
+            return self.response.split(f'#{self.channel_name} :')[1]
+        except:
+            return None
 
 def cls():
     os.system('cls' if os.name=='nt' else 'clear')
@@ -63,12 +78,11 @@ def downloadGlobalEmotes():
     emotes = twitch.getTwitchEmotes()
     counter = 0
     for emote in emotes:
-        emote_name = emote.code
         for character in constants.BAD_FILE_CHARS:
-            if character in emote_name:
-                emote_name = emote_name.replace(character, str(counter))
+            if character in emote.code:
+                emote.code = emote.code.replace(character, str(counter))
                 counter += 1
-        filename = f'{DIRS["twitch"]}/{emote_name}-{emote.id}.png'
+        filename = f'{DIRS["twitch"]}/{emote.code}-{emote.id}.png'
         downloadFile(emote.url, filename)
         counter = 0
 

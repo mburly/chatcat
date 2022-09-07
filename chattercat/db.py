@@ -1,15 +1,12 @@
-import configparser
 import os
 
 import mysql.connector
 
 import chattercat.constants as constants
 import chattercat.twitch as twitch
+from chattercat.utils import Config
 import chattercat.utils as utils
 
-CONFIG_SECTIONS = constants.CONFIG_SECTIONS
-DB_VARIABLES = constants.DB_VARIABLES
-DEBUG_MESSAGES = constants.DEBUG_MESSAGES
 ERROR_MESSAGES = constants.ERROR_MESSAGES
 STATUS_MESSAGES = constants.STATUS_MESSAGES
 DIRS = constants.DIRS
@@ -18,6 +15,7 @@ EMOTE_TYPES = constants.EMOTE_TYPES
 class Database:
     def __init__(self, channel_name):
         self.channel_name = channel_name
+        self.config = Config()
         self.db_name = f'cc_{channel_name}'
         self.db = self.connect()
         self.cursor = self.db.cursor()
@@ -46,13 +44,11 @@ class Database:
                 return None
 
     def connectHelper(self, db_name=None):
-        config = configparser.ConfigParser()
-        config.read(constants.CONFIG_NAME)
         db = mysql.connector.connect(
-            host=config[CONFIG_SECTIONS['db']][DB_VARIABLES['host']],
-            user=config[CONFIG_SECTIONS['db']][DB_VARIABLES['user']],
-            password=config[CONFIG_SECTIONS['db']][DB_VARIABLES['password']],
-            database=db_name if(db_name is not None) else None
+            host=self.config.host,
+            user=self.config.user,
+            password=self.config.password,
+            database=db_name if db_name is not None else None
         )
         return db
 

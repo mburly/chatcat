@@ -1,4 +1,3 @@
-import configparser
 import socket
 import time
 
@@ -6,10 +5,6 @@ import chattercat.constants as constants
 from chattercat.db import Database
 import chattercat.twitch as twitch
 from chattercat.utils import Response, elapsedTime, printError, printInfo, statusMessage
-
-CONFIG_SECTIONS = constants.CONFIG_SECTIONS
-ERROR_MESSAGES = constants.ERROR_MESSAGES
-TWITCH_VARIABLES = constants.TWITCH_VARIABLES
 
 class Chattercat:
     executing = True
@@ -89,19 +84,15 @@ class Chattercat:
         self.executing = False
 
     def startSocket(self):
-        config = configparser.ConfigParser()
-        config.read(constants.CONFIG_NAME)
-        nickname = config[CONFIG_SECTIONS['twitch']][TWITCH_VARIABLES['nickname']]
-        token = config[CONFIG_SECTIONS['twitch']][TWITCH_VARIABLES['token']]
         self.sock = socket.socket()
         try:
             self.sock.connect(constants.ADDRESS)
         except:
-            printError(self.channel_name, ERROR_MESSAGES['host'])
+            printError(self.channel_name, constants.ERROR_MESSAGES['host'])
             self.db.endSession()
             return None
-        self.sock.send(f'PASS {token}\n'.encode('utf-8'))
-        self.sock.send(f'NICK {nickname}\n'.encode('utf-8'))
+        self.sock.send(f'PASS {self.db.config.token}\n'.encode('utf-8'))
+        self.sock.send(f'NICK {self.db.config.nickname}\n'.encode('utf-8'))
         self.sock.send(f'JOIN #{self.channel_name}\n'.encode('utf-8'))
 
     def restartSocket(self):
