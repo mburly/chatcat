@@ -86,10 +86,10 @@ class Database:
         if(twitch.getChannelId(self.channel_name) is None):
             utils.printError(None, ERROR_MESSAGES['channel'])
             return None
-        self.segment = 0
-        self.stream_title = self.stream['title']
         self.commit(stmtInsertNewSession())
         self.session_id = self.cursor.lastrowid
+        self.stream_title = self.stream['title']
+        self.segment = 0
         self.addSegment(int(self.stream['game_id']))
         return self.session_id
 

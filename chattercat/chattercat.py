@@ -21,7 +21,8 @@ class Chattercat:
                     self.end()
                 else:
                     self.live = twitch.isStreamLive(self.channel_name)
-                    time.sleep(15)
+                    if not self.live:
+                        time.sleep(constants.TIMER_SLEEP)
         except KeyboardInterrupt:
             return None
 
@@ -33,7 +34,7 @@ class Chattercat:
         try:
             while self.running:
                 self.resp = ''
-                if(elapsedTime(self.live_clock) >= 1):
+                if(elapsedTime(self.live_clock) >= constants.TIMER_LIVE):
                     self.db.stream = twitch.getStreamInfo(self.channel_name)
                     if(self.db.stream is not None):
                         game_id = int(self.db.stream['game_id'])
@@ -44,7 +45,7 @@ class Chattercat:
                         if(self.sock is not None):
                             self.sock.close()
                         self.running = False
-                if(elapsedTime(self.socket_clock) >= 5):
+                if(elapsedTime(self.socket_clock) >= constants.TIMER_SOCKET):
                     self.restartSocket()
                 try:
                     self.resp = self.sock.recv(2048).decode('utf-8', errors='ignore')

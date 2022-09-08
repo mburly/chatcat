@@ -1,10 +1,12 @@
 import configparser
 import os
+import sys
 import time
 
 import requests
 
 import chattercat.constants as constants
+import chattercat.twitch as twitch
 
 COLORS = constants.COLORS
 CONFIG_SECTIONS = constants.CONFIG_SECTIONS
@@ -22,6 +24,7 @@ class Config:
         self.password = self.config[CONFIG_SECTIONS['db']][DB_VARIABLES['password']]
         self.nickname = self.config[CONFIG_SECTIONS['twitch']][TWITCH_VARIABLES['nickname']]
         self.token = self.config[CONFIG_SECTIONS['twitch']][TWITCH_VARIABLES['token']]
+        self.client_id = self.config[CONFIG_SECTIONS['twitch']][TWITCH_VARIABLES['client_id']]
         self.secret_key = self.config[CONFIG_SECTIONS['twitch']][TWITCH_VARIABLES['secret_key']]
 
 class Response:
@@ -104,6 +107,17 @@ def parseMessageEmotes(channel_emotes, message):
         if word in channel_emotes and word not in parsed_emotes:
             parsed_emotes.append(word)
     return parsed_emotes
+
+def verify():
+    printBanner()
+    streams = getStreamNames()
+    if(len(streams) == 0):
+        printError(None, ERROR_MESSAGES['no_streams'])
+        sys.exit()
+    if(twitch.isStreamLive(streams[0]) is None):
+        printError(None, ERROR_MESSAGES['config'])
+        sys.exit()
+    return streams
 
 def printBanner():
     cls()

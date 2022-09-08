@@ -1,9 +1,7 @@
-import configparser
-
 import requests
 
 import chattercat.constants as constants
-import chattercat.utils as utils
+from chattercat.utils import Config, printError
 
 API_URLS = constants.API_URLS
 CDN_URLS = constants.CDN_URLS
@@ -125,10 +123,9 @@ def getFFZEmotes(channel_id=None):
     return emote_set
 
 def getHeaders():
-    config = configparser.ConfigParser()
-    config.read(constants.CONFIG_NAME)
-    return {"Authorization": f"Bearer {getOAuth(config[constants.CONFIG_SECTIONS['twitch']][constants.TWITCH_VARIABLES['client_id']], config[constants.CONFIG_SECTIONS['twitch']][constants.TWITCH_VARIABLES['secret_key']])}",
-            "Client-Id": config[constants.CONFIG_SECTIONS['twitch']][constants.TWITCH_VARIABLES['client_id']]}
+    config = Config()
+    return {"Authorization": f"Bearer {getOAuth(config.client_id, config.secret_key)}",
+            "Client-Id": config.client_id}
 
 def getOAuth(client_id, client_secret):
     try:
@@ -184,18 +181,7 @@ def isStreamLive(channel_name):
     url = f'{API_URLS["twitch"]}/streams?user_login={channel_name}'
     try:
         return requests.get(url,params=None,headers=getHeaders()).json()['data'] != []
-    except:
-        return False
-
-def validateToken():
-    config = configparser.ConfigParser()
-    config.read(constants.CONFIG_NAME)
-    headers = {"Authorization": f"OAuth {getOAuth(config[constants.CONFIG_SECTIONS['twitch']][constants.TWITCH_VARIABLES['client_id']], config[constants.CONFIG_SECTIONS['twitch']][constants.TWITCH_VARIABLES['secret_key']])}"}
-    try:
-        return requests.get(f'{constants.OAUTH_URL}/validate',params=None,headers=headers).json()['client_id'] != None
     except requests.ConnectionError:
-        utils.printError(None, constants.ERROR_MESSAGES['connection'])
-        return False
+        printError(None, constants.ERROR_MESSAGES['connection'])
     except:
-        utils.printError(None, constants.ERROR_MESSAGES['secret_key'])
-        return False
+        return None

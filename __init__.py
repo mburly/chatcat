@@ -1,18 +1,12 @@
 import multiprocessing
 import os
-import sys
 
 from chattercat.chattercat import Chattercat
-from chattercat.constants import ERROR_MESSAGES
-from chattercat.utils import getStreamNames, printBanner, printError
+from chattercat.utils import verify
 
 if __name__ == '__main__':
     os.system("")
-    printBanner()
-    streams = getStreamNames()
-    if(len(streams) == 0):
-        printError(None, ERROR_MESSAGES['no_streams'])
-        sys.exit()
+    streams = verify()
     pool = multiprocessing.Pool(processes=len(streams))
     try:
         out = pool.map(Chattercat,streams)

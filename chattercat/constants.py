@@ -43,7 +43,7 @@ ERROR_MESSAGES = { 'host':'Unable to connect to host. Likely lost internet conne
                    'database':'Unable to connect to database.',
                    'directory':'Unable to create emote directories.',
                    'offline':'Stream offline. Please try another channel or try again later.',
-                   'secret_key':'Bad secret key. Please provide the appropriate secret key in the configuration file.',
+                   'config':'Bad value(s) provided in the configuration file. Please check and update config.ini.',
                    'connection':'No internet connection found. Please try again.',
                    'no_streams':'No streams provided. Please add at least one channel to streams.txt' }
 STATUS_MESSAGES = { 'downloading':'Downloading channel emotes...',
@@ -52,3 +52,6 @@ STATUS_MESSAGES = { 'downloading':'Downloading channel emotes...',
                     'set_emote':'Setting emote:',
                     'inactive':'now inactive.',
                     'reactivated':'now reactivated.' }
+TIMER_SLEEP = 15
+TIMER_LIVE = 1
+TIMER_SOCKET = 5
