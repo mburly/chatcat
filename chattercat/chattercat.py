@@ -27,10 +27,10 @@ class Chattercat:
             return None
 
     def run(self):
+        self.db.getChannelActiveEmotes()
         self.startSocket()
         self.live_clock = time.time()
         self.socket_clock = time.time()
-        self.db.getChannelActiveEmotes()
         try:
             while self.running:
                 self.resp = ''

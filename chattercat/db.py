@@ -115,7 +115,7 @@ class Database:
             return None
         if('\\' in emote.code):
             emote.code = emote.code.replace('\\', '\\\\')
-        self.commit(stmtInsertNewEmote(emote.code, id, emote.url, source))
+        self.commit(stmtInsertNewEmote(emote, source))
 
     def logMessage(self, chatter_id, message):
         if "\"" in message:
@@ -201,7 +201,7 @@ class Database:
         self.downloadEmotesHelper()
 
     def getChannelActiveEmotes(self):
-        emotes = []
+        emotes = []     
         self.updateEmotes()
         self.cursor.execute(stmtSelectActiveEmotes())
         for emote in self.cursor.fetchall():
@@ -319,9 +319,6 @@ def stmtSelectChatterIdByUsername(username):
 
 def stmtInsertNewChatter(username):
     return f'INSERT INTO chatters (username, first_date, last_date) VALUES ("{username}", "{utils.getDate()}", "{utils.getDate()}");'
-
-def stmtInsertNewEmote(code, emote_id, url, source):
-    return f'INSERT INTO emotes (code, emote_id, url, date_added, source, active) VALUES ("{code}","{emote_id}","{url}","{utils.getDate()}","{source}",1);'    
     
 def stmtInsertNewMessage(message, session_id, segment_id, chatter_id):
     return f'INSERT INTO messages (message, session_id, segment_id, chatter_id, datetime) VALUES ("{message}", {session_id}, {segment_id}, {chatter_id}, "{utils.getDateTime()}");'    
