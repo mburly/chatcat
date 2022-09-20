@@ -1,15 +1,10 @@
-import configparser
 import socket
 import time
 
+from chattercat.constants import ADDRESS, TIMER_LIVE, TIMER_SLEEP, TIMER_SOCKET,  ERROR_MESSAGES
 from chattercat.db import Database
-import chattercat.constants as constants
 import chattercat.twitch as twitch
-from chattercat.utils import printError, elapsedTime, parseIncompleteResponse, printInfo
-
-CONFIG_SECTIONS = constants.CONFIG_SECTIONS
-ERROR_MESSAGES = constants.ERROR_MESSAGES
-TWITCH_VARIABLES = constants.TWITCH_VARIABLES
+from chattercat.utils import Response, elapsedTime, printError, printInfo, statusMessage
 
 class Chattercat:
     executing = True
@@ -20,122 +15,98 @@ class Chattercat:
         try:
             while(self.executing):
                 if(self.live):
-                    if(self.start() is None):
-                        return None
+                    self.start()
                     while(self.running):
                         self.run()
                     self.end()
                 else:
                     self.live = twitch.isStreamLive(self.channel_name)
-                    time.sleep(15)
+                    if not self.live:
+                        time.sleep(TIMER_SLEEP)
         except KeyboardInterrupt:
             return None
-        except Exception as e:
-            printError(self.channel_name, e)
 
     def run(self):
-        self.sock = self.startSocket()
+        self.db.getChannelActiveEmotes()
+        self.startSocket()
         self.live_clock = time.time()
         self.socket_clock = time.time()
-        self.channel_emotes = self.db.getChannelActiveEmotes()
         try:
             while self.running:
                 self.resp = ''
-                if(elapsedTime(self.live_clock) >= 1):
-                    if(twitch.isStreamLive(self.channel_name)):
+                if(elapsedTime(self.live_clock) >= TIMER_LIVE):
+                    self.db.stream = twitch.getStreamInfo(self.channel_name)
+                    if(self.db.stream is not None):
+                        try:
+                            game_id = int(self.db.stream['game_id'])
+                        except:
+                            game_id = 0
+                        if(self.db.game_id != game_id):
+                            self.db.addSegment(game_id)
                         self.live_clock = time.time()
                     else:
-                        self.sock.close()
+                        if(self.sock is not None):
+                            self.sock.close()
                         self.running = False
-                if(elapsedTime(self.socket_clock) >= 5):
-                    self.sock = self.restartSocket()
+                if(elapsedTime(self.socket_clock) >= TIMER_SOCKET):
+                    self.restartSocket()
                 try:
                     self.resp = self.sock.recv(2048).decode('utf-8', errors='ignore')
                     if self.resp == '' :
-                        self.sock = self.restartSocket()
+                        self.restartSocket()
                 except KeyboardInterrupt:
-                    try:
-                        self.sock.close()
-                        self.endExecution()
-                    except:
-                        self.endExecution()
+                    self.endExecution()
                 except:
-                    self.sock = self.restartSocket()
-                self.parseResponse()
-        except Exception as e:
-            printError(self.channel_name, e)
-            if(self.sock is not None):
-                self.sock.close()
+                    self.restartSocket()
+                for resp in self.getResponses():
+                    self.db.log(Response(self.channel_name, resp))
+        except:
             self.endExecution()
 
     def start(self):
-        printInfo(self.channel_name, f'{self.channel_name} just went live!')
+        printInfo(self.channel_name, statusMessage(self.channel_name))
         try:
             self.db = Database(self.channel_name)
-            self.session_id = self.db.startSession()
+            if(self.db.startSession() is None):
+                return None
             self.running = True
-            return None if self.session_id is None else self.session_id
         except:
             return None
 
     def end(self):
-        printInfo(self.channel_name, f'{self.channel_name} is now offline.')
+        printInfo(self.channel_name, statusMessage(self.channel_name, online=False))
         self.db.endSession()
         self.db.cursor.close()
         self.db.db.close()
         self.live = False
 
     def endExecution(self):
+        if(self.sock is not None):
+                self.sock.close()
         self.db.endSession()
         self.running = False
         self.executing = False
 
     def startSocket(self):
-        config = configparser.ConfigParser()
-        config.read(constants.CONFIG_NAME)
-        nickname = config[CONFIG_SECTIONS['twitch']][TWITCH_VARIABLES['nickname']]
-        token = config[CONFIG_SECTIONS['twitch']][TWITCH_VARIABLES['token']]
-        sock = socket.socket()
         try:
-            sock.connect(constants.ADDRESS)
+            self.sock = socket.socket()
+            self.sock.connect(ADDRESS)
+            self.sock.send(f'PASS {self.db.config.token}\n'.encode('utf-8'))
+            self.sock.send(f'NICK {self.db.config.nickname}\n'.encode('utf-8'))
+            self.sock.send(f'JOIN #{self.channel_name}\n'.encode('utf-8'))
         except:
             printError(self.channel_name, ERROR_MESSAGES['host'])
             self.db.endSession()
             return None
-        sock.send(f'PASS {token}\n'.encode('utf-8'))
-        sock.send(f'NICK {nickname}\n'.encode('utf-8'))
-        sock.send(f'JOIN #{self.channel_name}\n'.encode('utf-8'))
-        return sock
 
     def restartSocket(self):
-        self.sock.close()
+        if(self.sock is not None):
+            self.sock.close()
         self.socket_clock = time.time()
-        return self.startSocket()
+        self.startSocket()
 
     def getResponses(self):
         try:
             return self.resp.split('\r\n')[:-1]
-        except:
-            return None
-
-    def parseResponse(self):
-        for response in self.getResponses():
-            username = self.parseUsername(response)
-            message = self.parseMessage(response)
-            if(message is None):
-                continue
-            if(username == message):
-                username = parseIncompleteResponse(response)
-            self.db.log(username, message, self.channel_emotes, self.session_id)
-
-    def parseUsername(self, resp):
-        try:
-            return resp.split('!')[0].split(':')[1]
-        except:
-            return None
-
-    def parseMessage(self, resp):
-        try:
-            return resp.split(f'#{self.channel_name} :')[1]
         except:
             return None

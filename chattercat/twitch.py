@@ -1,9 +1,7 @@
-import configparser
-
 import requests
 
 import chattercat.constants as constants
-import chattercat.utils as utils
+from chattercat.utils import Config, printError
 
 API_URLS = constants.API_URLS
 CDN_URLS = constants.CDN_URLS
@@ -125,10 +123,9 @@ def getFFZEmotes(channel_id=None):
     return emote_set
 
 def getHeaders():
-    config = configparser.ConfigParser()
-    config.read(constants.CONFIG_NAME)
-    return {"Authorization": f"Bearer {getOAuth(constants.CLIENT_ID, config[constants.CONFIG_SECTIONS['twitch']][constants.TWITCH_VARIABLES['secret_key']])}",
-            "Client-Id": constants.CLIENT_ID}
+    config = Config()
+    return {"Authorization": f"Bearer {getOAuth(config.client_id, config.secret_key)}",
+            "Client-Id": config.client_id}
 
 def getOAuth(client_id, client_secret):
     try:
@@ -138,23 +135,11 @@ def getOAuth(client_id, client_secret):
         return response.json()['access_token']
     except:
         return None
-
-def getOnlineStreams(channel_names):
-    online_streams = []
-    for stream in getStreams(channel_names):
-        online_streams.append(stream['user_login'])
-    return online_streams
-
-def getStreams(channel_names):
-    url = f'{API_URLS["twitch"]}/streams?'
-    for name in channel_names:
-        url += f'user_login={name}&'
-    return requests.get(url.strip('&'),params=None,headers=getHeaders()).json()['data']
-
-def getStreamTitle(channel_name):
+        
+def getStreamInfo(channel_name):
     url = f'{API_URLS["twitch"]}/streams?user_login={channel_name}'
     try:
-        return requests.get(url,params=None,headers=getHeaders()).json()['data'][0]['title'].replace('\"','\'')
+        return requests.get(url,params=None,headers=getHeaders()).json()['data'][0]
     except:
         return None
 
@@ -196,18 +181,7 @@ def isStreamLive(channel_name):
     url = f'{API_URLS["twitch"]}/streams?user_login={channel_name}'
     try:
         return requests.get(url,params=None,headers=getHeaders()).json()['data'] != []
-    except:
-        return False
-
-def validateToken():
-    config = configparser.ConfigParser()
-    config.read(constants.CONFIG_NAME)
-    headers = {"Authorization": f"OAuth {getOAuth(constants.CLIENT_ID, config[constants.CONFIG_SECTIONS['twitch']][constants.TWITCH_VARIABLES['secret_key']])}"}
-    try:
-        return requests.get(f'{constants.OAUTH_URL}/validate',params=None,headers=headers).json()['client_id'] != None
     except requests.ConnectionError:
-        utils.printError(None, constants.ERROR_MESSAGES['connection'])
-        return False
+        printError(None, constants.ERROR_MESSAGES['connection'])
     except:
-        utils.printError(None, constants.ERROR_MESSAGES['secret_key'])
-        return False
+        return None
