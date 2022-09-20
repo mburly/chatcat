@@ -1,7 +1,7 @@
 import socket
 import time
 
-import chattercat.constants as constants
+from chattercat.constants import ADDRESS, TIMER_LIVE, TIMER_SLEEP, TIMER_SOCKET,  ERROR_MESSAGES
 from chattercat.db import Database
 import chattercat.twitch as twitch
 from chattercat.utils import Response, elapsedTime, printError, printInfo, statusMessage
@@ -22,7 +22,7 @@ class Chattercat:
                 else:
                     self.live = twitch.isStreamLive(self.channel_name)
                     if not self.live:
-                        time.sleep(constants.TIMER_SLEEP)
+                        time.sleep(TIMER_SLEEP)
         except KeyboardInterrupt:
             return None
 
@@ -34,10 +34,13 @@ class Chattercat:
         try:
             while self.running:
                 self.resp = ''
-                if(elapsedTime(self.live_clock) >= constants.TIMER_LIVE):
+                if(elapsedTime(self.live_clock) >= TIMER_LIVE):
                     self.db.stream = twitch.getStreamInfo(self.channel_name)
                     if(self.db.stream is not None):
-                        game_id = int(self.db.stream['game_id'])
+                        try:
+                            game_id = int(self.db.stream['game_id'])
+                        except:
+                            game_id = 0
                         if(self.db.game_id != game_id):
                             self.db.addSegment(game_id)
                         self.live_clock = time.time()
@@ -45,7 +48,7 @@ class Chattercat:
                         if(self.sock is not None):
                             self.sock.close()
                         self.running = False
-                if(elapsedTime(self.socket_clock) >= constants.TIMER_SOCKET):
+                if(elapsedTime(self.socket_clock) >= TIMER_SOCKET):
                     self.restartSocket()
                 try:
                     self.resp = self.sock.recv(2048).decode('utf-8', errors='ignore')
@@ -87,12 +90,12 @@ class Chattercat:
     def startSocket(self):
         try:
             self.sock = socket.socket()
-            self.sock.connect(constants.ADDRESS)
+            self.sock.connect(ADDRESS)
             self.sock.send(f'PASS {self.db.config.token}\n'.encode('utf-8'))
             self.sock.send(f'NICK {self.db.config.nickname}\n'.encode('utf-8'))
             self.sock.send(f'JOIN #{self.channel_name}\n'.encode('utf-8'))
         except:
-            printError(self.channel_name, constants.ERROR_MESSAGES['host'])
+            printError(self.channel_name, ERROR_MESSAGES['host'])
             self.db.endSession()
             return None
 

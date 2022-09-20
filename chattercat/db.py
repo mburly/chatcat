@@ -90,7 +90,11 @@ class Database:
         self.session_id = self.cursor.lastrowid
         self.stream_title = self.stream['title']
         self.segment = 0
-        self.addSegment(int(self.stream['game_id']))
+        try:
+            game_id = int(self.stream['game_id'])
+        except:
+            game_id = 0
+        self.addSegment(game_id)
         return self.session_id
 
     def endSession(self):
@@ -201,7 +205,7 @@ class Database:
         self.downloadEmotesHelper()
 
     def getChannelActiveEmotes(self):
-        emotes = []     
+        emotes = []
         self.updateEmotes()
         self.cursor.execute(stmtSelectActiveEmotes())
         for emote in self.cursor.fetchall():
@@ -279,7 +283,7 @@ def stmtCreateTopChattersProcedure(channel_name):
     return f'CREATE PROCEDURE cc_{channel_name}.topChatters() BEGIN SELECT c.username, COUNT(m.id) FROM cc_{channel_name}.MESSAGES m INNER JOIN cc_{channel_name}.CHATTERS c ON m.chatter_id=c.id GROUP BY c.username ORDER BY COUNT(m.id) DESC LIMIT 10; END'
 
 def stmtCreateRecentSessionsProcedure(channel_name):
-    return f'CREATE PROCEDURE cc_{channel_name}.recentSessions() BEGIN SELECT id, (SELECT seg.stream_title FROM cc_{channel_name}.sessions ses INNER JOIN cc_{channel_name}.segments seg ON ses.id = seg.session_id ORDER BY seg.id DESC LIMIT 1), DATE_FORMAT(end_datetime, "%c/%e/%Y"), length FROM cc_{channel_name}.sessions ORDER BY id DESC LIMIT 5; END'
+    return f'CREATE PROCEDURE cc_{channel_name}.recentSessions() BEGIN SELECT id, (SELECT seg.stream_title FROM cc_{channel_name}.sessions ses INNER JOIN cc_{channel_name}.segments seg ON ses.id=seg.session_id ORDER BY seg.id DESC LIMIT 1), DATE_FORMAT(end_datetime, "%c/%e/%Y"), length FROM cc_{channel_name}.sessions ORDER BY id DESC LIMIT 5; END'
 
 def stmtCreateLogsTable():
     return f'CREATE TABLE logs (id INT AUTO_INCREMENT PRIMARY KEY, emote_id INT, old INT, new INT, user_id VARCHAR(512), datetime DATETIME, FOREIGN KEY (emote_id) REFERENCES emotes(id)) COLLATE utf8mb4_general_ci;'
@@ -347,6 +351,10 @@ def stmtInsertNewGame(game_id, game_name):
     return f'INSERT INTO games (id, name) VALUES ({game_id}, "{game_name}");'
 
 def stmtInsertNewSegment(session_id, stream_title, segment, game_id):
+    if('\\' in stream_title):
+        stream_title = stream_title.replace('\\', '\\\\')
+    if('"' in stream_title):
+        stream_title = stream_title.replace('"', '\\"')
     return f'INSERT INTO segments (session_id, stream_title, segment, start_datetime, end_datetime, length, game_id) VALUES ({session_id}, "{stream_title}", {segment}, "{utils.getDateTime()}", NULL, NULL, {game_id});'
 
 def stmtSelectSegmentNumberBySessionId(session_id):
