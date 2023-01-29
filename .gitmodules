@@ -1,0 +1,6 @@
+[submodule "chattercat-admin"]
+	path = chattercat-admin
+	url = https://github.com/mburly/chattercat-admin.git
+[submodule "chattercat-front"]
+	path = chattercat-front
+	url = https://github.com/mburly/chattercat-front.git
