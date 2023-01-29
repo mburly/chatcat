@@ -18,7 +18,9 @@ TWITCH_VARIABLES = { 'nickname':'nickname',
 DIRS = { 'emotes':'emotes', 
          'twitch':'emotes/twitch', 
          'bttv':'emotes/bttv', 
-         'ffz':'emotes/ffz' }
+         'ffz':'emotes/ffz',
+         'pictures':'chattercat-front/pictures',
+         'pictures_archive':'chattercat-front/pictures/archive' }
 API_URLS = { 'twitch':'https://api.twitch.tv/helix',
              'ffz':'https://api.frankerfacez.com/v1',
              'bttv':'https://api.betterttv.net/3/cached' }
@@ -47,11 +49,12 @@ ERROR_MESSAGES = { 'host':'Unable to connect to host. Likely lost internet conne
                    'connection':'No internet connection found. Please try again.',
                    'no_streams':'No streams provided. Please add at least one channel to streams.txt' }
 STATUS_MESSAGES = { 'downloading':'Downloading channel emotes...',
-                    'updates':'Checking for emote updates...',
-                    'updates_complete':'Emote update complete.',
+                    'updates':'Checking for updates...',
+                    'updates_complete':'Update complete.',
                     'set_emote':'Setting emote:',
                     'inactive':'now inactive.',
                     'reactivated':'now reactivated.' }
-TIMER_SLEEP = 15
-TIMER_LIVE = 1
-TIMER_SOCKET = 5
+TIMERS = { 'sleep':15,
+           'live':1,
+           'socket':5 }
+ADMIN_DB_NAME = 'cc_housekeeping'
