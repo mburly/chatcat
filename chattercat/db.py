@@ -22,6 +22,7 @@ class Database:
         self.db_name = f'cc_{channel_name}'
         self.db = None
         self.cursor = None
+        self.initial_run = True
         self.connect()
 
     def commit(self, sql):
@@ -143,6 +144,11 @@ class Database:
             source += 1
 
     def update(self):
+        if(self.initial_run):
+            try:
+                self.cursor.execute(stmtCreateEmoteInsertTrigger())
+            except:
+                pass
         utils.printInfo(self.channel_name, STATUS_MESSAGES['updates'])
         try:
             sql = f'INSERT INTO executionlog (type, channel, message, datetime) VALUES (1, "{self.channel_name}", "{STATUS_MESSAGES["updates"]}", UTC_TIMESTAMP());'
@@ -231,15 +237,18 @@ class Database:
                 else:
                     extension = 'png'
                 path = f'{DIRS["twitch"]}/{emote_name}-{emote_id}.{extension}'
+                download_path = f'{DIRS["twitch_download"]}/{emote_name}-{emote_id}.{extension}'
             elif(source == 3 or source == 4):
                 extension = 'png'
                 path = f'{DIRS["ffz"]}/{emote_name}-{emote_id}.{extension}'
+                download_path = f'{DIRS["ffz_download"]}/{emote_name}-{emote_id}.{extension}'
             elif(source == 5 or source == 6):
                 extension = url.split('.')[3]
                 url = url.split(f'.{extension}')[0]
                 path = f'{DIRS["bttv"]}/{emote_name}-{emote_id}.{extension}'
+                download_path = f'{DIRS["bttv_download"]}/{emote_name}-{emote_id}.{extension}'
             self.commit(stmtUpdateEmotePath(path, emote_id, source))
-            utils.downloadFile(url, path)
+            utils.downloadFile(url, download_path)
 
     def downloadEmotes(self):
         for dir in DIRS.values():
@@ -353,6 +362,9 @@ def stmtCreateSegmentsTable():
 
 def stmtCreateEmoteStatusChangeTrigger():
     return f'CREATE TRIGGER emote_status_change AFTER UPDATE ON emotes FOR EACH ROW IF OLD.active != NEW.active THEN INSERT INTO logs (emote_id, new, old, user_id, datetime) VALUES (OLD.id, NEW.active, OLD.active, NULL, UTC_TIMESTAMP()); END IF;//'
+
+def stmtCreateEmoteInsertTrigger():
+    return f'CREATE TRIGGER new_emote AFTER INSERT ON emotes FOR EACH ROW INSERT INTO logs (emote_id, new, old, user_id, datetime) VALUES (id, active, active, NULL, UTC_TIMESTAMP());'
 
 def stmtSelectEmotesToDownload():
     return f'SELECT url, emote_id, code, source FROM emotes WHERE path IS NULL;'
