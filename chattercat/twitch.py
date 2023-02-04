@@ -1,7 +1,7 @@
 import requests
 
 import chattercat.constants as constants
-from chattercat.utils import Config, printError
+import chattercat.utils as utils
 
 API_URLS = constants.API_URLS
 CDN_URLS = constants.CDN_URLS
@@ -73,10 +73,33 @@ def getBTTVEmotes(channel_id=None):
     return emote_set
 
 def getChannelId(channel_name):
+    try:
+        return int(getChannelInfo(channel_name)['id'])
+    except:
+        return None
+
+def getChannelInfo(channel_name):
     url = f'{API_URLS["twitch"]}/users?login={channel_name}'
     try:
-        return int(requests.get(url,params=None,headers=getHeaders()).json()['data'][0]['id'])
+        resp = requests.get(url,params=None,headers=getHeaders()).json()
+        if('error' in resp.keys()):
+            print('Error')
+            return None
+        return resp['data'][0]
     except:
+        return None
+
+def getChatterColor(chatter_name):
+    user_id = getChannelId(chatter_name)
+    url = f'{API_URLS["twitch"]}/chat/color?user_id={user_id}'
+    try:
+        resp = requests.get(url,params=None,headers=getHeaders()).json()
+        if('error' in resp.keys()):
+            print('Error')
+            return None
+        return resp['data'][0]['color']
+    except Exception as e:
+        print(e)
         return None
 
 def getEmoteById(channel_id, emote_id, source) -> Emote:
@@ -123,7 +146,7 @@ def getFFZEmotes(channel_id=None):
     return emote_set
 
 def getHeaders():
-    config = Config()
+    config = utils.Config()
     return {"Authorization": f"Bearer {getOAuth(config.client_id, config.secret_key)}",
             "Client-Id": config.client_id}
 
@@ -135,11 +158,15 @@ def getOAuth(client_id, client_secret):
         return response.json()['access_token']
     except:
         return None
-        
+
 def getStreamInfo(channel_name):
     url = f'{API_URLS["twitch"]}/streams?user_login={channel_name}'
     try:
-        return requests.get(url,params=None,headers=getHeaders()).json()['data'][0]
+        resp = requests.get(url,params=None,headers=getHeaders()).json()
+        if('error' in resp.keys()):
+            utils.printInfo(channel_name, resp['error'])
+            return None
+        return resp['data'][0]
     except:
         return None
 
@@ -174,14 +201,5 @@ def getTwitchEmotes(channel_name=None):
             emote = Emote(emotes[i]['id'], emotes[i]['name'], url)
             emote_set.append(emote)
         return emote_set
-    except:
-        return None
-
-def isStreamLive(channel_name):
-    url = f'{API_URLS["twitch"]}/streams?user_login={channel_name}'
-    try:
-        return requests.get(url,params=None,headers=getHeaders()).json()['data'] != []
-    except requests.ConnectionError:
-        printError(None, constants.ERROR_MESSAGES['connection'])
     except:
         return None

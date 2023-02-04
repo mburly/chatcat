@@ -5,6 +5,7 @@ import mysql.connector
 import chattercat.constants as constants
 import chattercat.twitch as twitch
 from chattercat.utils import Config
+from chattercat.utils import connect as connectAdmin
 import chattercat.utils as utils
 
 ERROR_MESSAGES = constants.ERROR_MESSAGES
@@ -14,11 +15,14 @@ EMOTE_TYPES = constants.EMOTE_TYPES
 
 class Database:
     def __init__(self, channel_name):
+        self.admin = connectAdmin("cc_housekeeping")
+        self.admin_cursor = self.admin.cursor()
         self.channel_name = channel_name
         self.config = Config()
         self.db_name = f'cc_{channel_name}'
         self.db = None
         self.cursor = None
+        self.initial_run = True
         self.connect()
 
     def commit(self, sql):
@@ -81,20 +85,11 @@ class Database:
             self.db.close()
             return None
 
-    def startSession(self):
-        self.stream = twitch.getStreamInfo(self.channel_name)
-        if(twitch.getChannelId(self.channel_name) is None):
-            utils.printError(None, ERROR_MESSAGES['channel'])
-            return None
+    def startSession(self, stream):
         self.commit(stmtInsertNewSession())
         self.session_id = self.cursor.lastrowid
-        self.stream_title = self.stream['title']
         self.segment = 0
-        try:
-            game_id = int(self.stream['game_id'])
-        except:
-            game_id = 0
-        self.addSegment(game_id)
+        self.addSegment(stream)
         return self.session_id
 
     def endSession(self):
@@ -148,10 +143,23 @@ class Database:
                 self.commit(stmtInsertNewEmote(emote, source))
             source += 1
 
-    def updateEmotes(self):
+    def update(self):
+        if(self.initial_run):
+            try:
+                self.cursor.execute(stmtCreateEmoteInsertTrigger())
+            except:
+                pass
         utils.printInfo(self.channel_name, STATUS_MESSAGES['updates'])
+        try:
+            sql = f'INSERT INTO executionlog (type, channel, message, datetime) VALUES (1, "{self.channel_name}", "{STATUS_MESSAGES["updates"]}", UTC_TIMESTAMP());'
+            self.admin_cursor.execute(sql)
+            self.admin.commit()
+        except Exception as e:
+            print('We are here(2) db.py')
+            print(e)
         new_emote_count = 0
-        channel_id = twitch.getChannelId(self.channel_name)
+        self.channel = twitch.getChannelInfo(self.channel_name)
+        self.channel_id = twitch.getChannelId(self.channel_name)
         channel_emotes = twitch.getAllChannelEmotes(self.channel_name)
         current_emotes = self.getEmotes(channel_emotes=channel_emotes)
         previous_emotes = self.getEmotes(active=1)
@@ -165,17 +173,58 @@ class Database:
         for emote in new_emotes:
             if(emote in reactivated_emotes):
                 continue
-            self.logEmote(emote, channel_id)
+            self.logEmote(emote, self.channel_id)
             new_emote_count += 1
         self.setEmotesStatus(removed_emotes, 0)
         self.setEmotesStatus(reactivated_emotes, 1)
         if(new_emote_count > 0):
             self.downloadEmotes()
             utils.printInfo(self.channel_name, utils.downloadMessage(new_emote_count))
+            try:
+                sql = f'INSERT INTO executionlog (type, channel, message, datetime) VALUES (1,"{self.channel_name}", "{utils.downloadMessage(new_emote_count)}", UTC_TIMESTAMP());'
+                self.admin_cursor.execute(sql)
+                self.admin.commit()
+            except Exception as e:
+                print(e)
+
+        db = connectAdmin('cc_housekeeping')
+        cursor = db.cursor(buffered=True)
+        sql = f'SELECT url FROM pictures WHERE channel = "{self.channel_name}" ORDER BY id DESC LIMIT 1;'
+        cursor.execute(sql)
+        if(cursor.rowcount == 0):
+            sql = f'INSERT INTO pictures (channel, url, date_added) VALUES ("{self.channel_name}","{self.channel["profile_image_url"]}","{utils.getDateTime()}")'
+            cursor.execute(sql)
+            db.commit()
+            utils.downloadFile(self.channel["profile_image_url"], f"{DIRS['pictures']}/{self.channel_name}.png")
+        else:
+            for url in cursor.fetchall():
+                profile_image_url = url[0]
+                if(self.channel['profile_image_url'] != profile_image_url):
+                    sql = f'INSERT INTO pictures (channel, url, date_added) VALUES ("{self.channel_name}","{self.channel["profile_image_url"]}","{utils.getDateTime()}")'
+                    cursor.execute(sql)
+                    db.commit()
+                    os.replace(f"{DIRS['pictures']}/{self.channel_name}.png", f"{DIRS['pictures_archive']}/{self.channel_name}-{utils.getNumPhotos(self.channel_name)+1}.png")
+                    utils.downloadFile(self.channel["profile_image_url"], f"{DIRS['pictures']}/{self.channel_name}.png")
+        cursor.close()
+        db.close()
+
         utils.printInfo(self.channel_name, STATUS_MESSAGES['updates_complete'])
+        try:
+            sql = f'INSERT INTO executionlog (type, channel, message, datetime) VALUES (1,"{self.channel_name}", "{STATUS_MESSAGES["updates_complete"]}", UTC_TIMESTAMP());'
+            self.admin_cursor.execute(sql)
+            self.admin.commit()
+        except Exception as e:
+            print(e)
 
     def downloadEmotesHelper(self):
         utils.printInfo(self.channel_name, STATUS_MESSAGES['downloading'])
+        try:
+            pass
+            # sql = f'INSERT INTO executionlog (type, channel, message, datetime) VALUES (1,"{self.channel_name}", "{STATUS_MESSAGES["downloading"]}", UTC_TIMESTAMP());'
+            # self.admin_cursor.execute(sql)
+            # self.admin.commit()
+        except Exception as e:
+            print(e)
         self.cursor.execute(stmtSelectEmotesToDownload())
         for row in self.cursor.fetchall():
             url = row[0]
@@ -188,15 +237,18 @@ class Database:
                 else:
                     extension = 'png'
                 path = f'{DIRS["twitch"]}/{emote_name}-{emote_id}.{extension}'
+                download_path = f'{DIRS["twitch_download"]}/{emote_name}-{emote_id}.{extension}'
             elif(source == 3 or source == 4):
                 extension = 'png'
                 path = f'{DIRS["ffz"]}/{emote_name}-{emote_id}.{extension}'
+                download_path = f'{DIRS["ffz_download"]}/{emote_name}-{emote_id}.{extension}'
             elif(source == 5 or source == 6):
                 extension = url.split('.')[3]
                 url = url.split(f'.{extension}')[0]
                 path = f'{DIRS["bttv"]}/{emote_name}-{emote_id}.{extension}'
+                download_path = f'{DIRS["bttv_download"]}/{emote_name}-{emote_id}.{extension}'
             self.commit(stmtUpdateEmotePath(path, emote_id, source))
-            utils.downloadFile(url, path)
+            utils.downloadFile(url, download_path)
 
     def downloadEmotes(self):
         for dir in DIRS.values():
@@ -206,7 +258,7 @@ class Database:
 
     def getChannelActiveEmotes(self):
         emotes = []
-        self.updateEmotes()
+        self.update()
         self.cursor.execute(stmtSelectActiveEmotes())
         for emote in self.cursor.fetchall():
             emotes.append(str(emote[0]))
@@ -246,19 +298,33 @@ class Database:
             self.commit(stmtUpdateEmoteStatus(active, id))
             if(active):
                 utils.printInfo(self.channel_name, f'{STATUS_MESSAGES["set_emote"]} {emote} {STATUS_MESSAGES["reactivated"]}')
+                try:
+                    sql = f'INSERT INTO executionlog (type, channel, message, datetime) VALUES (1,"{self.channel_name}", "{STATUS_MESSAGES["set_emote"]} {emote} {STATUS_MESSAGES["reactivated"]}", UTC_TIMESTAMP());'
+                    self.admin_cursor.execute(sql)
+                    self.admin.commit()
+                except Exception as e:
+                    print(e)
             else:
                 utils.printInfo(self.channel_name, f'{STATUS_MESSAGES["set_emote"]} {emote} {STATUS_MESSAGES["inactive"]}')
+                try:
+                    sql = f'INSERT INTO executionlog (type, channel, message, datetime) VALUES (1,"{self.channel_name}", "{STATUS_MESSAGES["set_emote"]} {emote} {STATUS_MESSAGES["inactive"]}", UTC_TIMESTAMP());'
+                    self.admin_cursor.execute(sql)
+                    self.admin.commit()
+                except Exception as e:
+                    print(e)
                 
-    def addSegment(self, new_game_id):
+    def addSegment(self, stream):
         if(self.segment != 0):
             self.commit([stmtUpdateSegmentEndDatetime(self.segment_id),stmtUpdateSegmentLength(self.segment_id)])
-        self.stream_title = self.stream['title']
-        self.game_id = new_game_id
+        try:
+            self.game_id = int(stream['game_id'])
+        except:
+            self.game_id = 0
         self.cursor.execute(stmtSelectGameById(self.game_id))
         if(len(self.cursor.fetchall()) == 0):
-            self.commit(stmtInsertNewGame(self.game_id, self.stream['game_name']))
+            self.commit(stmtInsertNewGame(self.game_id, stream['game_name']))
         self.segment += 1
-        self.commit(stmtInsertNewSegment(self.session_id, self.stream_title, self.segment, self.game_id))
+        self.commit(stmtInsertNewSegment(self.session_id, stream['title'], self.segment, self.game_id))
         self.segment_id = self.cursor.lastrowid
         
 def stmtCreateDatabase(channel_name):
@@ -296,6 +362,9 @@ def stmtCreateSegmentsTable():
 
 def stmtCreateEmoteStatusChangeTrigger():
     return f'CREATE TRIGGER emote_status_change AFTER UPDATE ON emotes FOR EACH ROW IF OLD.active != NEW.active THEN INSERT INTO logs (emote_id, new, old, user_id, datetime) VALUES (OLD.id, NEW.active, OLD.active, NULL, UTC_TIMESTAMP()); END IF;//'
+
+def stmtCreateEmoteInsertTrigger():
+    return f'CREATE TRIGGER new_emote AFTER INSERT ON emotes FOR EACH ROW INSERT INTO logs (emote_id, new, old, user_id, datetime) VALUES (id, active, active, NULL, UTC_TIMESTAMP());'
 
 def stmtSelectEmotesToDownload():
     return f'SELECT url, emote_id, code, source FROM emotes WHERE path IS NULL;'
@@ -346,6 +415,7 @@ def stmtSelectGameById(game_id):
     return f'SELECT id FROM games WHERE id = {game_id};'
 
 def stmtInsertNewGame(game_id, game_name):
+    game_name = 'N/A' if game_name == '' else game_name
     if('\"' in game_name):
         game_name = game_name.replace('"', '\\"')
     return f'INSERT INTO games (id, name) VALUES ({game_id}, "{game_name}");'

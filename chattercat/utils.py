@@ -3,6 +3,7 @@ import os
 import sys
 import time
 
+import mysql.connector
 import requests
 
 import chattercat.constants as constants
@@ -14,6 +15,9 @@ DB_VARIABLES = constants.DB_VARIABLES
 DIRS = constants.DIRS
 ERROR_MESSAGES = constants.ERROR_MESSAGES
 TWITCH_VARIABLES = constants.TWITCH_VARIABLES
+
+class InvalidConfigValue(Exception):
+    pass
 
 class Config:
     def __init__(self):
@@ -57,6 +61,52 @@ class Response:
 def cls():
     os.system('cls' if os.name=='nt' else 'clear')
 
+# Used when connecting to a non cc_{channelname} db 
+# i.e. when wanting to connect to cc_housekeeping
+def connect(db_name):
+    conf = Config()
+    try:
+        db = mysql.connector.connect(
+            host=conf.host,
+            user=conf.user,
+            password=conf.password,
+        database=db_name if db_name is not None else None
+        )
+        return db
+    except Exception as e:
+        raise e
+
+def createAdminDb():
+    db = connect(None)
+    cursor = db.cursor()
+    sql = 'CREATE DATABASE IF NOT EXISTS cc_housekeeping COLLATE utf8mb4_general_ci;'
+    cursor.execute(sql)
+    sql = 'USE cc_housekeeping;'
+    cursor.execute(sql)
+    sql = 'CREATE TABLE pictures (id INT AUTO_INCREMENT PRIMARY KEY, channel VARCHAR(256), url VARCHAR(512), date_added DATETIME)'
+    cursor.execute(sql)
+    sql = 'CREATE TABLE admins (id INT AUTO_INCREMENT PRIMARY KEY, password VARCHAR(256), role INT, username VARCHAR(256))'
+    cursor.execute(sql)
+    sql = 'INSERT INTO admins (username, password, role) VALUES ("michael","21232f297a57a5a743894a0e4a801fc3",1);'
+    cursor.execute(sql)
+    db.commit()
+    sql = 'CREATE TABLE adminsessions (id INT AUTO_INCREMENT PRIMARY KEY, token VARCHAR(256), userId INT, datetime DATETIME, expires DATETIME)'
+    cursor.execute(sql)
+    sql = 'CREATE TABLE executionlog (id INT AUTO_INCREMENT PRIMARY KEY, channel VARCHAR(256), message VARCHAR(256), type INT, datetime DATETIME)'
+    cursor.execute(sql)
+    sql = 'CREATE TABLE executions (id INT AUTO_INCREMENT PRIMARY KEY, userId INT, start DATETIME, end DATETIME)'
+    cursor.execute(sql)
+    cursor.close()
+    db.close()
+
+def verifyAdminDb():
+    try:
+        db = connect("cc_housekeeping")
+        db.close()
+        return True
+    except mysql.connector.ProgrammingError:
+        return False
+
 def downloadFile(url, fileName):
     if not os.path.exists(fileName):
         r = requests.get(url)
@@ -83,6 +133,14 @@ def getDateTime(sys=False):
     min = '0' if cur.tm_min < 10 else ''
     sec = '0' if cur.tm_sec < 10 else ''
     return f'{str(cur.tm_year)}-{mon}{str(cur.tm_mon)}-{day}{str(cur.tm_mday)} {hour}{str(cur.tm_hour)}:{min}{str(cur.tm_min)}:{sec}{str(cur.tm_sec)}'
+
+def getNumPhotos(channel_name):
+    counter = 0;
+    for photo in os.listdir(DIRS['pictures_archive']):
+        channel = photo.split('-')[0]
+        if(channel == channel_name):
+            counter += 1
+    return counter
 
 def getStreamNames():
     streams = []
@@ -114,9 +172,13 @@ def verify():
     if(len(streams) == 0):
         printError(None, ERROR_MESSAGES['no_streams'])
         sys.exit()
-    if(twitch.isStreamLive(streams[0]) is None):
+    try:
+        twitch.getChannelId(streams[0])
+    except InvalidConfigValue:
         printError(None, ERROR_MESSAGES['config'])
         sys.exit()
+    if(verifyAdminDb() is False):
+        createAdminDb()
     return streams
 
 def printBanner():
