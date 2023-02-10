@@ -150,13 +150,9 @@ class Database:
             except:
                 pass
         utils.printInfo(self.channel_name, STATUS_MESSAGES['updates'])
-        try:
-            sql = f'INSERT INTO executionlog (type, channel, message, datetime) VALUES (1, "{self.channel_name}", "{STATUS_MESSAGES["updates"]}", UTC_TIMESTAMP());'
-            self.admin_cursor.execute(sql)
-            self.admin.commit()
-        except Exception as e:
-            print('We are here(2) db.py')
-            print(e)
+        sql = f'INSERT INTO executionlog (type, channel, message, datetime) VALUES (1, "{self.channel_name}", "{STATUS_MESSAGES["updates"]}", UTC_TIMESTAMP());'
+        self.admin_cursor.execute(sql)
+        self.admin.commit()
         new_emote_count = 0
         self.channel = twitch.getChannelInfo(self.channel_name)
         self.channel_id = twitch.getChannelId(self.channel_name)
@@ -180,13 +176,9 @@ class Database:
         if(new_emote_count > 0):
             self.downloadEmotes()
             utils.printInfo(self.channel_name, utils.downloadMessage(new_emote_count))
-            try:
-                sql = f'INSERT INTO executionlog (type, channel, message, datetime) VALUES (1,"{self.channel_name}", "{utils.downloadMessage(new_emote_count)}", UTC_TIMESTAMP());'
-                self.admin_cursor.execute(sql)
-                self.admin.commit()
-            except Exception as e:
-                print(e)
-
+            sql = f'INSERT INTO executionlog (type, channel, message, datetime) VALUES (1,"{self.channel_name}", "{utils.downloadMessage(new_emote_count)}", UTC_TIMESTAMP());'
+            self.admin_cursor.execute(sql)
+            self.admin.commit()
         db = connectAdmin('cc_housekeeping')
         cursor = db.cursor(buffered=True)
         sql = f'SELECT url FROM pictures WHERE channel = "{self.channel_name}" ORDER BY id DESC LIMIT 1;'
@@ -209,22 +201,12 @@ class Database:
         db.close()
 
         utils.printInfo(self.channel_name, STATUS_MESSAGES['updates_complete'])
-        try:
-            sql = f'INSERT INTO executionlog (type, channel, message, datetime) VALUES (1,"{self.channel_name}", "{STATUS_MESSAGES["updates_complete"]}", UTC_TIMESTAMP());'
-            self.admin_cursor.execute(sql)
-            self.admin.commit()
-        except Exception as e:
-            print(e)
+        sql = f'INSERT INTO executionlog (type, channel, message, datetime) VALUES (1,"{self.channel_name}", "{STATUS_MESSAGES["updates_complete"]}", UTC_TIMESTAMP());'
+        self.admin_cursor.execute(sql)
+        self.admin.commit()
 
     def downloadEmotesHelper(self):
         utils.printInfo(self.channel_name, STATUS_MESSAGES['downloading'])
-        try:
-            pass
-            # sql = f'INSERT INTO executionlog (type, channel, message, datetime) VALUES (1,"{self.channel_name}", "{STATUS_MESSAGES["downloading"]}", UTC_TIMESTAMP());'
-            # self.admin_cursor.execute(sql)
-            # self.admin.commit()
-        except Exception as e:
-            print(e)
         self.cursor.execute(stmtSelectEmotesToDownload())
         for row in self.cursor.fetchall():
             url = row[0]
@@ -298,20 +280,14 @@ class Database:
             self.commit(stmtUpdateEmoteStatus(active, id))
             if(active):
                 utils.printInfo(self.channel_name, f'{STATUS_MESSAGES["set_emote"]} {emote} {STATUS_MESSAGES["reactivated"]}')
-                try:
-                    sql = f'INSERT INTO executionlog (type, channel, message, datetime) VALUES (1,"{self.channel_name}", "{STATUS_MESSAGES["set_emote"]} {emote} {STATUS_MESSAGES["reactivated"]}", UTC_TIMESTAMP());'
-                    self.admin_cursor.execute(sql)
-                    self.admin.commit()
-                except Exception as e:
-                    print(e)
+                sql = f'INSERT INTO executionlog (type, channel, message, datetime) VALUES (1,"{self.channel_name}", "{STATUS_MESSAGES["set_emote"]} {emote} {STATUS_MESSAGES["reactivated"]}", UTC_TIMESTAMP());'
+                self.admin_cursor.execute(sql)
+                self.admin.commit()
             else:
                 utils.printInfo(self.channel_name, f'{STATUS_MESSAGES["set_emote"]} {emote} {STATUS_MESSAGES["inactive"]}')
-                try:
-                    sql = f'INSERT INTO executionlog (type, channel, message, datetime) VALUES (1,"{self.channel_name}", "{STATUS_MESSAGES["set_emote"]} {emote} {STATUS_MESSAGES["inactive"]}", UTC_TIMESTAMP());'
-                    self.admin_cursor.execute(sql)
-                    self.admin.commit()
-                except Exception as e:
-                    print(e)
+                sql = f'INSERT INTO executionlog (type, channel, message, datetime) VALUES (1,"{self.channel_name}", "{STATUS_MESSAGES["set_emote"]} {emote} {STATUS_MESSAGES["inactive"]}", UTC_TIMESTAMP());'
+                self.admin_cursor.execute(sql)
+                self.admin.commit()
                 
     def addSegment(self, stream):
         if(self.segment != 0):

@@ -83,7 +83,6 @@ def getChannelInfo(channel_name):
     try:
         resp = requests.get(url,params=None,headers=getHeaders()).json()
         if('error' in resp.keys()):
-            print('Error')
             return None
         return resp['data'][0]
     except:
@@ -95,11 +94,9 @@ def getChatterColor(chatter_name):
     try:
         resp = requests.get(url,params=None,headers=getHeaders()).json()
         if('error' in resp.keys()):
-            print('Error')
             return None
         return resp['data'][0]['color']
-    except Exception as e:
-        print(e)
+    except:
         return None
 
 def getEmoteById(channel_id, emote_id, source) -> Emote:

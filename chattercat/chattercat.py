@@ -26,10 +26,6 @@ class Chattercat:
                         time.sleep(TIMERS['sleep'])
         except KeyboardInterrupt:
             return None
-        except Exception as e:
-            print(e)
-            # printError(self.channel_name, f'__init__ Exception: {e}')
-            # printError(self.channel_name, self.stream)
 
     def run(self):
         self.db.getChannelActiveEmotes()
@@ -66,16 +62,8 @@ class Chattercat:
                 except:
                     self.restartSocket()
                 for resp in self.getResponses():
-                    try:
-                        self.db.log(Response(self.channel_name, resp))
-                    except Exception as e:
-                        print('2')
-                        utils.printError(self.channel_name, e)
-                        utils.printError(self.channel_name, self.stream)
-        except Exception as e:
-            # print('3')
-            # printError(self.channel_name, e)
-            # printError(self.channel_name, self.stream)
+                    self.db.log(Response(self.channel_name, resp))
+        except:
             self.endExecution()
 
             utils.printInfo(self.channel_name, utils.statusMessage(self.channel_name))
@@ -103,15 +91,9 @@ class Chattercat:
         self.db.db.close()
         self.live = False
         utils.printInfo(self.channel_name, utils.statusMessage(self.channel_name, online=False))
-        try:
-            sql = f'INSERT INTO executionlog (type, channel, message, datetime) VALUES (1,"{self.channel_name}", "{utils.statusMessage(self.channel_name, online=False)}", UTC_TIMESTAMP());'
-            self.admin.cursor().execute(sql)
-            self.admin.commit()
-        except Exception as e:
-            print(e)
-        # from chattercat.scripts import extract, profanity
-        # extract.extract(self.channel_name)
-        # profanity.scan(self.channel_name)
+        sql = f'INSERT INTO executionlog (type, channel, message, datetime) VALUES (1,"{self.channel_name}", "{utils.statusMessage(self.channel_name, online=False)}", UTC_TIMESTAMP());'
+        self.admin.cursor().execute(sql)
+        self.admin.commit()
 
     def endExecution(self):
         if(self.sock is not None):
